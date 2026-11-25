@@ -528,9 +528,12 @@ extends Screen {
         y = this.toggle(x, y, w, "Dye HUD", () -> this.cfg.dyeHudEnabled, v -> {
             this.cfg.dyeHudEnabled = v;
         });
-        y = this.toggle(x, y, w, "Only while fishing", () -> this.cfg.dyeHudOnlyFishing, v -> {
-            this.cfg.dyeHudOnlyFishing = v;
-        });
+        this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal(SkyMaxxScreen.hudMode(this.cfg.dyeHudOnlyFishing)), btn -> {
+            this.cfg.dyeHudOnlyFishing = !this.cfg.dyeHudOnlyFishing;
+            this.cfg.save();
+            btn.setMessage((Component)Component.literal(SkyMaxxScreen.hudMode(this.cfg.dyeHudOnlyFishing)));
+        }).bounds(x, y, w, 20).build(), y));
+        y += 22;
         this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal((String)"§dMove and resize HUD"), b -> {
             if (this.minecraft != null) {
                 this.minecraft.gui.setScreen((Screen)new com.skymaxx.tiki.light.dye.DyeHudEditScreen((Screen)this));
@@ -557,6 +560,10 @@ extends Screen {
         y = this.note(y, "§fVincent: §7talk to him or /dyes, once per SkyBlock year.");
         y = this.note(y, "§8Chance tables based on DyeAddons by anlg (Apache-2.0).");
         return y + 10;
+    }
+
+    private static String hudMode(boolean rodOnly) {
+        return "Show HUD: " + (rodOnly ? "\u00a7aOnly with fishing rod in hand" : "\u00a7eAlways");
     }
 
     /** One small "label ... value" cell of a two-column grid. */
