@@ -1,0 +1,22 @@
+{
+	"required": true,
+	"package": "com.skymaxx.tiki.mixin",
+	"compatibilityLevel": "JAVA_25",
+	"client": [
+		"GuiHudMixin",
+		"SoundEngineMixin",
+		"ItemInHandRendererMixin",
+		"GuiScreenMixin",
+		"GuiRenderStateMixin",
+		"GuiRenderStateFadeMixin",
+		"GuiTextRenderStateAccessor",
+		"GameRendererMixin",
+		"EntityNameTagMixin",
+		"ParticlePacketMixin",
+		"BazaarSellLockMixin",
+		"BazaarPacketGuardMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

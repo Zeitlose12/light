@@ -1,0 +1,44 @@
+{
+	"schemaVersion": 1,
+	"id": "light",
+	"version": "${version}",
+	"name": "Light",
+	"description": "Light - a fork of SkyMaxx 1.0.1 by Rachie (MIT, Copyright (c) 2026 SkyMaxx). Wiki Tiki and Titanoboa drop animations with bug fixes (volume, loot share, ESC-only skip), a new menu and a Bazaar Sell Sacks lock.",
+	"authors": [
+		"Grundsteuer"
+	],
+	"license": "MIT",
+	"icon": "assets/light/icon.png",
+	"environment": "client",
+	"entrypoints": {
+		"client": [
+			"com.skymaxx.tiki.TikiGambleClient",
+			"com.skymaxx.tiki.light.LightInit"
+		],
+		"modmenu": [
+			"com.skymaxx.tiki.gui.ModMenuIntegration"
+		]
+	},
+	"mixins": [
+		{
+			"config": "light.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.19.3",
+		"minecraft": "~26.2",
+		"java": ">=25",
+		"fabric-api": "*"
+	},
+	"contributors": [
+		"Rachie (SkyMaxx, original mod)"
+	],
+	"breaks": {
+		"tikigamble": "*"
+	},
+	"contact": {
+		"sources": "https://github.com/Zeitlose12/light",
+		"issues": "https://github.com/Zeitlose12/light/issues"
+	}
+}
