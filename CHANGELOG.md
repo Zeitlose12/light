@@ -27,6 +27,7 @@
 ### 🔧 Changed
 - Achievements are grouped into categories in the menu
 - Menu tabs shrink on small windows so every tab stays visible
+- Cleaner menu: new tab order (General first, Settings last); in Gambling only one category is open at a time and every mob is one line (on/off · speed · preview)
 - Ragnarok stops shooting as soon as a shot hits
 
 ### ❤️ Credits

@@ -66,14 +66,16 @@ extends Screen {
     private static final int TAB_HEIGHT = 22;
     private static final int PAD = 14;
     private static final int SCROLLBAR_WIDTH = 3;
-    private static Tab activeTab = Tab.GAMBLING;
+    private static Tab activeTab = Tab.GENERAL;
     private static boolean tikiOpen;
     private static boolean boaOpen;
     private static boolean animOpen;
     private static boolean lavaOpen;
     private static boolean spookyOpen;
     private static boolean winterOpen;
-    private static final java.util.Set<String> MOB_OPEN = new java.util.HashSet<>();
+    /** Gambling tab: only one category is open at a time. */
+    private static String openGamble = "";
+    private static boolean searchAll;
     private static boolean stampsOpen;
     private static final int SCROLLBAR_GRAB = 5;
     private boolean draggingScrollbar;
@@ -219,7 +221,9 @@ extends Screen {
         stampsOpen = true;
         boaOpen = true;
         tikiOpen = true;
+        searchAll = true;
         int y = this.buildGambling(x, 0, w);
+        searchAll = false;
         y = this.buildSound(x, y + 10, w);
         y = this.buildBazaar(x, y + 10, w);
         y = this.buildDyes(x, y + 10, w);
@@ -253,43 +257,23 @@ extends Screen {
     }
 
     private int buildGambling(int x, int y, int w) {
-        y = this.sectionHeader(x, y, w, "Tiki Gambling", this.cfg.tikiEnabled, tikiOpen, () -> {
-            tikiOpen = !tikiOpen;
-        });
-        if (tikiOpen) {
-            y = this.openSection(y, () -> this.buildTiki(x + 10, 0, w - 10));
-        }
-        y = this.sectionHeader(x, y + 6, w, "Titanoboa Gambling", this.cfg.titanoboaEnabled, boaOpen, () -> {
-            boaOpen = !boaOpen;
-        });
-        if (boaOpen) {
-            y = this.openSection(y, () -> this.buildTitanoboa(x + 10, 0, w - 10));
-        }
-        y = this.sectionHeader(x, y + 6, w, "Lava Gambling (Test)", this.cfg.lavaGambleEnabled, lavaOpen, () -> {
-            lavaOpen = !lavaOpen;
-        });
-        if (lavaOpen) {
-            y = this.openSection(y, () -> this.buildLavaGambling(x + 10, 0, w - 10));
-        }
-        y = this.sectionHeader(x, y + 6, w, "Spooky Fishing (Test, Debug)", this.cfg.spookyGambleEnabled, spookyOpen, () -> {
-            spookyOpen = !spookyOpen;
-        });
-        if (spookyOpen) {
-            y = this.openSection(y, () -> this.buildSpooky(x + 10, 0, w - 10));
-        }
-        y = this.sectionHeader(x, y + 6, w, "Winter Fishing (Test, Debug)", this.cfg.winterGambleEnabled, winterOpen, () -> {
-            winterOpen = !winterOpen;
-        });
-        if (winterOpen) {
-            y = this.openSection(y, () -> this.buildWinter(x + 10, 0, w - 10));
-        }
-        y = this.sectionHeader(x, y + 6, w, "Shark pop-up (test)", null, animOpen, () -> {
-            animOpen = !animOpen;
-        });
-        if (animOpen) {
-            y = this.openSection(y, () -> this.buildFishingAnims(x + 10, 0, w - 10));
-        }
+        y = this.category(x, y, w, "tiki", "Wiki Tiki", this.cfg.tikiEnabled, () -> this.buildTiki(x + 10, 0, w - 10));
+        y = this.category(x, y, w, "boa", "Titanoboa", this.cfg.titanoboaEnabled, () -> this.buildTitanoboa(x + 10, 0, w - 10));
+        y = this.category(x, y, w, "lava", "Lava Fishing  \u00a78(Test)", this.cfg.lavaGambleEnabled, () -> this.buildLavaGambling(x + 10, 0, w - 10));
+        y = this.category(x, y, w, "spooky", "Spooky Fishing  \u00a78(Debug)", this.cfg.spookyGambleEnabled, () -> this.buildSpooky(x + 10, 0, w - 10));
+        y = this.category(x, y, w, "winter", "Winter Fishing  \u00a78(Debug)", this.cfg.winterGambleEnabled, () -> this.buildWinter(x + 10, 0, w - 10));
+        y = this.category(x, y, w, "shark", "Shark Pop-up  \u00a78(Debug)", null, () -> this.buildFishingAnims(x + 10, 0, w - 10));
         return y;
+    }
+
+    /** One collapsible category; opening it closes the others. */
+    private int category(int x, int y, int w, String key, String title, Boolean on, IntSupplier body) {
+        boolean open = searchAll || key.equals(openGamble);
+        y = this.sectionHeader(x, y, w, title, on, open, () -> {
+            openGamble = key.equals(openGamble) ? "" : key;
+        });
+        if (open) y = this.openSection(y, body);
+        return y + 2;
     }
 
     private int sectionHeader(int x, int y, int w, String title, Boolean enabled, boolean open, Runnable flip) {
@@ -323,72 +307,62 @@ extends Screen {
     }
 
     private int buildFishingAnims(int x, int y, int w) {
-        y = this.note(y, "\u00a7eTest feature: only plays while \"Debug log\" is on");
-        y = this.note(y, "(General tab). A small pop-up for Great White Sharks");
-        y = this.note(y, "(Fishing Festival): Megalodon and Shark Tooth.");
-        y = this.note(y, "\u00a78Try: /light anim shark, sharktooth, sharkmiss");
+        y = this.note(y, "\u00a77Great White Shark: Megalodon / Shark Tooth pop-up.");
         y = this.buildSharkControls(x, y, w);
         return y;
     }
 
     private int buildLavaGambling(int x, int y, int w) {
-        y = this.note(y, "\u00a7eStill in testing - if something looks wrong, please report it.");
-        y = this.note(y, "After a Lord Jawbus, Thunder, Ragnarok or Plhlegblast kill the");
-        y = this.note(y, "real mob rises from the lava and a game of chance runs until");
-        y = this.note(y, "your real drop is known - it always lands on what you got.");
-        y = this.toggle(x, y, w, "Lava Gambling", () -> this.cfg.lavaGambleEnabled, v -> {
+        y = this.note(y, "\u00a77Jawbus, Thunder, Ragnarok, Plhlegblast - always your real drop.");
+        int half = (w - 4) / 2;
+        this.toggle(x, y, half, "Lava Gambling", () -> this.cfg.lavaGambleEnabled, v -> {
             this.cfg.lavaGambleEnabled = v;
         });
-        y = this.toggle(x, y, w, "Only my own kills (no loot share)", () -> this.cfg.lavaGambleOwnOnly, v -> {
+        y = this.toggle(x + half + 4, y, w - half - 4, "Own kills only", () -> this.cfg.lavaGambleOwnOnly, v -> {
             this.cfg.lavaGambleOwnOnly = v;
         });
-        y = this.slider(x, y, w, "Gambling volume", 0.0f, 1.0f, () -> Float.valueOf(this.cfg.lavaGambleVolume), v -> {
+        y = this.slider(x, y, w, "Volume", 0.0f, 1.0f, () -> Float.valueOf(this.cfg.lavaGambleVolume), v -> {
             this.cfg.lavaGambleVolume = v.floatValue();
         }, ConfigSlider.Format.PERCENT, null);
-        y = this.mobSection(x, y + 4, w, "jawbus", "Lord Jawbus - iron slot machine", () -> this.cfg.lavaGambleJawbus, v -> this.cfg.lavaGambleJawbus = v, false);
-        y = this.mobSection(x, y, w, "thunder", "Thunder - storm roulette", () -> this.cfg.lavaGambleThunder, v -> this.cfg.lavaGambleThunder = v, false);
-        y = this.mobSection(x, y, w, "ragnarok", "Ragnarok - bounty shooting", () -> this.cfg.lavaGambleRagnarok, v -> this.cfg.lavaGambleRagnarok = v, false);
-        y = this.mobSection(x, y, w, "plhlegblast", "Plhlegblast - jelly bubbles", () -> this.cfg.lavaGamblePlhlegblast, v -> this.cfg.lavaGamblePlhlegblast = v, false);
-        y = this.note(y, "\u00a77Drop prices: see the Settings tab. ESC skips a scene.");
+        y = this.note(y + 4, "\u00a78Mob  \u00b7  Speed  \u00b7  Preview");
+        y = this.mobRow(x, y, w, "jawbus", "Lord Jawbus", () -> this.cfg.lavaGambleJawbus, v -> this.cfg.lavaGambleJawbus = v, false);
+        y = this.mobRow(x, y, w, "thunder", "Thunder", () -> this.cfg.lavaGambleThunder, v -> this.cfg.lavaGambleThunder = v, false);
+        y = this.mobRow(x, y, w, "ragnarok", "Ragnarok", () -> this.cfg.lavaGambleRagnarok, v -> this.cfg.lavaGambleRagnarok = v, false);
+        y = this.mobRow(x, y, w, "plhlegblast", "Plhlegblast", () -> this.cfg.lavaGamblePlhlegblast, v -> this.cfg.lavaGamblePlhlegblast = v, false);
         return y;
     }
 
     private int buildSpooky(int x, int y, int w) {
-        y = this.note(y, "\u00a7eTest feature: only plays while \"Debug log\" is on.");
-        y = this.note(y, "Spooky Festival: the Grim Reaper's scythe opens a grave");
-        y = this.note(y, "with your real drop.");
-        y = this.toggle(x, y, w, "Spooky Fishing gambling", () -> this.cfg.spookyGambleEnabled, v -> {
+        y = this.note(y, "\u00a77Test - only plays while Debug log is on.");
+        y = this.toggle(x, y, w, "Spooky Fishing", () -> this.cfg.spookyGambleEnabled, v -> {
             this.cfg.spookyGambleEnabled = v;
         });
-        y = this.mobSection(x, y + 4, w, "grim", "Grim Reaper - graveyard scythe", () -> this.cfg.gambleGrimReaper, v -> this.cfg.gambleGrimReaper = v, true);
+        y = this.note(y + 4, "\u00a78Mob  \u00b7  Speed  \u00b7  Preview");
+        y = this.mobRow(x, y, w, "grim", "Grim Reaper", () -> this.cfg.gambleGrimReaper, v -> this.cfg.gambleGrimReaper = v, true);
         return y;
     }
 
     private int buildWinter(int x, int y, int w) {
-        y = this.note(y, "\u00a7eTest feature: only plays while \"Debug log\" is on.");
-        y = this.note(y, "Season of Jerry: the Yeti's ice claw machine and the");
-        y = this.note(y, "Reindrake's gift shuffle - always your real drop.");
-        y = this.toggle(x, y, w, "Winter Fishing gambling", () -> this.cfg.winterGambleEnabled, v -> {
+        y = this.note(y, "\u00a77Test - only plays while Debug log is on.");
+        y = this.toggle(x, y, w, "Winter Fishing", () -> this.cfg.winterGambleEnabled, v -> {
             this.cfg.winterGambleEnabled = v;
         });
-        y = this.mobSection(x, y + 4, w, "yeti", "Yeti - ice claw machine", () -> this.cfg.gambleYeti, v -> this.cfg.gambleYeti = v, true);
-        y = this.mobSection(x, y, w, "reindrake", "Reindrake - dragon gift shuffle", () -> this.cfg.gambleReindrake, v -> this.cfg.gambleReindrake = v, true);
+        y = this.note(y + 4, "\u00a78Mob  \u00b7  Speed  \u00b7  Preview");
+        y = this.mobRow(x, y, w, "yeti", "Yeti", () -> this.cfg.gambleYeti, v -> this.cfg.gambleYeti = v, true);
+        y = this.mobRow(x, y, w, "reindrake", "Reindrake", () -> this.cfg.gambleReindrake, v -> this.cfg.gambleReindrake = v, true);
         return y;
     }
 
-    /** One mob as its own small category: on/off, speed and a preview button. */
-    private int mobSection(int x, int y, int w, String key, String title, BooleanSupplier on, Consumer<Boolean> set, boolean debugOnly) {
-        boolean open = MOB_OPEN.contains(key);
-        y = this.sectionHeader(x, y, w, title, on.getAsBoolean(), open, () -> {
-            if (!MOB_OPEN.remove(key)) MOB_OPEN.add(key);
-        });
-        if (!open) return y;
-        int ix = x + 10, iw = w - 10;
-        y = this.toggle(ix, y, iw, "Play for this mob", on, set);
-        y = this.slider(ix, y, iw, "Speed", 0.5f, 2.0f, () -> Float.valueOf(this.cfg.gambleSpeedOf(key)), v -> {
+    /** One mob in one line: on/off, speed (50 - 200 %) and a preview button. */
+    private int mobRow(int x, int y, int w, String key, String name, BooleanSupplier on, Consumer<Boolean> set, boolean debugOnly) {
+        int pw = 22, gap = 4;
+        int tw = (w - pw - 2 * gap) / 2;
+        int sw = w - pw - 2 * gap - tw;
+        this.toggle(x, y, tw, name, on, set);
+        this.slider(x + tw + gap, y, sw, "Speed", 0.5f, 2.0f, () -> Float.valueOf(this.cfg.gambleSpeedOf(key)), v -> {
             this.cfg.gambleSpeed.put(key, Math.round(v.floatValue() * 20.0f) / 20.0f);
         }, ConfigSlider.Format.PERCENT, null);
-        this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal("\u00a7bPreview (random result)"), b -> {
+        Button play = Button.builder((Component)Component.literal("\u00a7b\u25b6"), b -> {
             if (debugOnly && !this.cfg.debug) {
                 com.skymaxx.tiki.TikiGambleClient.chat("\u00a7c[Light] Turn on \"Debug log\" (General) to test this one.");
                 return;
@@ -398,8 +372,10 @@ extends Screen {
             this.audio.applyVolume();
             if (this.minecraft != null) this.minecraft.gui.setScreen(null);
             com.skymaxx.tiki.light.LavaScene.test(key, false);
-        }).bounds(ix, y, iw, 20).build(), y));
-        return y + 26;
+        }).bounds(x + tw + gap + sw + gap, y, pw, 20).build();
+        play.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal("Preview (random result)")));
+        this.rows.add(new Row((AbstractWidget)play, y));
+        return y + 22;
     }
 
     private int buildSharkControls(int x, int y, int w) {
@@ -1280,15 +1256,15 @@ extends Screen {
     }
 
     private static enum Tab {
+        GENERAL("General"),
         GAMBLING("Gambling"),
+        DYES("Dyes"),
         SOUND("Sound"),
         BAZAAR("Bazaar"),
-        DYES("Dyes"),
         HUDS("HUDs"),
-        SETTINGS("Settings"),
-        GENERAL("General"),
         STATS("Stats"),
-        ACHIEVEMENTS("Achievements");
+        ACHIEVEMENTS("Achievements"),
+        SETTINGS("Settings");
 
         final String title;
 
