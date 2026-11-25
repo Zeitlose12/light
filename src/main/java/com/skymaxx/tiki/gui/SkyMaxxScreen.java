@@ -1,3 +1,19 @@
+/*
+ * Decompiled with CFR 0.152.
+ * 
+ * Could not load the following classes:
+ *  net.minecraft.client.gui.GuiGraphicsExtractor
+ *  net.minecraft.client.gui.components.AbstractWidget
+ *  net.minecraft.client.gui.components.Button
+ *  net.minecraft.client.gui.components.events.GuiEventListener
+ *  net.minecraft.client.gui.screens.ConfirmScreen
+ *  net.minecraft.client.gui.screens.Screen
+ *  net.minecraft.client.input.MouseButtonEvent
+ *  net.minecraft.client.renderer.RenderPipelines
+ *  net.minecraft.network.chat.Component
+ *  net.minecraft.resources.Identifier
+ *  org.joml.Matrix3x2fStack
+ */
 package com.skymaxx.tiki.gui;
 
 import com.skymaxx.tiki.TikiGambleClient;
@@ -53,6 +69,11 @@ extends Screen {
     private static Tab activeTab = Tab.GAMBLING;
     private static boolean tikiOpen;
     private static boolean boaOpen;
+    private static boolean animOpen;
+    private static boolean lavaOpen;
+    private static boolean spookyOpen;
+    private static boolean winterOpen;
+    private static final java.util.Set<String> MOB_OPEN = new java.util.HashSet<>();
     private static boolean stampsOpen;
     private static final int SCROLLBAR_GRAB = 5;
     private boolean draggingScrollbar;
@@ -160,6 +181,8 @@ extends Screen {
                 case SOUND -> y = this.buildSound(left, y, w);
                 case BAZAAR -> y = this.buildBazaar(left, y, w);
                 case DYES -> y = this.buildDyes(left, y, w);
+                case HUDS -> y = this.buildHuds(left, y, w);
+                case SETTINGS -> y = this.buildSettings(left, y, w);
                 case GENERAL -> y = this.buildGeneral(left, y, w);
                 case STATS -> y = this.buildStats(left, y, w);
                 case ACHIEVEMENTS -> y = this.buildAchievements(left, y, w);
@@ -242,6 +265,30 @@ extends Screen {
         if (boaOpen) {
             y = this.openSection(y, () -> this.buildTitanoboa(x + 10, 0, w - 10));
         }
+        y = this.sectionHeader(x, y + 6, w, "Lava Gambling (Test)", this.cfg.lavaGambleEnabled, lavaOpen, () -> {
+            lavaOpen = !lavaOpen;
+        });
+        if (lavaOpen) {
+            y = this.openSection(y, () -> this.buildLavaGambling(x + 10, 0, w - 10));
+        }
+        y = this.sectionHeader(x, y + 6, w, "Spooky Fishing (Test, Debug)", this.cfg.spookyGambleEnabled, spookyOpen, () -> {
+            spookyOpen = !spookyOpen;
+        });
+        if (spookyOpen) {
+            y = this.openSection(y, () -> this.buildSpooky(x + 10, 0, w - 10));
+        }
+        y = this.sectionHeader(x, y + 6, w, "Winter Fishing (Test, Debug)", this.cfg.winterGambleEnabled, winterOpen, () -> {
+            winterOpen = !winterOpen;
+        });
+        if (winterOpen) {
+            y = this.openSection(y, () -> this.buildWinter(x + 10, 0, w - 10));
+        }
+        y = this.sectionHeader(x, y + 6, w, "Shark pop-up (test)", null, animOpen, () -> {
+            animOpen = !animOpen;
+        });
+        if (animOpen) {
+            y = this.openSection(y, () -> this.buildFishingAnims(x + 10, 0, w - 10));
+        }
         return y;
     }
 
@@ -273,6 +320,169 @@ extends Screen {
         int bottom = y + 4 + height + 6;
         this.panels.add(new Panel(y - 2, bottom));
         return bottom + 2;
+    }
+
+    private int buildFishingAnims(int x, int y, int w) {
+        y = this.note(y, "\u00a7eTest feature: only plays while \"Debug log\" is on");
+        y = this.note(y, "(General tab). A small pop-up for Great White Sharks");
+        y = this.note(y, "(Fishing Festival): Megalodon and Shark Tooth.");
+        y = this.note(y, "\u00a78Try: /light anim shark, sharktooth, sharkmiss");
+        y = this.buildSharkControls(x, y, w);
+        return y;
+    }
+
+    private int buildLavaGambling(int x, int y, int w) {
+        y = this.note(y, "\u00a7eStill in testing - if something looks wrong, please report it.");
+        y = this.note(y, "After a Lord Jawbus, Thunder, Ragnarok or Plhlegblast kill the");
+        y = this.note(y, "real mob rises from the lava and a game of chance runs until");
+        y = this.note(y, "your real drop is known - it always lands on what you got.");
+        y = this.toggle(x, y, w, "Lava Gambling", () -> this.cfg.lavaGambleEnabled, v -> {
+            this.cfg.lavaGambleEnabled = v;
+        });
+        y = this.toggle(x, y, w, "Only my own kills (no loot share)", () -> this.cfg.lavaGambleOwnOnly, v -> {
+            this.cfg.lavaGambleOwnOnly = v;
+        });
+        y = this.slider(x, y, w, "Gambling volume", 0.0f, 1.0f, () -> Float.valueOf(this.cfg.lavaGambleVolume), v -> {
+            this.cfg.lavaGambleVolume = v.floatValue();
+        }, ConfigSlider.Format.PERCENT, null);
+        y = this.mobSection(x, y + 4, w, "jawbus", "Lord Jawbus - iron slot machine", () -> this.cfg.lavaGambleJawbus, v -> this.cfg.lavaGambleJawbus = v, false);
+        y = this.mobSection(x, y, w, "thunder", "Thunder - storm roulette", () -> this.cfg.lavaGambleThunder, v -> this.cfg.lavaGambleThunder = v, false);
+        y = this.mobSection(x, y, w, "ragnarok", "Ragnarok - bounty shooting", () -> this.cfg.lavaGambleRagnarok, v -> this.cfg.lavaGambleRagnarok = v, false);
+        y = this.mobSection(x, y, w, "plhlegblast", "Plhlegblast - jelly bubbles", () -> this.cfg.lavaGamblePlhlegblast, v -> this.cfg.lavaGamblePlhlegblast = v, false);
+        y = this.note(y, "\u00a77Drop prices: see the Settings tab. ESC skips a scene.");
+        return y;
+    }
+
+    private int buildSpooky(int x, int y, int w) {
+        y = this.note(y, "\u00a7eTest feature: only plays while \"Debug log\" is on.");
+        y = this.note(y, "Spooky Festival: the Grim Reaper's scythe opens a grave");
+        y = this.note(y, "with your real drop.");
+        y = this.toggle(x, y, w, "Spooky Fishing gambling", () -> this.cfg.spookyGambleEnabled, v -> {
+            this.cfg.spookyGambleEnabled = v;
+        });
+        y = this.mobSection(x, y + 4, w, "grim", "Grim Reaper - graveyard scythe", () -> this.cfg.gambleGrimReaper, v -> this.cfg.gambleGrimReaper = v, true);
+        return y;
+    }
+
+    private int buildWinter(int x, int y, int w) {
+        y = this.note(y, "\u00a7eTest feature: only plays while \"Debug log\" is on.");
+        y = this.note(y, "Season of Jerry: the Yeti's ice claw machine and the");
+        y = this.note(y, "Reindrake's gift shuffle - always your real drop.");
+        y = this.toggle(x, y, w, "Winter Fishing gambling", () -> this.cfg.winterGambleEnabled, v -> {
+            this.cfg.winterGambleEnabled = v;
+        });
+        y = this.mobSection(x, y + 4, w, "yeti", "Yeti - ice claw machine", () -> this.cfg.gambleYeti, v -> this.cfg.gambleYeti = v, true);
+        y = this.mobSection(x, y, w, "reindrake", "Reindrake - dragon gift shuffle", () -> this.cfg.gambleReindrake, v -> this.cfg.gambleReindrake = v, true);
+        return y;
+    }
+
+    /** One mob as its own small category: on/off, speed and a preview button. */
+    private int mobSection(int x, int y, int w, String key, String title, BooleanSupplier on, Consumer<Boolean> set, boolean debugOnly) {
+        boolean open = MOB_OPEN.contains(key);
+        y = this.sectionHeader(x, y, w, title, on.getAsBoolean(), open, () -> {
+            if (!MOB_OPEN.remove(key)) MOB_OPEN.add(key);
+        });
+        if (!open) return y;
+        int ix = x + 10, iw = w - 10;
+        y = this.toggle(ix, y, iw, "Play for this mob", on, set);
+        y = this.slider(ix, y, iw, "Speed", 0.5f, 2.0f, () -> Float.valueOf(this.cfg.gambleSpeedOf(key)), v -> {
+            this.cfg.gambleSpeed.put(key, Math.round(v.floatValue() * 20.0f) / 20.0f);
+        }, ConfigSlider.Format.PERCENT, null);
+        this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal("\u00a7bPreview (random result)"), b -> {
+            if (debugOnly && !this.cfg.debug) {
+                com.skymaxx.tiki.TikiGambleClient.chat("\u00a7c[Light] Turn on \"Debug log\" (General) to test this one.");
+                return;
+            }
+            this.cfg.clamp();
+            this.cfg.save();
+            this.audio.applyVolume();
+            if (this.minecraft != null) this.minecraft.gui.setScreen(null);
+            com.skymaxx.tiki.light.LavaScene.test(key, false);
+        }).bounds(ix, y, iw, 20).build(), y));
+        return y + 26;
+    }
+
+    private int buildSharkControls(int x, int y, int w) {
+        y = this.toggle(x, y, w, "Shark pop-up without a drop", () -> this.cfg.sharkPopupNoDrop, v -> {
+            this.cfg.sharkPopupNoDrop = v;
+        });
+        this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal((String)"\u00a7bMove and resize shark pop-up"), b -> {
+            if (this.minecraft != null) {
+                this.minecraft.gui.setScreen((Screen)new com.skymaxx.tiki.light.SharkEditScreen((Screen)this));
+            }
+        }).bounds(x, y, w, 20).build(), y));
+        return y + 22;
+    }
+
+    private static String bazaarLabel(String mode) {
+        return "Bazaar price: \u00a7f" + ("SELL_OFFER".equals(mode) ? "Sell offer" : "Insta-sell");
+    }
+
+    private static String auctionLabel(String mode) {
+        return "Auction price: \u00a7f" + ("MEDIAN_5".equals(mode) ? "Median of 5 lowest BINs" : "Lowest BIN");
+    }
+
+    private int buildSettings(int x, int y, int w) {
+        y = this.heading(y, "Prices (SkyCofl)");
+        y = this.toggle(x, y, w, "Show drop prices", () -> this.cfg.lavaGamblePrices, v -> {
+            this.cfg.lavaGamblePrices = v;
+        });
+        this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal(SkyMaxxScreen.bazaarLabel(this.cfg.priceBazaarMode)), b -> {
+            this.cfg.priceBazaarMode = "SELL_OFFER".equals(this.cfg.priceBazaarMode) ? "INSTA_SELL" : "SELL_OFFER";
+            this.cfg.save();
+            b.setMessage((Component)Component.literal(SkyMaxxScreen.bazaarLabel(this.cfg.priceBazaarMode)));
+        }).bounds(x, y, w, 20).build(), y));
+        y += 22;
+        this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal(SkyMaxxScreen.auctionLabel(this.cfg.priceAuctionMode)), b -> {
+            this.cfg.priceAuctionMode = "MEDIAN_5".equals(this.cfg.priceAuctionMode) ? "LOWEST_BIN" : "MEDIAN_5";
+            this.cfg.save();
+            com.skymaxx.tiki.light.LavaPrices.clearCache();
+            b.setMessage((Component)Component.literal(SkyMaxxScreen.auctionLabel(this.cfg.priceAuctionMode)));
+        }).bounds(x, y, w, 20).build(), y));
+        y += 22;
+        this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal("Refresh prices now"), b -> {
+            com.skymaxx.tiki.light.LavaPrices.clearCache();
+            b.setMessage((Component)Component.literal("\u00a7aPrices cleared - fetched again on the next drop"));
+        }).bounds(x, y, w, 20).build(), y));
+        y += 22;
+        y = this.note(y, "Insta-sell = what buy orders pay right now.");
+        y = this.note(y, "Sell offer = what sellers ask (where your offer would sit).");
+        y = this.note(y, "Lowest BIN = cheapest Buy-It-Now in the auction house.");
+        y = this.note(y, "Median = middle of the 5 cheapest, ignores troll listings.");
+        y = this.note(y, "\u00a78Data: SkyCofl - sky.coflnet.com/data. One request per drop,");
+        y = this.note(y, "\u00a78cached 10 min, max 20 a minute. Off = Light uses no internet.");
+        return y;
+    }
+
+    private int buildHuds(int x, int y, int w) {
+        y = this.heading(y, "Dye HUD");
+        y = this.toggle(x, y, w, "Dye HUD", () -> this.cfg.dyeHudEnabled, v -> {
+            this.cfg.dyeHudEnabled = v;
+        });
+        this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal(SkyMaxxScreen.hudMode(this.cfg.dyeHudOnlyFishing)), btn -> {
+            this.cfg.dyeHudOnlyFishing = !this.cfg.dyeHudOnlyFishing;
+            this.cfg.save();
+            btn.setMessage((Component)Component.literal(SkyMaxxScreen.hudMode(this.cfg.dyeHudOnlyFishing)));
+        }).bounds(x, y, w, 20).build(), y));
+        y += 22;
+        this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal((String)"\u00a7dMove and resize dye HUD"), b -> {
+            if (this.minecraft != null) {
+                this.minecraft.gui.setScreen((Screen)new com.skymaxx.tiki.light.dye.DyeHudEditScreen((Screen)this));
+            }
+        }).bounds(x, y, w, 20).build(), y));
+        y += 22;
+        y = this.heading(y, "Shark pop-up (test, needs Debug log)");
+        y = this.buildSharkControls(x, y, w);
+        y = this.heading(y, "Titanoboa");
+        y = this.toggle(x, y, w, "Gameplay during Animation", () -> this.cfg.boaGameplayView, v -> {
+            this.cfg.boaGameplayView = v;
+        });
+        y = this.cornerButton(x, y, w);
+        y = this.heading(y, "In the world");
+        y = this.toggle(x, y, w, "Hotspot text on the water", () -> this.cfg.hotspotTextOnWater, v -> {
+            this.cfg.hotspotTextOnWater = v;
+        });
+        return y;
     }
 
     private int buildTiki(int x, int y, int w) {
@@ -850,13 +1060,19 @@ extends Screen {
         return super.mouseClicked(event, doubled);
     }
 
+    /** Tab height: 24 when there is room, smaller on small windows so all tabs stay above the Done button. */
+    private int tabStep() {
+        int room = this.winBottom - 32 - (this.headerBottom + 8);
+        return Math.max(12, Math.min(24, room / Tab.values().length));
+    }
+
     private int tabAt(double mouseX, double mouseY) {
         if (mouseX < (double)(this.winLeft + 6) || mouseX >= (double)(this.sideRight - 6)) {
             return -1;
         }
         for (int i = 0; i < Tab.values().length; ++i) {
-            int top = this.headerBottom + 8 + i * 24;
-            if (!(mouseY >= (double)top) || !(mouseY < (double)(top + 20))) continue;
+            int top = this.headerBottom + 8 + i * this.tabStep();
+            if (!(mouseY >= (double)top) || !(mouseY < (double)(top + this.tabStep() - 2))) continue;
             return i;
         }
         return -1;
@@ -898,7 +1114,7 @@ extends Screen {
         ctx.text(this.font, (Component)Component.literal((String)"Wiki Tiki \u00b7 Titanoboa \u00b7 Bazaar"), after, this.winTop + 15, -7695484);
         // Light: credits for the original mod
         int creditY = this.winBottom - 28 - 24;
-        if (creditY > this.headerBottom + 8 + Tab.values().length * 24 + 4) {
+        if (creditY > this.headerBottom + 8 + Tab.values().length * this.tabStep() + 4) {
             ctx.text(this.font, (Component)Component.literal((String)"Based on SkyMaxx"), this.winLeft + 10, creditY, -7695484);
             ctx.text(this.font, (Component)Component.literal((String)"by Rachie \u00b7 MIT"), this.winLeft + 10, creditY + 10, -7695484);
         }
@@ -921,15 +1137,16 @@ extends Screen {
         for (int i = 0; i < all.length; ++i) {
             int x0 = this.winLeft + 6;
             int x1 = this.sideRight - 6;
-            int y0 = this.headerBottom + 8 + i * 24;
-            int y1 = y0 + 20;
+            int step = this.tabStep();
+            int y0 = this.headerBottom + 8 + i * step;
+            int y1 = y0 + step - 2;
             if (i == live) {
                 ctx.fill(x0, y0, x1, y1, PINK_ACTIVE);
                 ctx.fill(x0, y0, x0 + 2, y1, PINK);
             } else if (i == hovered) {
                 ctx.fill(x0, y0, x1, y1, 0x22FFFFFF);
             }
-            ctx.text(this.font, (Component)Component.literal((String)all[i].title), x0 + 10, y0 + 6, i == live ? -1 : -3355444);
+            ctx.text(this.font, (Component)Component.literal((String)all[i].title), x0 + 10, y0 + (y1 - y0 - 8) / 2, i == live ? -1 : -3355444);
         }
     }
 
@@ -1067,6 +1284,8 @@ extends Screen {
         SOUND("Sound"),
         BAZAAR("Bazaar"),
         DYES("Dyes"),
+        HUDS("HUDs"),
+        SETTINGS("Settings"),
         GENERAL("General"),
         STATS("Stats"),
         ACHIEVEMENTS("Achievements");

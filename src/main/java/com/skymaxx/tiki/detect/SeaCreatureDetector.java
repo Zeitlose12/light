@@ -124,6 +124,9 @@ public class SeaCreatureDetector<P extends DropLines.Named> {
             return;
         }
         DropLines.Share share = DropLines.lootShare(line, this.quarry.lootShareMessage().get(), this.quarry.name().get());
+        if (share == DropLines.Share.UNNAMED && this.lastAnyShareMs != 0L && now - this.lastAnyShareMs < 1000L) {
+            return; // Light: Hypixel often sends the shard line and the loot line together - one loot share
+        }
         if (share != DropLines.Share.NONE) {
             this.lastAnyShareMs = now;
         }

@@ -61,6 +61,28 @@ implements ClientModInitializer {
     public static AudioDirector audio;
     public static StampOverlay stamp;
     private static SeaCreatureDetector<Prize> tikiWatch;
+
+    /** Light: every server chat line, read from the packet before other mods (FEESH etc.) hide or rewrite it. */
+    public static void onServerChat(net.minecraft.network.chat.Component message, boolean overlay) {
+        try {
+            if (inventory != null) inventory.onChat(message, overlay);
+        } catch (Throwable t) {
+            LOGGER.warn("[Light] inventory chat failed", t);
+        }
+        try {
+            if (tikiWatch != null) tikiWatch.onChat(message, overlay);
+            if (boaWatch != null) boaWatch.onChat(message, overlay);
+        } catch (Throwable t) {
+            LOGGER.warn("[Light] creature chat failed", t);
+        }
+        try {
+            com.skymaxx.tiki.light.dye.DyeTracker.onChat(message, overlay);
+        } catch (Throwable t) {
+            LOGGER.warn("[Light] dye chat failed", t);
+        }
+        com.skymaxx.tiki.light.LavaScene.onChat(message, overlay);
+        com.skymaxx.tiki.light.SharkPopup.onChat(message, overlay);
+    }
     private static TotemHud totem;
     private static JungleOverlay jungle;
     private static InventoryWatch inventory;
@@ -68,6 +90,11 @@ implements ClientModInitializer {
     public static BoaStamp boaStamp;
     private static SeaCreatureDetector<BoaPrize> boaWatch;
     private static BoaHud boaHud;
+
+    /** Light: the Titanoboa HUD, so other scenes can borrow its rifle and scope (render/boa/LightRifle). */
+    public static BoaHud boaHud() {
+        return boaHud;
+    }
     private static final Identifier[] VANILLA_HUD;
     private static final float HUD_FADE_SECONDS = 0.35f;
     private static long ownedSinceNanos;
@@ -147,11 +174,14 @@ implements ClientModInitializer {
         inventory = new InventoryWatch(config);
         inventory.listen(tikiWatch::onItemGained);
         inventory.listen(boaWatch::onItemGained);
-        ClientReceiveMessageEvents.GAME.register((message, overlay) -> inventory.onChat(message, overlay));
-        ClientReceiveMessageEvents.GAME.register((message, overlay) -> {
-            tikiWatch.onChat(message, overlay);
-            boaWatch.onChat(message, overlay);
+        inventory.listen((n, id, c, sack) -> {
+            try {
+                com.skymaxx.tiki.light.LavaScene.onItemGained(n, id, c, sack);
+                com.skymaxx.tiki.light.SharkPopup.onItemGained(n);
+            } catch (Throwable ignored) {
+            }
         });
+        // Light: chat now comes straight from the packet (see LightPacketMixin), before other mods can hide it
         Runnable standDown = () -> {
             if (director.owningScreen()) {
                 director.abort();

@@ -154,6 +154,7 @@ public final class DyeKills {
     private static final Map<Integer, Tracked> TRACKED = new HashMap<Integer, Tracked>();
     private static final Map<String, Long> LAST_KILL = new HashMap<String, Long>();
     private static int tick;
+    private static net.minecraft.world.entity.LivingEntity killBody;
     private static int killSoundTick = -100;
     private static boolean doubleHook;
     private static Object lastLevel;
@@ -314,7 +315,7 @@ public final class DyeKills {
                 // died before its catch message arrived (one-shot kills): wait a moment for the message
                 if (!t.owned && DyeKills.takeMine(t.creature, now)) t.owned = true;
                 if (t.owned || now - t.firstSeenMs >= 1500L) {
-                    if (!(t.creature.equals("Tadgang") && t.level == 1)) DyeKills.kill(t.creature, !t.owned);
+                    if (!(t.creature.equals("Tadgang") && t.level == 1)) { killBody = t.body; DyeKills.kill(t.creature, !t.owned); }
                     it.remove();
                 }
                 continue;
@@ -330,6 +331,7 @@ public final class DyeKills {
                     continue;
                 }
                 if (!(t.creature.equals("Tadgang") && t.level == 1)) {
+                    killBody = t.body;
                     DyeKills.kill(t.creature, !t.owned);
                 }
                 it.remove();
@@ -372,6 +374,8 @@ public final class DyeKills {
     }
 
     private static void kill(String creature, boolean lootShare) {
+        net.minecraft.world.entity.LivingEntity body = killBody;
+        killBody = null;
         long now = System.currentTimeMillis();
         if (creature.equals("Titanoboa") && now - LAST_KILL.getOrDefault(creature, 0L) < 5000L) {
             return; // one Titanoboa, many body parts
@@ -379,5 +383,7 @@ public final class DyeKills {
         LAST_KILL.put(creature, now);
         DyeTracker.countKill(creature, lootShare);
         if (debug()) TikiGambleClient.LOGGER.info("[Light] kill: {} {}", creature, lootShare ? "(loot share)" : "(yours)");
+        com.skymaxx.tiki.light.LavaScene.onKill(creature, lootShare, body);
+        com.skymaxx.tiki.light.SharkPopup.onKill(creature, body);
     }
 }

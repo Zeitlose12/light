@@ -20,6 +20,7 @@ public class LightPacketMixin {
     private void light$chat(ClientboundSystemChatPacket packet, CallbackInfo ci) {
         if (Minecraft.getInstance().isSameThread()) {
             DyeKills.onChatPacket(packet.content(), packet.overlay());
+            com.skymaxx.tiki.TikiGambleClient.onServerChat(packet.content(), packet.overlay());
         }
     }
 

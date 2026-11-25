@@ -35,10 +35,25 @@ public final class LightInit implements ClientModInitializer {
                 return LightInit.testAchievement(StringArgumentType.getString(c, "name"));
             }))).then(ClientCommands.literal("pvcheck").executes(c -> {
                 return com.skymaxx.tiki.light.dye.PvBridge.check();
-            }))));
+            })).then(ClientCommands.literal("dragonfix").then(ClientCommands.argument("yaw", com.mojang.brigadier.arguments.FloatArgumentType.floatArg()).then(ClientCommands.argument("pitch", com.mojang.brigadier.arguments.FloatArgumentType.floatArg()).then(ClientCommands.argument("y", com.mojang.brigadier.arguments.FloatArgumentType.floatArg()).executes(c -> {
+                com.skymaxx.tiki.light.MobView.dragonYawFix = com.mojang.brigadier.arguments.FloatArgumentType.getFloat(c, "yaw");
+                com.skymaxx.tiki.light.MobView.dragonPitchFix = com.mojang.brigadier.arguments.FloatArgumentType.getFloat(c, "pitch");
+                com.skymaxx.tiki.light.MobView.dragonYFix = com.mojang.brigadier.arguments.FloatArgumentType.getFloat(c, "y");
+                com.skymaxx.tiki.light.MobView.reset();
+                TikiGambleClient.chat("\u00a78[Light] dragon view: yaw " + com.skymaxx.tiki.light.MobView.dragonYawFix + ", pitch " + com.skymaxx.tiki.light.MobView.dragonPitchFix + ", y " + com.skymaxx.tiki.light.MobView.dragonYFix);
+                return 1;
+            }))))).then(ClientCommands.literal("anim").then(ClientCommands.argument("creature", StringArgumentType.word()).suggests((c, builder) -> {
+                for (String n : ANIMS) builder.suggest(n);
+                return builder.buildFuture();
+            }).executes(c -> {
+                return LightInit.testAnim(StringArgumentType.getString(c, "creature"), false);
+            }).then(ClientCommands.literal("loot").executes(c -> {
+                return LightInit.testAnim(StringArgumentType.getString(c, "creature"), true);
+            }))))));
         DyeTracker.load();
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("light", "dye_hud"), DyeHud::render);
-        ClientReceiveMessageEvents.GAME.register(DyeTracker::onChat);
+        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("light", "lava_scene"), LavaScene::render);
+        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("light", "shark_popup"), SharkPopup::render);
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             Achievements.tick();
             DyeTracker.tick(client);
@@ -47,6 +62,29 @@ public final class LightInit implements ClientModInitializer {
                 client.gui.setScreen(SkyMaxxScreen.create());
             }
         });
+    }
+
+    private static final String[] ANIMS = {"jawbus", "thunder", "ragnarok", "plhlegblast", "grim", "yeti", "reindrake", "shark", "sharktooth", "sharkmiss"};
+
+    /** Debug only: plays a lava scene with a made-up drop. Nothing is counted. */
+    private static int testAnim(String which, boolean loot) {
+        if (TikiGambleClient.config == null || !TikiGambleClient.config.debug) {
+            TikiGambleClient.chat("\u00a7c[Light] Turn on \"Debug log\" in /light -> General to test animations.");
+            return 0;
+        }
+        String key = which.toLowerCase(Locale.ROOT);
+        switch (key) {
+            case "shark": SharkPopup.play("Megalodon", null); break;
+            case "sharktooth": SharkPopup.play("Shark Tooth", null); break;
+            case "sharkmiss": SharkPopup.play(null, null); break;
+            default:
+                if (!LavaScene.test(key, loot)) {
+                    TikiGambleClient.chat("\u00a7c[Light] Unknown: " + which + " (jawbus, thunder, ragnarok, plhlegblast, grim, yeti, reindrake, shark, sharktooth, sharkmiss)");
+                    return 0;
+                }
+        }
+        TikiGambleClient.chat("\u00a78[Light] Test only - nothing was counted. The result is random.");
+        return 1;
     }
 
     /** Debug only: plays the unlock title and sound. Nothing is saved as unlocked. */

@@ -19,6 +19,9 @@ public final class LightScreens {
     }
 
     public static boolean onScreenOpening(Screen screen) {
+        if (screen instanceof PauseScreen && LavaScene.skip()) {
+            return true;
+        }
         AnimationDirector director = TikiGambleClient.director;
         BoaDirector boa = TikiGambleClient.boa;
         boolean totemRunning = director != null && director.running();

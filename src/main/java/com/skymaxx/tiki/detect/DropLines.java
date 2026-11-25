@@ -10,7 +10,7 @@ import java.util.regex.Pattern;
 
 public final class DropLines {
     private static final String[] NO_NAMES = new String[0];
-    private static final Pattern LOOT_SHARE = Pattern.compile("loot share you received (.+?) for assisting ");
+    private static final Pattern LOOT_SHARE = Pattern.compile("loot share!? you received (.+?) for assisting ");
     private static final Pattern CHARM = Pattern.compile("charm! you charmed the (.+?) and received ");
     private static final Pattern SACK_LINE = Pattern.compile("^\\s*\\+([\\d,]+)\\s+(.+?)\\s*\\((.+)\\)\\s*$");
 
@@ -87,6 +87,10 @@ public final class DropLines {
             return Share.NONE;
         }
         String what = DropLines.squash(m.group(1));
+        if (what.equals("loot") || what.endsWith("shards") || what.endsWith("shard")) {
+            // Light: "LOOT SHARE! You received 2 Wiki Tiki Shards for assisting X!" (hunting shards) = a loot share too
+            return Share.UNNAMED;
+        }
         if (what.equals("loot")) {
             return Share.UNNAMED;
         }

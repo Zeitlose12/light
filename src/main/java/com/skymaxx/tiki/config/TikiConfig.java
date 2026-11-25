@@ -1,3 +1,13 @@
+/*
+ * Decompiled with CFR 0.152.
+ * 
+ * Could not load the following classes:
+ *  com.google.gson.Gson
+ *  com.google.gson.GsonBuilder
+ *  com.google.gson.JsonElement
+ *  com.google.gson.JsonObject
+ *  com.google.gson.JsonParser
+ */
 package com.skymaxx.tiki.config;
 
 import com.google.gson.Gson;
@@ -23,7 +33,7 @@ public class TikiConfig {
     public static final double TIKI_MAX_HEALTH = 7.5E7;
     public static final double TITANOBOA_MAX_HEALTH = 4.5E7;
     public static final int CURRENT_VERSION = 8;
-    public int configVersion = 8;
+    public int configVersion = 9;
     public boolean tikiEnabled = true;
     public boolean requireSkyblock = true;
     public String creatureName = "Wiki Tiki";
@@ -87,6 +97,33 @@ public class TikiConfig {
     public float dyeHudX = 0.01f;
     public float dyeHudY = 0.30f;
     public float dyeHudScale = 1.0f;
+    public float sharkPopupX = -1f;
+    public float sharkPopupY = -1f;
+    public float sharkPopupScale = 1.0f;
+    public boolean sharkPopupNoDrop = false;
+    public boolean lavaGambleEnabled = true;
+    public boolean lavaGambleJawbus = true;
+    public boolean lavaGambleThunder = true;
+    public boolean lavaGambleRagnarok = true;
+    public boolean lavaGamblePlhlegblast = true;
+    public boolean lavaGambleOwnOnly = false;
+    public float lavaGambleVolume = 0.6f;
+    public boolean lavaGamblePrices = true;
+    /** Spooky Festival / Season of Jerry gambling (test, only with Debug log). */
+    public boolean spookyGambleEnabled = true;
+    public boolean winterGambleEnabled = true;
+    public boolean gambleGrimReaper = true;
+    public boolean gambleYeti = true;
+    public boolean gambleReindrake = true;
+    /** Per mob animation speed (key: jawbus, thunder, ragnarok, plhlegblast, grim, yeti, reindrake), 0.5 - 2.0. */
+    public java.util.Map<String, Float> gambleSpeed = new java.util.HashMap<>();
+
+    public float gambleSpeedOf(String key) {
+        Float v = this.gambleSpeed == null ? null : this.gambleSpeed.get(key);
+        return v == null ? 1.0f : Math.max(0.5f, Math.min(2.0f, v));
+    }
+    public String priceBazaarMode = "INSTA_SELL";
+    public String priceAuctionMode = "LOWEST_BIN";
     public boolean dyeShowAquamarine = true;
     public boolean dyeShowIceberg = true;
     public boolean dyeShowCarmine = true;
@@ -128,12 +165,16 @@ public class TikiConfig {
         catch (Exception exception) {
             // empty catch block
         }
-        this.configVersion = 8;
+        this.configVersion = 9;
         this.clamp();
         this.save();
     }
 
     private void migrate(int fromVersion, JsonObject raw) {
+        if (fromVersion < 9) {
+            // 1.2.0: drop prices are on by default now (lava gambling is live)
+            this.lavaGamblePrices = true;
+        }
         if (fromVersion >= 8) {
             return;
         }

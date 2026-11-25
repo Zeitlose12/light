@@ -16,6 +16,10 @@ Light turns your rarest fishing moments into a show – and makes sure you never
 - Cel-shaded 3D models and a built-in synthesizer soundtrack
 - **Never fake** – the animation only shows what you actually got
 - Skip any animation with **`ESC`**
+- **🌋 Lava Gambling** *(still in testing)* – after a **Lord Jawbus**, **Thunder**, **Ragnarok** or **Plhlegblast** kill the real 3D mob rises out of the lava and plays its own game of chance: Jawbus' iron slot machine, Thunder's storm roulette, Ragnarok's bounty shooting gallery and Plhlegblast's jelly bubbles – it always lands on your *real* drop
+- Every mob has its own category in the menu: **on/off**, **animation speed** and a **preview** button
+- **💰 Drop prices** from **SkyCofl** right in the result (Bazaar insta-sell / sell offer, auction lowest BIN / median) – can be turned off in the **Settings** tab
+- *Experimental (Debug only):* **Spooky Fishing** (Grim Reaper graveyard) and **Winter Fishing** (Yeti ice claw machine, Reindrake gift shuffle)
 
 ### 🔒 Bazaar Protection
 - **"Sell Sacks Now" lock** – your click on the insta-sell button for sacks is blocked
@@ -81,7 +85,7 @@ Light is **client-side only**. It does **not**:
 - show hidden entities or players
 
 It only displays information you already get and blocks **your own** clicks on the Bazaar sell button.
-Light never connects to the internet itself – the dye tracker only reads the data the SkyBlock Profile Viewer has already loaded.
+The dye tracker never connects to the internet – it only reads the data the SkyBlock Profile Viewer has already loaded. The only network feature is the **drop prices** in the gambling animations: Light asks [SkyCofl](https://sky.coflnet.com/data) once per real rare drop for its price (cached 10 minutes, at most 20 requests per minute). Only the item id is sent – nothing about you or your account. You can switch prices off any time in **`/light` → Settings**, then Light never goes online.
 
 *No mod is ever officially approved by Hypixel – use any mod at your own risk.*
 </details>
@@ -113,6 +117,7 @@ Light is a fork of SkyMaxx by Rachie. The bug fixes and new features were made w
 ## ❤️ Credits
 - Original mod **SkyMaxx** by **Rachie** – MIT License
 - Dye drop-chance tables (rarity brackets, creature lists) based on **DyeAddons** by **anlg** – Apache-2.0
-- Catch messages from the **SkyHanni-REPO**, bestiary ids from the **NEU-REPO**
+- Catch messages from the **SkyHanni-REPO**, bestiary ids, item ids and head skins from the **NEU-REPO**
+- Drop prices (optional) from **SkyCofl** – [sky.coflnet.com/data](https://sky.coflnet.com/data)
 - Light by **Grundsteuer**
 - Not affiliated with Hypixel or Mojang
