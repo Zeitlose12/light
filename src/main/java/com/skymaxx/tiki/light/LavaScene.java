@@ -28,7 +28,7 @@ import org.joml.Matrix3x2fStack;
  * the end times (Ragnarok), popping bubbles (Plhlegblast). It always lands on what you really got - never a
  * fake win. Then the mob bursts and the result is shown.
  * Display only: reads chat and the mob the client already has and draws on the HUD. Nothing is sent.
- * Only while "Debug log" is on (test feature).
+ * Live, still marked as a test feature. Also: Grim Reaper (graveyard), Yeti (ice claw machine), Reindrake (dragon gifts).
  */
 public final class LavaScene {
     private static final float RISE_AT = 0.5f;
@@ -43,7 +43,7 @@ public final class LavaScene {
     /** Jawbus: machine a bit lower, golem a bit higher. */
     private static final int SLOT_DROP = 40;
     /** Jawbus: how far the golem stands above the machine (more = head higher, face free). */
-    private static final int GOLEM_LIFT = 165;
+    private static final int GOLEM_LIFT = 145;
     private static final float RIDE = 3.2f;
 
     private enum Game { SLOTS, ROULETTE, WHEEL, BUBBLES, SHOOT, GRAVES, CLAW, GIFTS }
@@ -146,13 +146,13 @@ public final class LavaScene {
         return c != null && c.lavaGambleEnabled;
     }
 
-    /** Is the category of this mob on? Spooky and Winter are test features: only with Debug log. */
+    /** Is the category of this mob on? (Lava, Spooky, Winter - all live, still marked as test.) */
     private static boolean catOn(Look l) {
         TikiConfig c = cfg();
         if (c == null) return false;
         return switch (l.cat) {
-            case "spooky" -> c.debug && c.spookyGambleEnabled;
-            case "winter" -> c.debug && c.winterGambleEnabled;
+            case "spooky" -> c.spookyGambleEnabled;
+            case "winter" -> c.winterGambleEnabled;
             default -> c.lavaGambleEnabled;
         };
     }
@@ -177,6 +177,7 @@ public final class LavaScene {
             Look l = lookOf(creature);
             if (l == null || !catOn(l) || !mobOn(l)) return;
             if (share && cfg().lavaGambleOwnOnly) return;
+            if (active && look == l && !test) return; // the same kill reported twice (chat + nametag)
             start(l, share, false, body);
         } catch (Throwable t) {
             TikiGambleClient.LOGGER.warn("[Light] lava gambling failed", t);
@@ -233,7 +234,13 @@ public final class LavaScene {
             mob = MobView.snapshot(null, EntityTypes.ENDER_DRAGON);
         } else {
             mob = MobView.snapshot(body, l.standIn);
-            if (body == null && mob != null) dressStandIn(l.game);
+            // no usable body (none, invisible or only an armor stand): the stand-in dressed like the SkyBlock mob
+            if (mob == null || mob.isInvisible() || mob instanceof net.minecraft.world.entity.decoration.ArmorStand) {
+                mob = MobView.snapshot(null, l.standIn);
+                if (mob != null) dressStandIn(l.game);
+            } else if (body == null) {
+                dressStandIn(l.game);
+            }
         }
         // the snowman next to the Yeti's claw machine / in the Reindrake's snow
         if (l.game == Game.CLAW || l.game == Game.GIFTS) horse = MobView.snapshot(null, EntityTypes.SNOW_GOLEM);
@@ -631,7 +638,7 @@ public final class LavaScene {
         float st = t - nameAt;
         float scale = st < 0.15f ? 5.0f - 1.8f * (st / 0.15f) : 3.2f;
         float shake = st < 0.4f ? (1.0f - st / 0.4f) * 4.0f : 0.0f;
-        float cy = sh * 0.22f;
+        float cy = sh * (look.game == Game.CLAW ? 0.09f : (look.game == Game.GRAVES ? 0.12f : 0.22f));
         Matrix3x2fStack pose = ctx.pose();
         pose.pushMatrix();
         pose.translate(sw / 2.0f + shake * (RNG.nextFloat() * 2 - 1), cy + shake * (RNG.nextFloat() * 2 - 1));
@@ -1215,7 +1222,7 @@ public final class LavaScene {
     }
 
     // ===================================================================================================
-    // Spooky Festival + Season of Jerry (test, only with Debug log)
+    // Spooky Festival + Season of Jerry (live, still marked as test)
     // ===================================================================================================
 
     private static final float CLAW_GRAB = 2.0f;
@@ -1676,7 +1683,7 @@ public final class LavaScene {
                 ctx.fill((int) sx, (int) sy, (int) sx + 4, (int) sy + 4, argb(a * clamp(1 - st), k % 2 == 0 ? 0xDDF6FF : 0x9ACCEE));
             }
             GambleArt.item(ctx, font, iconOf(pool[resultIdx]), hx, hy - Math.min(st, 0.4f) * 60, cs + Math.min(st, 0.4f) * 50, a);
-            GambleArt.bigText(ctx, font, win() ? "GOT IT!" : "EMPTY...", mx + mw / 2.0f, my - 50, win() ? 3.0f : 2.0f, win() ? 0xBFE9FF : 0x9E9890, a * clamp(st / 0.2f));
+            GambleArt.bigText(ctx, font, win() ? "GOT IT!" : "EMPTY...", mx + mw / 2.0f, my + mh * 0.30f, win() ? 2.6f : 2.0f, win() ? 0xBFE9FF : 0x9E9890, a * clamp(st / 0.2f));
         }
 
         // the 3D Yeti on the left, working the joystick

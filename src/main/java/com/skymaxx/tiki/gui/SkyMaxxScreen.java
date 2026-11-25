@@ -260,8 +260,8 @@ extends Screen {
         y = this.category(x, y, w, "tiki", "Wiki Tiki", this.cfg.tikiEnabled, () -> this.buildTiki(x + 10, 0, w - 10));
         y = this.category(x, y, w, "boa", "Titanoboa", this.cfg.titanoboaEnabled, () -> this.buildTitanoboa(x + 10, 0, w - 10));
         y = this.category(x, y, w, "lava", "Lava Fishing  \u00a78(Test)", this.cfg.lavaGambleEnabled, () -> this.buildLavaGambling(x + 10, 0, w - 10));
-        y = this.category(x, y, w, "spooky", "Spooky Fishing  \u00a78(Debug)", this.cfg.spookyGambleEnabled, () -> this.buildSpooky(x + 10, 0, w - 10));
-        y = this.category(x, y, w, "winter", "Winter Fishing  \u00a78(Debug)", this.cfg.winterGambleEnabled, () -> this.buildWinter(x + 10, 0, w - 10));
+        y = this.category(x, y, w, "spooky", "Spooky Fishing  \u00a78(Test)", this.cfg.spookyGambleEnabled, () -> this.buildSpooky(x + 10, 0, w - 10));
+        y = this.category(x, y, w, "winter", "Winter Fishing  \u00a78(Test)", this.cfg.winterGambleEnabled, () -> this.buildWinter(x + 10, 0, w - 10));
         y = this.category(x, y, w, "shark", "Shark Pop-up  \u00a78(Debug)", null, () -> this.buildFishingAnims(x + 10, 0, w - 10));
         return y;
     }
@@ -333,23 +333,23 @@ extends Screen {
     }
 
     private int buildSpooky(int x, int y, int w) {
-        y = this.note(y, "\u00a77Test - only plays while Debug log is on.");
+        y = this.note(y, "\u00a77Grim Reaper - always your real drop.");
         y = this.toggle(x, y, w, "Spooky Fishing", () -> this.cfg.spookyGambleEnabled, v -> {
             this.cfg.spookyGambleEnabled = v;
         });
         y = this.note(y + 4, "\u00a78Mob  \u00b7  Speed  \u00b7  Preview");
-        y = this.mobRow(x, y, w, "grim", "Grim Reaper", () -> this.cfg.gambleGrimReaper, v -> this.cfg.gambleGrimReaper = v, true);
+        y = this.mobRow(x, y, w, "grim", "Grim Reaper", () -> this.cfg.gambleGrimReaper, v -> this.cfg.gambleGrimReaper = v, false);
         return y;
     }
 
     private int buildWinter(int x, int y, int w) {
-        y = this.note(y, "\u00a77Test - only plays while Debug log is on.");
+        y = this.note(y, "\u00a77Yeti and Reindrake - always your real drop.");
         y = this.toggle(x, y, w, "Winter Fishing", () -> this.cfg.winterGambleEnabled, v -> {
             this.cfg.winterGambleEnabled = v;
         });
         y = this.note(y + 4, "\u00a78Mob  \u00b7  Speed  \u00b7  Preview");
-        y = this.mobRow(x, y, w, "yeti", "Yeti", () -> this.cfg.gambleYeti, v -> this.cfg.gambleYeti = v, true);
-        y = this.mobRow(x, y, w, "reindrake", "Reindrake", () -> this.cfg.gambleReindrake, v -> this.cfg.gambleReindrake = v, true);
+        y = this.mobRow(x, y, w, "yeti", "Yeti", () -> this.cfg.gambleYeti, v -> this.cfg.gambleYeti = v, false);
+        y = this.mobRow(x, y, w, "reindrake", "Reindrake", () -> this.cfg.gambleReindrake, v -> this.cfg.gambleReindrake = v, false);
         return y;
     }
 

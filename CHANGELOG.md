@@ -22,7 +22,8 @@
 - **💰 Drop prices** from SkyCofl in the result – new **Settings** tab: Bazaar insta-sell or sell offer, auction lowest BIN or median of the 5 lowest BINs
 - **HUDs** tab: every HUD in one place, on/off and move
 - **Shark pop-up** *(test)* for Great White Sharks: Megalodon / Shark Tooth
-- *Experimental, only with Debug log:* **Spooky Fishing** (Grim Reaper graveyard scythe) and **Winter Fishing** (Yeti ice claw machine, Reindrake = Ender Dragon gift shuffle)
+- **🎃 Spooky Fishing** *(test)*: Grim Reaper – graveyard, the scythe opens the grave with your drop
+- **❄️ Winter Fishing** *(test)*: Yeti – ice claw machine; Reindrake – an Ender Dragon drops three gifts, gift shuffle
 
 ### 🔧 Changed
 - Achievements are grouped into categories in the menu
