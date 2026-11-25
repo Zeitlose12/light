@@ -82,7 +82,7 @@ public final class LavaScene {
             new int[]{0x2F6E9A, 0x1F4A6A, 0x9CFF6B, 0x5FD35F}, new Sym[]{DYE, NONE, OTHER, NONE, NONE}),
         new Look("Grim Reaper", "grim", "spooky", 0x78FFC8, Game.GRAVES, EntityTypes.WITHER_SKELETON,
             new int[]{0x1A1A22, 0x2E2A3A, 0x78FFC8, 0x3AD08A}, new Sym[]{FANG, ORB, NONE, BOOK, MDYE, OTHER, NONE}),
-        new Look("Yeti", "yeti", "winter", 0xBFE9FF, Game.CLAW, EntityTypes.POLAR_BEAR,
+        new Look("Yeti", "yeti", "winter", 0xBFE9FF, Game.CLAW, EntityTypes.ZOMBIE,
             new int[]{0xF0F6FC, 0xBFE9FF, 0x8AB8D8, 0xFFFFFF}, new Sym[]{BYETI, ROD, NONE, HILT, BOOK, IDYE, OTHER, NONE}),
         new Look("Reindrake", "reindrake", "winter", 0xD03030, Game.GIFTS, EntityTypes.ENDER_DRAGON,
             new int[]{0xD03030, 0x30A050, 0xF0F0F0, 0xFFD24A}, new Sym[]{IDYE, PROSP, OTHER, NONE}),
@@ -233,15 +233,10 @@ public final class LavaScene {
             mob = MobView.snapshot(null, EntityTypes.ENDER_DRAGON);
         } else {
             mob = MobView.snapshot(body, l.standIn);
-            if (body == null && mob != null && l.game == Game.GRAVES) {
-                try {
-                    mob.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, new ItemStack(net.minecraft.world.item.Items.NETHERITE_HOE));
-                } catch (Throwable ignored) {
-                }
-            }
+            if (body == null && mob != null) dressStandIn(l.game);
         }
-        // the snowman next to the Yeti's claw machine
-        if (l.game == Game.CLAW) horse = MobView.snapshot(null, EntityTypes.SNOW_GOLEM);
+        // the snowman next to the Yeti's claw machine / in the Reindrake's snow
+        if (l.game == Game.CLAW || l.game == Game.GIFTS) horse = MobView.snapshot(null, EntityTypes.SNOW_GOLEM);
         if (l.game == Game.GIFTS) {
             for (int i = 0; i < SWAPS.length; i++) SWAPS[i] = RNG.nextInt(3);
         }
@@ -271,6 +266,28 @@ public final class LavaScene {
         }
         startNs = System.nanoTime();
         active = true;
+    }
+
+    /** Test scenes (no real body): dress the stand-in like the SkyBlock mob - its real head skin from the NEU repo. */
+    private static void dressStandIn(Game g) {
+        try {
+            var head = net.minecraft.world.entity.EquipmentSlot.HEAD;
+            if (g == Game.GRAVES) {
+                mob.setItemSlot(head, GambleArt.icon("GRIMHEAD").copy());
+                mob.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, new ItemStack(net.minecraft.world.item.Items.NETHERITE_HOE));
+            } else if (g == Game.CLAW) {
+                mob.setItemSlot(head, GambleArt.icon("YETIHEAD").copy());
+                var white = new net.minecraft.world.item.component.DyedItemColor(0xF2F6FA);
+                ItemStack chest = new ItemStack(net.minecraft.world.item.Items.LEATHER_CHESTPLATE);
+                ItemStack legs = new ItemStack(net.minecraft.world.item.Items.LEATHER_LEGGINGS);
+                ItemStack boots = new ItemStack(net.minecraft.world.item.Items.LEATHER_BOOTS);
+                for (ItemStack s : new ItemStack[]{chest, legs, boots}) s.set(net.minecraft.core.component.DataComponents.DYED_COLOR, white);
+                mob.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST, chest);
+                mob.setItemSlot(net.minecraft.world.entity.EquipmentSlot.LEGS, legs);
+                mob.setItemSlot(net.minecraft.world.entity.EquipmentSlot.FEET, boots);
+            }
+        } catch (Throwable ignored) {
+        }
     }
 
     /** RARE DROP / PET DROP lines while the scene runs. */
@@ -1249,18 +1266,29 @@ public final class LavaScene {
         }
     }
 
+    /** A thick line made of few, larger blocks (cheap: about one fill per 3 pixels). */
+    private static void fastLine(GuiGraphicsExtractor ctx, float x0, float y0, float x1, float y1, int th, int color) {
+        float dx = x1 - x0, dy = y1 - y0;
+        int steps = (int) Math.max(1, Math.max(Math.abs(dx), Math.abs(dy)) / 3.0f);
+        int s = Math.max(2, th) + 1;
+        for (int i = 0; i <= steps; i++) {
+            float u = i / (float) steps;
+            int x = (int) (x0 + dx * u), y = (int) (y0 + dy * u);
+            ctx.fill(x - s / 2, y - s / 2, x - s / 2 + s, y - s / 2 + s, color);
+        }
+    }
+
     private static void deadTree(GuiGraphicsExtractor ctx, int x, int base, int h, int color, float a, long seed) {
         Random r = new Random(seed);
         int c = argb(a, color);
-        GambleArt.line(ctx, x, base, x + h * 0.05f, base - h, 4, c);
-        for (int i = 0; i < 7; i++) {
+        ctx.fill(x - 2, base - h, x + 3, base, c);
+        for (int i = 0; i < 5; i++) {
             float y = base - h * (0.35f + 0.6f * r.nextFloat());
             float dir = r.nextBoolean() ? 1 : -1;
             float len = h * (0.18f + 0.25f * r.nextFloat());
             float ex = x + dir * len, ey = y - len * 0.6f;
-            GambleArt.line(ctx, x, y, ex, ey, 2, c);
-            GambleArt.line(ctx, ex, ey, ex + dir * len * 0.3f, ey - len * 0.45f, 1, c);
-            GambleArt.line(ctx, ex - dir * len * 0.3f, ey + len * 0.2f, ex - dir * len * 0.1f, ey - len * 0.3f, 1, c);
+            fastLine(ctx, x, y, ex, ey, 2, c);
+            fastLine(ctx, ex, ey, ex + dir * len * 0.3f, ey - len * 0.45f, 1, c);
         }
     }
 
@@ -1268,10 +1296,10 @@ public final class LavaScene {
         float f = (float) Math.sin(t * 18 + i) * 3;
         int c = argb(a, 0x050308);
         ctx.fill((int) x - 1, (int) y - 1, (int) x + 2, (int) y + 2, c);
-        GambleArt.line(ctx, x, y, x - 6, y - 2 - f, 1, c);
-        GambleArt.line(ctx, x - 6, y - 2 - f, x - 9, y + 1, 1, c);
-        GambleArt.line(ctx, x + 1, y, x + 7, y - 2 - f, 1, c);
-        GambleArt.line(ctx, x + 7, y - 2 - f, x + 10, y + 1, 1, c);
+        fastLine(ctx, x, y, x - 6, y - 2 - f, 1, c);
+        fastLine(ctx, x - 6, y - 2 - f, x - 9, y + 1, 1, c);
+        fastLine(ctx, x + 1, y, x + 7, y - 2 - f, 1, c);
+        fastLine(ctx, x + 7, y - 2 - f, x + 10, y + 1, 1, c);
     }
 
     private static void waiting(GuiGraphicsExtractor ctx, Font font, float t, float a, int x, int y) {
@@ -1315,10 +1343,10 @@ public final class LavaScene {
         }
         int mx = (int) (sw * 0.80f), my = (int) (sh * 0.19f), mr = Math.max(12, (int) (sh * 0.08f));
         for (int g = 4; g >= 1; g--) GambleArt.disc(ctx, mx, my, mr + g * 7, argb(a * 0.07f, 0xC02818), 2);
-        GambleArt.disc(ctx, mx, my, mr, argb(a, 0xE2CDAE), 1);
+        GambleArt.disc(ctx, mx, my, mr, argb(a, 0xE2CDAE), 2);
         GambleArt.disc(ctx, mx - mr / 3, my - mr / 4, mr / 5, argb(a * 0.5f, 0xB89878), 1);
         GambleArt.disc(ctx, mx + mr / 3, my + mr / 3, mr / 6, argb(a * 0.5f, 0xB89878), 1);
-        GambleArt.disc(ctx, mx, my, mr, argb(a * 0.22f, 0xC02010), 1);
+        GambleArt.disc(ctx, mx, my, mr, argb(a * 0.22f, 0xC02010), 2);
         for (int i = 0; i < 4; i++) {
             float x = wrap(i * 230 + t * 14, sw + 300) - 150;
             int y = (int) (sh * 0.12f + i * 14);
@@ -1356,9 +1384,9 @@ public final class LavaScene {
         }
         // ground, grass, iron fence
         ctx.fill(0, ground, sw, sh, argb(a, 0x0D090F));
-        for (int x = 0; x < sw; x += 3) {
+        for (int x = 0; x < sw; x += 6) {
             int gh = 2 + (int) (Math.abs(Math.sin(x * 0.37)) * 4);
-            ctx.fill(x, ground - gh, x + 2, ground, argb(a, 0x14201A));
+            ctx.fill(x, ground - gh, x + 3, ground, argb(a, 0x14201A));
         }
         int fenceTop = ground - (int) (sh * 0.09f);
         for (int x = 6; x < sw; x += 14) {
@@ -1455,14 +1483,14 @@ public final class LavaScene {
     private static void tomb(GuiGraphicsExtractor ctx, Font font, int x, int base, int w, int h, ItemStack icon, float a, boolean lit, boolean open, float ot, float t) {
         int top = base - h;
         int r = w / 2;
-        GambleArt.ellipse(ctx, x, base, (int) (w * 0.75f), 4, argb(a, 0x1A1218), 1);
+        GambleArt.ellipse(ctx, x, base, (int) (w * 0.75f), 4, argb(a, 0x1A1218), 2);
         int stone = lit ? 0x6E6E7E : 0x4A4A56;
         if (lit) {
             float pulse = 0.6f + 0.4f * (float) Math.sin(t * 14);
             for (int g = 1; g <= 3; g++) ctx.outline(x - r - g * 2, top - g * 2, w + g * 4, h + g * 4, argb(a * pulse * (0.45f - g * 0.12f), 0x78FFC8));
         }
         if (!open) {
-            GambleArt.disc(ctx, x, top + r, r, argb(a, stone), 1);
+            GambleArt.disc(ctx, x, top + r, r, argb(a, stone), 2);
             ctx.fill(x - r, top + r, x + r, base, argb(a, stone));
             ctx.fill(x + r - 3, top + r, x + r, base, argb(a, 0x2E2E36));
             ctx.fill(x - r, base - 4, x - r + w / 3, base, argb(a, 0x2E4A2A));
@@ -1545,11 +1573,14 @@ public final class LavaScene {
             ctx.nextStratum();
         }
 
-        // the claw machine
+        // the claw machine: compact, with big ice cubes in two stacked rows and a big claw
         Sym[] pool = look.pool;
         int n = pool.length;
-        int mw = Math.min((int) (sw * 0.50f), n * 40 + 40);
-        int mh = (int) (sh * 0.52f);
+        int cols = (n + 1) / 2;
+        int cs = Math.max(30, Math.min(46, (int) (sh * 0.13f)));
+        int cell = cs + 6;
+        int mw = (int) (cols * cell + cell * 0.5f) + 24;
+        int mh = Math.max((int) (sh * 0.44f), cs * 2 + 120);
         int mx = (int) (sw * 0.60f) - mw / 2;
         int my = ground + (int) (sh * 0.08f) - mh;
         float ga = clamp((t - GAMBLE_AT) / 0.4f) * a;
@@ -1558,33 +1589,39 @@ public final class LavaScene {
             ctx.fill(mx - 7, my - 34, mx + mw + 7, my + mh + 7, argb(ga, 0x1E3A58));
             ctx.fill(mx - 5, my - 32, mx + mw + 5, my + mh + 5, argb(ga, 0x7AA8C8));
             ctx.fillGradient(mx, my, mx + mw, my + mh, argb(ga * 0.30f, 0xDDF3FF), argb(ga * 0.55f, 0x6AA6D6));
-            for (int i = 0; i < 6; i++) ctx.fill(mx + 8 + i * 6, my + 4 + i * 10, mx + 10 + i * 6, my + 30 + i * 10, argb(ga * 0.15f, 0xFFFFFF));
+            for (int i = 0; i < 5; i++) ctx.fill(mx + 8 + i * 6, my + 4 + i * 10, mx + 10 + i * 6, my + 30 + i * 10, argb(ga * 0.15f, 0xFFFFFF));
             ctx.fill(mx, my - 30, mx + mw, my - 4, argb(ga, 0x16304C));
             boolean blink = ((int) (t * 4)) % 2 == 0;
             for (int i = 0; i < mw / 12; i++) {
                 ctx.fill(mx + 4 + i * 12, my - 28, mx + 7 + i * 12, my - 25, argb(ga, (i % 2 == 0) == blink ? 0x9AF0FF : 0x2A5070));
             }
             GambleArt.bigText(ctx, font, "YETI CLAW", mx + mw / 2.0f, my - 15, 1.4f, 0xDDF6FF, ga);
-            // frost in the corners
             for (int i = 0; i < 10; i++) {
                 ctx.fill(mx, my + i, mx + 10 - i, my + i + 1, argb(ga * 0.8f, 0xFFFFFF));
                 ctx.fill(mx + mw - 10 + i, my + i, mx + mw, my + i + 1, argb(ga * 0.8f, 0xFFFFFF));
             }
             ctx.fill(mx + 4, my + 8, mx + mw - 4, my + 12, argb(ga, 0x9AB8D0));
+            ctx.fill(mx, my + mh - 6, mx + mw, my + mh, argb(ga, 0xEAF6FF));
         }
-        int cs = Math.max(18, Math.min(30, (mw - 20) / n - 6));
-        int cubeY = my + mh - cs / 2 - 8;
-        float x0 = mx + 10 + cs / 2.0f, x1 = mx + mw - 10 - cs / 2.0f;
-        float cell = n > 1 ? (x1 - x0) / (n - 1) : 0;
-        float sweepFrom = stopAt >= 0 ? stopAt : t;
-        float sweep = x0 + (0.5f + 0.5f * (float) Math.sin(sweepFrom * 1.6f)) * (x1 - x0);
-        float clawX = stopAt < 0 || t < stopAt ? x0 + (0.5f + 0.5f * (float) Math.sin(t * 1.6f)) * (x1 - x0)
-            : sweep + (x0 + resultIdx * cell - sweep) * ease((t - stopAt) / STOP_LEN);
+        // cube i: bottom row = 0..cols-1, top row (offset by half a cube) = the rest
+        float[] cxs = new float[n], cys = new float[n];
+        float floorY = my + mh - 6;
+        for (int i = 0; i < n; i++) {
+            int row = i < cols ? 0 : 1;
+            int col = row == 0 ? i : i - cols;
+            cxs[i] = mx + 12 + cs / 2.0f + col * cell + (row == 1 ? cell * 0.5f : 0);
+            cys[i] = floorY - cs / 2.0f - row * (cs + 2);
+        }
+        float xL = cxs[0], xR = cxs[n - 1];
+        float sweep = xL + (0.5f + 0.5f * (float) Math.sin((stopAt >= 0 ? stopAt : t) * 1.6f)) * (xR - xL);
+        float clawX = stopAt < 0 || t < stopAt ? xL + (0.5f + 0.5f * (float) Math.sin(t * 1.6f)) * (xR - xL)
+            : sweep + (cxs[resultIdx] - sweep) * ease((t - stopAt) / STOP_LEN);
+        float clawScale = cs / 20.0f;
         float arrive = stopAt >= 0 ? stopAt + STOP_LEN : Float.MAX_VALUE;
         float d = t - arrive;
         int railY = my + 12;
-        float top = railY + 10;
-        float bottom = cubeY - cs / 2.0f - 14;
+        float top = railY + 6;
+        float bottom = stopAt >= 0 ? cys[resultIdx] - cs / 2.0f - 15 * clawScale : top;
         float clawY = top + (float) Math.sin(t * 3) * 2;
         float grip = 0.0f;
         if (d >= 0) {
@@ -1599,34 +1636,46 @@ public final class LavaScene {
             if (d < 0.05f) sound(6, SoundEvents.PISTON_EXTEND, 1.4f, 0.4f);
             if (d > 0.6f && d < 0.65f) sound(7, SoundEvents.CHAIN_PLACE, 1.0f, 0.5f);
         }
-        int lit = Math.max(0, Math.min(n - 1, Math.round((clawX - x0) / Math.max(1, cell))));
+        // the cube under the claw: the nearest one, top row first
+        int lit = 0;
+        float best = Float.MAX_VALUE;
+        for (int i = 0; i < n; i++) {
+            float dist = Math.abs(cxs[i] - clawX) - (i >= cols ? cs * 0.3f : 0);
+            if (dist < best) {
+                best = dist;
+                lit = i;
+            }
+        }
         if (on && stopAt < 0) tick(lit, 1.8f);
         boolean held = d >= 0.8f && t < settled;
         boolean shattered = t >= settled;
+        float heldY = clawY + 15 * clawScale + cs / 2.0f;
         if (on) {
             for (int i = 0; i < n; i++) {
-                float cx = x0 + i * cell;
-                float cy = cubeY;
                 if (i == resultIdx && (held || shattered) && stopAt >= 0) continue;
-                iceCube(ctx, font, cx, cy, cs, iconOf(pool[i]), ga, i == lit && stopAt < 0, t);
+                iceCube(ctx, font, cxs[i], cys[i], cs, iconOf(pool[i]), ga, i == lit && stopAt < 0, t);
             }
-            // cable + claw
             int cxI = (int) clawX;
-            ctx.fill(cxI - 6, railY - 2, cxI + 6, railY + 4, argb(ga, 0x3A5A7A));
-            ctx.fill(cxI - 1, railY + 4, cxI + 1, (int) clawY, argb(ga, 0xD8E4EE));
-            if (held) iceCube(ctx, font, clawX + (d > 1.6f ? (RNG.nextFloat() - 0.5f) * 3 : 0), clawY + 14 + cs / 2.0f - 4, cs, iconOf(pool[resultIdx]), ga, true, t);
-            claw(ctx, clawX, clawY, grip, ga);
+            ctx.fill(cxI - 9, railY - 3, cxI + 9, railY + 5, argb(ga, 0x3A5A7A));
+            ctx.fill(cxI - 1, railY + 5, cxI + 2, (int) clawY, argb(ga, 0xD8E4EE));
+            if (held) iceCube(ctx, font, clawX + (d > 1.6f ? (RNG.nextFloat() - 0.5f) * 3 : 0), heldY, cs, iconOf(pool[resultIdx]), ga, true, t);
+            Matrix3x2fStack ps = ctx.pose();
+            ps.pushMatrix();
+            ps.translate(clawX, clawY);
+            ps.scale(clawScale, clawScale);
+            claw(ctx, 0, 0, grip, ga);
+            ps.popMatrix();
         }
         if (shattered && stopAt >= 0) {
             float st = t - settled;
-            float hx = clawX, hy = clawY + 14 + cs / 2.0f - 4;
+            float hx = clawX, hy = heldY;
             sound(8, SoundEvents.GLASS_BREAK, 1.1f, 0.6f);
             for (int k = 0; k < 16; k++) {
                 double ang = k * Math.PI * 2 / 16;
                 float sx = hx + (float) Math.cos(ang) * st * 120, sy = hy + (float) Math.sin(ang) * st * 90 + st * st * 160;
                 ctx.fill((int) sx, (int) sy, (int) sx + 4, (int) sy + 4, argb(a * clamp(1 - st), k % 2 == 0 ? 0xDDF6FF : 0x9ACCEE));
             }
-            GambleArt.item(ctx, font, iconOf(pool[resultIdx]), hx, hy - Math.min(st, 0.4f) * 60, 28 + Math.min(st, 0.4f) * 40, a);
+            GambleArt.item(ctx, font, iconOf(pool[resultIdx]), hx, hy - Math.min(st, 0.4f) * 60, cs + Math.min(st, 0.4f) * 50, a);
             GambleArt.bigText(ctx, font, win() ? "GOT IT!" : "EMPTY...", mx + mw / 2.0f, my - 50, win() ? 3.0f : 2.0f, win() ? 0xBFE9FF : 0x9E9890, a * clamp(st / 0.2f));
         }
 
@@ -1664,7 +1713,7 @@ public final class LavaScene {
             for (int g = 1; g <= 3; g++) ctx.outline(x - g * 2, y - g * 2, s + g * 4, s + g * 4, argb(a * pulse * (0.5f - g * 0.13f), 0xBFF4FF));
         }
         ctx.fill(x, y, x + s, y + s, argb(a * 0.55f, 0xBFE9FF));
-        GambleArt.item(ctx, font, icon, cx, cy, s * 0.62f, a);
+        GambleArt.item(ctx, font, icon, cx, cy, s * 0.74f, a);
         ctx.fill(x, y, x + s, y + s, argb(a * 0.22f, 0xDDF6FF));
         ctx.outline(x, y, s, s, argb(a, 0xF0FAFF));
         ctx.fill(x + 2, y + 2, x + s / 2, y + 4, argb(a * 0.7f, 0xFFFFFF));
@@ -1725,17 +1774,20 @@ public final class LavaScene {
             if (x > sw * 0.30f && x < sw * 0.70f) continue;
             pine(ctx, x, ground - 2, (int) (sh * (0.12f + 0.03f * (i % 3))), 0x0E2E24, 0xF4FAFF, a);
         }
-        // a cabin with warm windows
-        int hx = (int) (sw * 0.13f), hb = ground + 4;
-        ctx.fill(hx - 26, hb - 30, hx + 26, hb, argb(a, 0x4A2A1A));
-        for (int yy = 0; yy < 18; yy += 2) {
-            int hw = 30 * yy / 18 + 2;
-            ctx.fill(hx - hw, hb - 48 + yy, hx + hw, hb - 46 + yy, argb(a, yy < 6 ? 0xF4FAFF : 0x2A1A12));
-        }
-        float glow = 0.75f + 0.25f * (float) Math.sin(t * 5);
-        ctx.fill(hx - 18, hb - 22, hx - 8, hb - 12, argb(a * glow, 0xFFC860));
-        ctx.fill(hx + 8, hb - 22, hx + 18, hb - 12, argb(a * glow, 0xFFC860));
         ctx.fill(0, ground, sw, sh, argb(a, 0xE9F1F9));
+        // a small snowy hill on the left (in front of the horizon)
+        {
+            int bx = (int) (sw * 0.11f), bb = ground + (int) (sh * 0.12f), bh = (int) (sh * 0.24f), bw = (int) (sw * 0.26f);
+            for (int yy = 0; yy < bh; yy += 2) {
+                float f = yy / (float) bh;
+                int hw = (int) (bw / 2.0f * Math.sqrt(f));
+                int col = f < 0.30f ? 0xFFFFFF : (f < 0.75f ? 0xE4EEF8 : 0xC8DAEA);
+                ctx.fill(bx - hw, bb - bh + yy, bx + hw, bb - bh + yy + 2, argb(a, col));
+                ctx.fill(bx + hw - hw / 3, bb - bh + yy, bx + hw, bb - bh + yy + 2, argb(a * 0.35f, 0x9AB4CC));
+            }
+            pine(ctx, bx - bw / 5, bb - bh / 2, (int) (sh * 0.10f), 0x0E2E24, 0xF4FAFF, a);
+            pine(ctx, bx + bw / 6, bb - bh / 3, (int) (sh * 0.08f), 0x0E2E24, 0xF4FAFF, a);
+        }
         for (int x = 0; x < sw; x += 4) {
             int d = (int) (Math.sin(x * 0.025) * 4 + Math.sin(x * 0.09) * 2);
             ctx.fill(x, ground + 12 + d, x + 4, ground + 15 + d, argb(a, 0xC4D6E8));
@@ -1743,8 +1795,8 @@ public final class LavaScene {
         snowfall(ctx, t, a * 0.7f, sw, sh, 60, -10, 3);
 
         // gift slots on the snow
-        int gs = Math.max(30, (int) (sh * 0.11f));
-        int gy = ground + (int) (sh * 0.10f);
+        int gs = Math.max(40, (int) (sh * 0.17f));
+        int gy = ground + (int) (sh * 0.11f);
         float[] slotX = {sw * 0.5f - sw * 0.16f, sw * 0.5f, sw * 0.5f + sw * 0.16f};
         String[] giftIcon = {"RGIFT", "GGIFT", "WGIFT"};
 
@@ -1868,6 +1920,13 @@ public final class LavaScene {
             } else {
                 GambleArt.item(ctx, font, GambleArt.icon(giftIcon[i]), x, y, gs, ia);
             }
+        }
+        // the snow golem on the right
+        if (horse != null && t >= RISE_AT && MobView.available()) {
+            int spx = (int) (sh * 0.26f);
+            ctx.nextStratum();
+            MobView.draw(ctx, horse, (int) (sw * 0.89f), ground + (int) (sh * 0.10f) - spx / 2, spx, (float) Math.sin(t * 0.8f) * 0.7f, -0.1f);
+            ctx.nextStratum();
         }
         snowfall(ctx, t, a, sw, sh, 30, -16, 4);
         burstPieces(ctx, t, burstAt, a, sw / 2, (int) (sh * 0.34f), sh, 0xC080FF);

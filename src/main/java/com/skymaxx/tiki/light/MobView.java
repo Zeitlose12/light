@@ -145,7 +145,7 @@ public final class MobView {
 
     private static boolean dragonBroken;
     /** Debug fine-tuning for the dragon view (/light dragonfix yaw pitch y). */
-    public static float dragonYawFix = 180.0f;
+    public static float dragonYawFix = 0.0f;
     public static float dragonPitchFix = 0.0f;
     public static float dragonYFix = 1.5f;
 
