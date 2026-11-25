@@ -82,6 +82,19 @@ public class TikiConfig {
     public boolean lightAchievementFx = true;
     public float lightAchievementVolume = 0.5f;
     public String lightSellSacksSlots = "";
+    public boolean dyeHudEnabled = true;
+    public boolean dyeHudOnlyFishing = true;
+    public float dyeHudX = 0.01f;
+    public float dyeHudY = 0.30f;
+    public float dyeHudScale = 1.0f;
+    public boolean dyeShowAquamarine = true;
+    public boolean dyeShowIceberg = true;
+    public boolean dyeShowCarmine = true;
+    public boolean dyeShowMidnight = true;
+    public int dyeVincentAquamarine = 1;
+    public int dyeVincentIceberg = 1;
+    public int dyeVincentCarmine = 1;
+    public int dyeVincentMidnight = 1;
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private transient File file;
 

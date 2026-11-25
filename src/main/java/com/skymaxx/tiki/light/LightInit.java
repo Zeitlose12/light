@@ -8,6 +8,11 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.minecraft.resources.Identifier;
+import com.skymaxx.tiki.light.dye.DyeHud;
+import com.skymaxx.tiki.light.dye.DyeTracker;
 
 /** Light: adds the /light command that opens the settings screen. */
 public final class LightInit implements ClientModInitializer {
@@ -28,9 +33,15 @@ public final class LightInit implements ClientModInitializer {
                 return builder.buildFuture();
             }).executes(c -> {
                 return LightInit.testAchievement(StringArgumentType.getString(c, "name"));
-            })))));
+            }))).then(ClientCommands.literal("pvcheck").executes(c -> {
+                return com.skymaxx.tiki.light.dye.PvBridge.check();
+            }))));
+        DyeTracker.load();
+        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("light", "dye_hud"), DyeHud::render);
+        ClientReceiveMessageEvents.GAME.register(DyeTracker::onChat);
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             Achievements.tick();
+            DyeTracker.tick(client);
             if (openRequested) {
                 openRequested = false;
                 client.gui.setScreen(SkyMaxxScreen.create());

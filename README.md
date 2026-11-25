@@ -1,6 +1,6 @@
 # ⚡ Light
 
-**Drop animations & coin protection for Hypixel SkyBlock.**
+**Drop animations, a fishing dye tracker & coin protection for Hypixel SkyBlock.**
 
 Light turns your rarest fishing moments into a show – and makes sure you never insta-sell millions by accident.
 
@@ -24,9 +24,18 @@ Light turns your rarest fishing moments into a show – and makes sure you never
 - **Lag guard** – the button's slot stays locked even while the server is lagging
 - Sell with **Sell Offers** instead – turn the lock off any time
 
+### 🎨 Fishing Dye Tracker
+- Tracks **Aquamarine, Iceberg, Carmine and Midnight Dye**
+- Chance per sea creature by **rarity**, multiplied by your **Magic Find** and **Vincent's dye bonus**
+- Kills come from the **[SkyBlock Profile Viewer](https://modrinth.com/mod/skyblock-profile-viewer)** – open **`/pv`** once
+- **Loot share** kills count with **1/5** of the chance
+- New catches are counted **live** – also with custom catch messages from other mods
+- Vincent's bonus (1x / 2x / 3x) is read automatically when you talk to him or open **`/dyes`**
+- Small **HUD** that only shows up while you fish, plus a detailed **Dyes** tab with your 50 % and 90 % kill marks
+
 ### 📊 Statistics
 - **🍀 Luck Meter** – compares your drops with the base drop chances, per item and overall
-- **🏆 17 Achievements** – from *Tiki Time* to *1 in 50,000*, with an on-screen title and sound
+- **🏆 23 Achievements** in 5 categories – from *Tiki Time* to *1 in 50,000*, with an on-screen title and sound
 - **🖼️ Stat Card** – save your Wiki Tiki & Titanoboa stats as a shareable PNG with one click
 
 ### 🎀 Menu
@@ -47,6 +56,7 @@ Light turns your rarest fishing moments into a show – and makes sure you never
 | Command | What it does |
 |---|---|
 | `/light` | Opens the menu |
+| `/light pvcheck` | Checks which sea creatures Light found in your `/pv` data |
 | `/tikipreview` | Plays a test Wiki Tiki animation |
 | `/boapreview` | Plays a test Titanoboa animation |
 
@@ -56,6 +66,7 @@ Light turns your rarest fishing moments into a show – and makes sure you never
 1. Install **[Fabric Loader](https://fabricmc.net/use/installer/)** for Minecraft **26.2**
 2. Put **Light** and **[Fabric API](https://modrinth.com/mod/fabric-api)** into your `mods` folder
 3. *Optional:* **[Mod Menu](https://modrinth.com/mod/modmenu)** adds a config button
+4. *For the dye tracker:* **[SkyBlock Profile Viewer](https://modrinth.com/mod/skyblock-profile-viewer)** – Light reads your kills from it
 
 > ⚠️ **Do not install Light together with SkyMaxx** – Light replaces it. Your SkyMaxx settings and stats are copied over automatically on the first start.
 
@@ -70,6 +81,7 @@ Light is **client-side only**. It does **not**:
 - show hidden entities or players
 
 It only displays information you already get and blocks **your own** clicks on the Bazaar sell button.
+Light never connects to the internet itself – the dye tracker only reads the data the SkyBlock Profile Viewer has already loaded.
 
 *No mod is ever officially approved by Hypixel – use any mod at your own risk.*
 </details>
@@ -111,5 +123,6 @@ The finished jar is in `build/libs/`.
 
 ## ❤️ Credits
 - Original mod **SkyMaxx** by **Rachie** – MIT License
+- Dye drop-chance tables (rarity brackets, creature lists) based on **DyeAddons** by **anlg** – Apache-2.0
 - Light by **Grundsteuer**
 - Not affiliated with Hypixel or Mojang

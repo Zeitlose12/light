@@ -103,6 +103,7 @@ extends Screen {
     private int tikiStatsTop;
     private int luckTop;
     private int achievementsTop;
+    private int dyesTop;
     private int boaStatsTop;
 
     public SkyMaxxScreen(TikiConfig cfg, TikiStats stats, AnimationDirector director, AudioDirector audio, Screen parent) {
@@ -153,29 +154,15 @@ extends Screen {
         int left = this.cardLeft + 14;
         if (!query.isBlank()) {
             y = this.buildSearch(left, w);
-        } else switch (activeTab.ordinal()) {
-            case 0: {
-                y = this.buildGambling(left, y, w);
-                break;
-            }
-            case 1: {
-                y = this.buildSound(left, y, w);
-                break;
-            }
-            case 2: {
-                y = this.buildBazaar(left, y, w);
-                break;
-            }
-            case 3: {
-                y = this.buildGeneral(left, y, w);
-                break;
-            }
-            case 4: {
-                y = this.buildStats(left, y, w);
-                break;
-            }
-            case 5: {
-                y = this.buildAchievements(left, y, w);
+        } else {
+            switch (activeTab) {
+                case GAMBLING -> y = this.buildGambling(left, y, w);
+                case SOUND -> y = this.buildSound(left, y, w);
+                case BAZAAR -> y = this.buildBazaar(left, y, w);
+                case DYES -> y = this.buildDyes(left, y, w);
+                case GENERAL -> y = this.buildGeneral(left, y, w);
+                case STATS -> y = this.buildStats(left, y, w);
+                case ACHIEVEMENTS -> y = this.buildAchievements(left, y, w);
             }
         }
         this.contentHeight = y;
@@ -212,6 +199,7 @@ extends Screen {
         int y = this.buildGambling(x, 0, w);
         y = this.buildSound(x, y + 10, w);
         y = this.buildBazaar(x, y + 10, w);
+        y = this.buildDyes(x, y + 10, w);
         this.buildGeneral(x, y + 10, w);
         tikiOpen = t;
         boaOpen = b;
@@ -510,9 +498,152 @@ extends Screen {
         return y + 26;
     }
 
+    private static final int DYE_STATUS_H = 66;
+    private static final int DYE_CARD_H = 100;
+    private static final int DYE_GAP = 8;
+
+    private int buildDyes(int x, int y, int w) {
+        if (query.isBlank()) {
+            // overview cards are drawn first, the settings follow below them
+            this.dyesTop = y + 4;
+            y = this.dyesTop + DYE_STATUS_H + DYE_GAP + com.skymaxx.tiki.light.dye.Dye.values().length * (DYE_CARD_H + DYE_GAP);
+        }
+        y = this.heading(y, "Vincent dye bonus");
+        int n = com.skymaxx.tiki.light.dye.Dye.values().length;
+        int bw = (w - (n - 1) * 4) / n;
+        int i = 0;
+        for (com.skymaxx.tiki.light.dye.Dye dye : com.skymaxx.tiki.light.dye.Dye.values()) {
+            final com.skymaxx.tiki.light.dye.Dye fd = dye;
+            this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal(DyeHudAgo.vincentLabel(fd)), b -> {
+                int next = com.skymaxx.tiki.light.dye.DyeTracker.vincent(fd) % 3 + 1;
+                com.skymaxx.tiki.light.dye.DyeTracker.setVincent(fd, next);
+                this.cfg.save();
+                b.setMessage((Component)Component.literal(DyeHudAgo.vincentLabel(fd)));
+            }).bounds(x + i * (bw + 4), y, bw, 20).build(), y));
+            ++i;
+        }
+        y += 24;
+        y = this.note(y, "§8Set automatically by Vincent or /dyes - click to change.");
+        y = this.heading(y, "Dye HUD");
+        y = this.toggle(x, y, w, "Dye HUD", () -> this.cfg.dyeHudEnabled, v -> {
+            this.cfg.dyeHudEnabled = v;
+        });
+        y = this.toggle(x, y, w, "Only while fishing", () -> this.cfg.dyeHudOnlyFishing, v -> {
+            this.cfg.dyeHudOnlyFishing = v;
+        });
+        this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal((String)"§dMove and resize HUD"), b -> {
+            if (this.minecraft != null) {
+                this.minecraft.gui.setScreen((Screen)new com.skymaxx.tiki.light.dye.DyeHudEditScreen((Screen)this));
+            }
+        }).bounds(x, y, w, 20).build(), y));
+        y += 22;
+        y = this.heading(y, "Dyes in the HUD");
+        y = this.toggle(x, y, w, "Aquamarine", () -> this.cfg.dyeShowAquamarine, v -> {
+            this.cfg.dyeShowAquamarine = v;
+        });
+        y = this.toggle(x, y, w, "Iceberg", () -> this.cfg.dyeShowIceberg, v -> {
+            this.cfg.dyeShowIceberg = v;
+        });
+        y = this.toggle(x, y, w, "Carmine", () -> this.cfg.dyeShowCarmine, v -> {
+            this.cfg.dyeShowCarmine = v;
+        });
+        y = this.toggle(x, y, w, "Midnight", () -> this.cfg.dyeShowMidnight, v -> {
+            this.cfg.dyeShowMidnight = v;
+        });
+        y = this.heading(y, "How the data gets in");
+        y = this.note(y, "§fKills: §7open §f/pv§7 (SkyBlock Profile Viewer) once.");
+        y = this.note(y, "§7New catches are then counted live.");
+        y = this.note(y, "§fMagic Find: §7SkyBlock Menu → hover \"Your SkyBlock Profile\".");
+        y = this.note(y, "§fVincent: §7talk to him or /dyes, once per SkyBlock year.");
+        y = this.note(y, "§8Chance tables based on DyeAddons by anlg (Apache-2.0).");
+        return y + 10;
+    }
+
+    /** One small "label ... value" cell of a two-column grid. */
+    private void cell(GuiGraphicsExtractor ctx, int x, int w, int y, String key, String value) {
+        ctx.text(this.font, (Component)Component.literal(key), x, y, -7695484);
+        ctx.text(this.font, (Component)Component.literal(value), x + w - this.font.width(value), y, -1514280);
+    }
+
+    private void card(GuiGraphicsExtractor ctx, int x, int right, int y, int h, int accent) {
+        ctx.fill(x, y, right, y + h, 0x2A000000);
+        ctx.outline(x, y, right - x, h, 0x40FFFFFF);
+        ctx.fill(x, y, x + 3, y + h, accent);
+    }
+
+    private void drawDyes(GuiGraphicsExtractor ctx) {
+        int x = this.cardLeft + 14 - 4;
+        int right = this.cardRight - 14 - 3;
+        int y = this.viewTop + this.dyesTop - this.scroll;
+        int inner = x + 10;
+        int innerW = right - inner - 10;
+        int colW = (innerW - 16) / 2;
+        int col2 = inner + colW + 16;
+        com.skymaxx.tiki.light.dye.DyeTracker.Data d = com.skymaxx.tiki.light.dye.DyeTracker.data();
+
+        // ---- data sources ----
+        this.card(ctx, x, right, y, DYE_STATUS_H, PINK);
+        ctx.text(this.font, (Component)Component.literal("§lData"), inner, y + 7, PINK);
+        String kills;
+        if (d.pvReadMs > 0L) {
+            kills = "§a✔ §fProfile Viewer §8· " + d.pvProfile + " · " + DyeHudAgo.ago(d.pvReadMs);
+        } else {
+            kills = "§c✖ §7open /pv for your own profile";
+        }
+        String mf = d.magicFind < 0 ? "§c✖ §7SkyBlock Menu" : "§a✔ §f" + Math.round(d.magicFind);
+        String vin = com.skymaxx.tiki.light.dye.DyeTracker.vincentLoaded() ? "§a✔ §floaded" : "§e✖ §7Vincent or /dyes";
+        this.cell(ctx, inner, innerW, y + 22, "Kills", kills);
+        this.cell(ctx, inner, innerW, y + 36, "Magic Find", mf);
+        this.cell(ctx, inner, innerW, y + 50, "Vincent bonus", vin);
+        y += DYE_STATUS_H + DYE_GAP;
+
+        // ---- one card per dye ----
+        for (com.skymaxx.tiki.light.dye.Dye dye : com.skymaxx.tiki.light.dye.Dye.values()) {
+            com.skymaxx.tiki.light.dye.DyeTracker.Progress p = com.skymaxx.tiki.light.dye.DyeTracker.progress(dye);
+            this.card(ctx, x, right, y, DYE_CARD_H, dye.color);
+            ctx.fill(x + 3, y, right, y + 20, 0x22FFFFFF);
+            ctx.text(this.font, (Component)Component.literal("§l" + dye.itemName), inner, y + 6, dye.color);
+            String pct = String.format("%.1f%%", p.chance() * 100.0);
+            String mult = String.format("x%.2f  ", com.skymaxx.tiki.light.dye.DyeTracker.multiplier(dye));
+            ctx.text(this.font, (Component)Component.literal("§l" + pct), right - 10 - this.font.width("§l" + pct), y + 6, -1);
+            ctx.text(this.font, (Component)Component.literal("§8" + mult), right - 10 - this.font.width("§l" + pct) - this.font.width(mult), y + 6, -1);
+            // progress bar towards "you should have one"
+            int barY = y + 22;
+            ctx.fill(x + 3, barY, right, barY + 3, 0x30FFFFFF);
+            ctx.fill(x + 3, barY, x + 3 + (int)Math.round((right - x - 3) * Math.max(0.0, Math.min(1.0, p.chance()))), barY + 3, dye.color);
+
+            java.util.List<String> all = com.skymaxx.tiki.light.dye.DyeOdds.creatures(dye);
+            int have = 0;
+            for (String c : all) {
+                if (d.kills.containsKey(c)) ++have;
+            }
+            long k50 = p.killsFor(0.5);
+            long k90 = p.killsFor(0.9);
+            int ry = y + 32;
+            this.cell(ctx, inner, colW, ry, "Your kills", String.format("%,d", p.kills()));
+            this.cell(ctx, col2, colW, ry, "Loot share", p.lootShare() > 0L ? String.format("%,d §8(1/5)", p.lootShare()) : "-");
+            ry += 13;
+            this.cell(ctx, inner, colW, ry, "Expected", String.format("%.2f", p.expected()));
+            this.cell(ctx, col2, colW, ry, "Found", String.valueOf(p.found()));
+            ry += 13;
+            this.cell(ctx, inner, colW, ry, "50% at", k50 < 0 ? "-" : String.format("%,d", k50));
+            this.cell(ctx, col2, colW, ry, "90% at", k90 < 0 ? "-" : String.format("%,d", k90));
+            ry += 13;
+            this.cell(ctx, inner, colW, ry, "Since last", String.format("%,d", p.sinceLast()));
+            this.cell(ctx, col2, colW, ry, "Creatures", (have == 0 ? "§c" : have < all.size() ? "§e" : "§a") + have + "/" + all.size());
+            ry += 15;
+            if (p.bestCreature() != null) {
+                String best = String.format("1 in %,d", Math.round(1.0 / p.bestChance()));
+                ctx.text(this.font, (Component)Component.literal("§8Best: §7" + p.bestCreature() + " §8· " + DyeHudAgo.where(dye)), inner, ry, -1);
+                ctx.text(this.font, (Component)Component.literal("§7" + best), inner + innerW - this.font.width(best), ry, -1);
+            }
+            y += DYE_CARD_H + DYE_GAP;
+        }
+    }
+
     private int buildAchievements(int x, int y, int w) {
         this.achievementsTop = y + 20;
-        return this.achievementsTop + com.skymaxx.tiki.light.Achievements.values().length * 38 + 6;
+        return this.achievementsTop + com.skymaxx.tiki.light.Achievements.values().length * 38 + com.skymaxx.tiki.light.Achievements.Category.values().length * 26 + 6;
     }
 
     private void drawAchievements(GuiGraphicsExtractor ctx) {
@@ -523,7 +654,24 @@ extends Screen {
         int total = com.skymaxx.tiki.light.Achievements.values().length;
         ctx.text(this.font, (Component)Component.literal((String)("Achievements  \u00a7f" + got + " / " + total)), x, top + 3, PINK);
         int y = this.viewTop + this.achievementsTop - this.scroll;
+        for (com.skymaxx.tiki.light.Achievements.Category cat : com.skymaxx.tiki.light.Achievements.Category.values()) {
+        int inCat = 0;
+        int doneInCat = 0;
         for (com.skymaxx.tiki.light.Achievements a : com.skymaxx.tiki.light.Achievements.values()) {
+            if (a.category != cat) continue;
+            ++inCat;
+            if (a.isUnlocked(this.cfg)) ++doneInCat;
+        }
+        if (y > this.viewTop - 30 && y < this.viewBottom + 4) {
+            ctx.text(this.font, (Component)Component.literal((String)(cat.title + "  \u00a77" + doneInCat + " / " + inCat)), x, y + 8, PINK);
+            int from = x + this.font.width(cat.title + "  " + doneInCat + " / " + inCat) + 8;
+            if (from < right) {
+                ctx.fill(from, y + 12, right, y + 13, PINK_LINE);
+            }
+        }
+        y += 26;
+        for (com.skymaxx.tiki.light.Achievements a : com.skymaxx.tiki.light.Achievements.values()) {
+            if (a.category != cat) continue;
             boolean done = a.isUnlocked(this.cfg);
             if (y > this.viewTop - 30 && y < this.viewBottom + 4) {
                 ctx.fill(x - 4, y, right + 4, y + 32, done ? 0x30FF6FB0 : 0x14FFFFFF);
@@ -536,6 +684,7 @@ extends Screen {
                 ctx.text(this.font, (Component)Component.literal((String)mark), right - 4 - this.font.width(mark), y + 12, -1);
             }
             y += 38;
+        }
         }
     }
 
@@ -718,6 +867,9 @@ extends Screen {
         }
         if (activeTab == Tab.ACHIEVEMENTS && query.isBlank()) {
             this.drawAchievements(ctx);
+        }
+        if (activeTab == Tab.DYES && query.isBlank()) {
+            this.drawDyes(ctx);
         }
         if (activeTab == Tab.STATS && query.isBlank()) {
             this.drawStats(ctx);
@@ -907,6 +1059,7 @@ extends Screen {
         GAMBLING("Gambling"),
         SOUND("Sound"),
         BAZAAR("Bazaar"),
+        DYES("Dyes"),
         GENERAL("General"),
         STATS("Stats"),
         ACHIEVEMENTS("Achievements");

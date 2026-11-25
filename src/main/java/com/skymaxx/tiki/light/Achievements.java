@@ -15,24 +15,31 @@ import net.minecraft.sounds.SoundEvents;
 
 /** Light: achievements built from the statistics the mod already counts. */
 public enum Achievements {
-    FIRST_TIKI("Tiki Time", "Kill your first Wiki Tiki", s -> s.kills >= 1),
-    TIKI_100("Totem Regular", "Kill 100 Wiki Tikis", s -> s.kills >= 100),
-    TIKI_500("Tiki Veteran", "Kill 500 Wiki Tikis", s -> s.kills >= 500),
-    FIRST_BOA("Snake Charmer", "Kill your first Titanoboa", s -> s.boaKills >= 1),
-    BOA_100("Boa Hunter", "Kill 100 Titanoboas", s -> s.boaKills >= 100),
-    BOA_500("Boa Veteran", "Kill 500 Titanoboas", s -> s.boaKills >= 500),
-    FOUR_MASKS("Four of a Kind", "Reach the fourth mask", s -> s.reachedFinalReel >= 1),
-    HEADSHOT("Headshot", "Shoot the Titanoboa down to its head", s -> s.segmentsDown.length > 3 && s.segmentsDown[3] >= 1),
-    SCRIPTURES("Well Read", "Get Bobbin' Scriptures", s -> s.scripturesDropped + s.boaScripturesDropped >= 1),
-    BUBBLE("Bubble Trouble", "Get a Troubled Bubble", s -> s.bubblesDropped >= 1),
-    MASK("Masked", "Get a Tiki Mask", s -> s.masksDropped >= 1),
-    LILY("Green Thumb", "Get a Condensed Lily Pad", s -> s.lilyPadsDropped >= 1),
-    SHED("Shed Happens", "Get a Titanoboa Shed", s -> s.shedsDropped >= 1),
-    SNAKE_EYES("Snake Eyes", "Get Snake Eyes", s -> s.snakeEyesDropped >= 1),
-    AQUAMARINE("1 in 50,000", "Get an Aquamarine Dye", s -> s.dyesDropped + s.boaDyesDropped >= 1),
-    DRY_SPELL("Dry Spell", "Go 300 Wiki Tikis without a drop", s -> s.worstDryStreak >= 300),
-    LUCKY("Born Lucky", "Be +50% lucky after 200 kills", s -> s.kills + s.boaKills >= 200 && Luck.overall(s) >= 50.0);
+    FIRST_TIKI(Category.KILLS, "Tiki Time", "Kill your first Wiki Tiki", s -> s.kills >= 1),
+    TIKI_100(Category.KILLS, "Totem Regular", "Kill 100 Wiki Tikis", s -> s.kills >= 100),
+    TIKI_500(Category.KILLS, "Tiki Veteran", "Kill 500 Wiki Tikis", s -> s.kills >= 500),
+    FIRST_BOA(Category.KILLS, "Snake Charmer", "Kill your first Titanoboa", s -> s.boaKills >= 1),
+    BOA_100(Category.KILLS, "Boa Hunter", "Kill 100 Titanoboas", s -> s.boaKills >= 100),
+    BOA_500(Category.KILLS, "Boa Veteran", "Kill 500 Titanoboas", s -> s.boaKills >= 500),
+    FOUR_MASKS(Category.ANIMATIONS, "Four of a Kind", "Reach the fourth mask", s -> s.reachedFinalReel >= 1),
+    HEADSHOT(Category.ANIMATIONS, "Headshot", "Shoot the Titanoboa down to its head", s -> s.segmentsDown.length > 3 && s.segmentsDown[3] >= 1),
+    SCRIPTURES(Category.DROPS, "Well Read", "Get Bobbin' Scriptures", s -> s.scripturesDropped + s.boaScripturesDropped >= 1),
+    BUBBLE(Category.DROPS, "Bubble Trouble", "Get a Troubled Bubble", s -> s.bubblesDropped >= 1),
+    MASK(Category.DROPS, "Masked", "Get a Tiki Mask", s -> s.masksDropped >= 1),
+    LILY(Category.DROPS, "Green Thumb", "Get a Condensed Lily Pad", s -> s.lilyPadsDropped >= 1),
+    SHED(Category.DROPS, "Shed Happens", "Get a Titanoboa Shed", s -> s.shedsDropped >= 1),
+    SNAKE_EYES(Category.DROPS, "Snake Eyes", "Get Snake Eyes", s -> s.snakeEyesDropped >= 1),
+    AQUAMARINE(Category.DYES, "1 in 50,000", "Get an Aquamarine Dye", s -> s.dyesDropped + s.boaDyesDropped >= 1 || Achievements.dye(com.skymaxx.tiki.light.dye.Dye.AQUAMARINE) >= 1),
+    ICEBERG(Category.DYES, "Ice Cold", "Get an Iceberg Dye", s -> Achievements.dye(com.skymaxx.tiki.light.dye.Dye.ICEBERG) >= 1),
+    CARMINE(Category.DYES, "Seeing Red", "Get a Carmine Dye", s -> Achievements.dye(com.skymaxx.tiki.light.dye.Dye.CARMINE) >= 1),
+    MIDNIGHT(Category.DYES, "Midnight Fisher", "Get a Midnight Dye", s -> Achievements.dye(com.skymaxx.tiki.light.dye.Dye.MIDNIGHT) >= 1),
+    RAINBOW(Category.DYES, "Full Palette", "Get all four fishing dyes", s -> Achievements.dyeKinds() >= 4),
+    BOOKWORM(Category.DYES, "Bookworm", "Load your kills with /pv", s -> com.skymaxx.tiki.light.dye.DyeTracker.hasData()),
+    OVERDUE(Category.DYES, "Overdue", "Reach a 90% dye chance without that dye", s -> Achievements.overdue()),
+    DRY_SPELL(Category.LUCK, "Dry Spell", "Go 300 Wiki Tikis without a drop", s -> s.worstDryStreak >= 300),
+    LUCKY(Category.LUCK, "Born Lucky", "Be +50% lucky after 200 kills", s -> s.kills + s.boaKills >= 200 && Luck.overall(s) >= 50.0);
 
+    public final Category category;
     public final String title;
     public final String description;
     private final Predicate<TikiStats> rule;
@@ -41,10 +48,35 @@ public enum Achievements {
     private static int showCooldown;
     private static final java.util.Set<Achievements> TESTS = java.util.EnumSet.noneOf(Achievements.class);
 
-    private Achievements(String title, String description, Predicate<TikiStats> rule) {
+    private Achievements(Category category, String title, String description, Predicate<TikiStats> rule) {
+        this.category = category;
         this.title = title;
         this.description = description;
         this.rule = rule;
+    }
+
+    private static int dye(com.skymaxx.tiki.light.dye.Dye dye) {
+        return com.skymaxx.tiki.light.dye.DyeTracker.data().found.getOrDefault(dye.name(), 0);
+    }
+
+    private static int dyeKinds() {
+        int n = 0;
+        for (com.skymaxx.tiki.light.dye.Dye d : com.skymaxx.tiki.light.dye.Dye.values()) {
+            if (Achievements.dye(d) >= 1) {
+                ++n;
+            }
+        }
+        return n;
+    }
+
+    private static boolean overdue() {
+        for (com.skymaxx.tiki.light.dye.Dye d : com.skymaxx.tiki.light.dye.Dye.values()) {
+            com.skymaxx.tiki.light.dye.DyeTracker.Progress p = com.skymaxx.tiki.light.dye.DyeTracker.progress(d);
+            if (p.found() == 0 && p.chance() >= 0.9) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean reached(TikiStats stats) {
@@ -153,5 +185,20 @@ public enum Achievements {
             mc.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, volume));
         }
         showCooldown = 110;
+    }
+
+    /** Light: groups shown in the Achievements tab. */
+    public enum Category {
+        KILLS("Kills"),
+        DROPS("Drops"),
+        DYES("Dyes"),
+        ANIMATIONS("Animations"),
+        LUCK("Luck");
+
+        public final String title;
+
+        Category(String title) {
+            this.title = title;
+        }
     }
 }

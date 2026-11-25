@@ -1,9 +1,9 @@
 {
 	"schemaVersion": 1,
 	"id": "light",
-	"version": "${version}",
+	"version": "1.2.0",
 	"name": "Light",
-	"description": "Light - a fork of SkyMaxx 1.0.1 by Rachie (MIT, Copyright (c) 2026 SkyMaxx). Wiki Tiki and Titanoboa drop animations with bug fixes (volume, loot share, ESC-only skip), a new menu and a Bazaar Sell Sacks lock.",
+	"description": "Light - a fork of SkyMaxx 1.0.1 by Rachie (MIT, Copyright (c) 2026 SkyMaxx). Wiki Tiki and Titanoboa drop animations with bug fixes (volume, loot share, ESC-only skip), a new menu and a Bazaar Sell Sacks lock, and a fishing dye tracker (dye chance tables based on DyeAddons by anlg, Apache-2.0).",
 	"authors": [
 		"Grundsteuer"
 	],
@@ -17,6 +17,9 @@
 		],
 		"modmenu": [
 			"com.skymaxx.tiki.gui.ModMenuIntegration"
+		],
+		"skyblockapi:imc/pv-profile": [
+			"com.skymaxx.tiki.light.dye.PvBridge::onPvLoad"
 		]
 	},
 	"mixins": [
@@ -36,9 +39,5 @@
 	],
 	"breaks": {
 		"tikigamble": "*"
-	},
-	"contact": {
-		"sources": "https://github.com/Zeitlose12/light",
-		"issues": "https://github.com/Zeitlose12/light/issues"
 	}
 }
