@@ -39,7 +39,7 @@ public final class DyeOdds {
             "Drowned Captain", "Tiger Shark", "Ent", "Torrid", "Nutcracker", "Werewolf");
         put(Dye.AQUAMARINE, Rarity.LEGENDARY, "Water Hydra", "Blue Ringed Octopus", "Abyssal Miner", "Alligator",
             "Puddle Jumper", "Great White Shark", "The Loch Emperor", "Silkbreeze", "Yeti", "Phantom Fisher");
-        put(Dye.AQUAMARINE, Rarity.MYTHIC, "Wiki Tiki", "Titanoboa", "Frog Prince", "Nesse", "Giant Isopod", "Grim Reaper");
+        put(Dye.AQUAMARINE, Rarity.MYTHIC, "Wiki Tiki", "Titanoboa", "Frog Prince", "Nessie", "Giant Isopod", "Grim Reaper");
 
         // Carmine - lava sea creatures
         put(Dye.CARMINE, Rarity.COMMON, "Fried Chicken");
@@ -67,6 +67,7 @@ public final class DyeOdds {
         put(Dye.MIDNIGHT, Rarity.MYTHIC, "Grim Reaper");
 
         ALIASES.put("Loch Emperor", "The Loch Emperor");
+        ALIASES.put("Nesse", "Nessie");
         ALIASES.put("Jumpin Jack", "Jumpin' Jack");
         ALIASES.put("Pyroclasitc Worm", "Pyroclastic Worm");
     }

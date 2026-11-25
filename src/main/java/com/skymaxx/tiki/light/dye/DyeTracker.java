@@ -47,6 +47,8 @@ public final class DyeTracker {
         public Map<String, Long> live = new LinkedHashMap<String, Long>();
         /** Loot share kills per creature, from the Profile Viewer (bestiary minus own kills). */
         public Map<String, Long> lootShare = new LinkedHashMap<String, Long>();
+        /** Loot share kills counted live since the last /pv. */
+        public Map<String, Long> liveLootShare = new LinkedHashMap<String, Long>();
         public String pvProfile = "";
         public long pvReadMs = 0L;
         /** SkyBlock year (Light's own count) in which Vincent's rotation was read; 0 = never. */
@@ -90,6 +92,7 @@ public final class DyeTracker {
                 if (data.killsAtLastDrop == null) data.killsAtLastDrop = new LinkedHashMap<String, Long>();
                 if (data.live == null) data.live = new LinkedHashMap<String, Long>();
                 if (data.lootShare == null) data.lootShare = new LinkedHashMap<String, Long>();
+                if (data.liveLootShare == null) data.liveLootShare = new LinkedHashMap<String, Long>();
                 if (data.pvProfile == null) data.pvProfile = "";
                 if (data.pvReadMs == 0L && !data.kills.isEmpty()) {
                     data.kills.clear(); // old Bestiary-menu numbers included loot share - /pv replaces them
@@ -122,7 +125,7 @@ public final class DyeTracker {
 
     /** Called every client tick; reads open menus a few times per second. */
     public static void tick(Minecraft mc) {
-        DyeTracker.watchCatches(mc);
+        DyeKills.tick(mc);
         if (++tick % 5 == 0) {
             Screen screen = mc.gui == null ? null : mc.gui.screen();
             if (screen instanceof AbstractContainerScreen<?> container) {
@@ -222,6 +225,7 @@ public final class DyeTracker {
             data.kills.put(e.getKey(), e.getValue()[0]);
             data.lootShare.put(e.getKey(), e.getValue()[1]);
             data.live.remove(e.getKey());
+            data.liveLootShare.remove(e.getKey());
         }
         data.pvProfile = profileName == null ? "" : profileName;
         data.pvReadMs = System.currentTimeMillis();
@@ -309,48 +313,10 @@ public final class DyeTracker {
         return data.kills.getOrDefault(creature, 0L) + data.live.getOrDefault(creature, 0L);
     }
 
-    // ---- live catch counting: a known sea creature that appears right at your bobber is your catch ----
-    private static final double CATCH_RADIUS_SQ = 8.0 * 8.0;
-    private static final long HOOK_MEMORY_MS = 3000L;
-    private static final java.util.Set<String> MULTI_BODY = java.util.Set.of("Titanoboa");
-    private static final Map<Integer, Long> SEEN = new java.util.HashMap<Integer, Long>();
-    private static final Map<String, Long> LAST_COUNT = new java.util.HashMap<String, Long>();
-    private static net.minecraft.world.phys.Vec3 lastHook;
-    private static long lastHookMs;
-
-    private static void watchCatches(Minecraft mc) {
-        if (mc.level == null || mc.player == null) {
-            SEEN.clear();
-            lastHook = null;
-            return;
-        }
-        long now = System.currentTimeMillis();
-        if (mc.player.fishing != null) {
-            lastHook = mc.player.fishing.position();
-            lastHookMs = now;
-        }
-        SEEN.values().removeIf(t -> now - t > 120000L);
-        boolean hookRecent = lastHook != null && now - lastHookMs <= HOOK_MEMORY_MS;
-        for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
-            if (!e.hasCustomName() || SEEN.containsKey(e.getId())) continue;
-            Component custom = e.getCustomName();
-            String text = custom == null ? "" : custom.getString();
-            if (!text.contains("Lv")) continue;
-            SEEN.put(e.getId(), now);
-            if (!hookRecent) continue;
-            String creature = DyeOdds.creatureIn(text);
-            if (creature == null) continue;
-            double dx = e.getX() - lastHook.x;
-            double dz = e.getZ() - lastHook.z;
-            if (dx * dx + dz * dz > CATCH_RADIUS_SQ) continue;
-            if (MULTI_BODY.contains(creature) && now - LAST_COUNT.getOrDefault(creature, 0L) < 5000L) continue;
-            LAST_COUNT.put(creature, now);
-            data.live.merge(creature, 1L, Long::sum);
-            dirty = true;
-            if (TikiGambleClient.config != null && TikiGambleClient.config.debug) {
-                TikiGambleClient.LOGGER.info("[Light] live catch: {}", creature);
-            }
-        }
+    /** Called by DyeKills for every sea creature kill near you. */
+    static void countKill(String creature, boolean lootShare) {
+        (lootShare ? data.liveLootShare : data.live).merge(creature, 1L, Long::sum);
+        dirty = true;
     }
 
     /** Vincent's dye bonus from the config: 1, 2 or 3. */
@@ -399,7 +365,7 @@ public final class DyeTracker {
         for (String c : creatures) {
             long k = DyeTracker.killsOf(c);
             double p = Math.min(1.0, DyeOdds.chance(c, dye) * mult);
-            long ls = data.lootShare.getOrDefault(c, 0L);
+            long ls = data.lootShare.getOrDefault(c, 0L) + data.liveLootShare.getOrDefault(c, 0L);
             kills += k;
             lootShare += ls;
             expected += k * p + ls * p / 5.0;

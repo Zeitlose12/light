@@ -14,7 +14,8 @@
 		"EntityNameTagMixin",
 		"ParticlePacketMixin",
 		"BazaarSellLockMixin",
-		"BazaarPacketGuardMixin"
+		"BazaarPacketGuardMixin",
+		"LightPacketMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

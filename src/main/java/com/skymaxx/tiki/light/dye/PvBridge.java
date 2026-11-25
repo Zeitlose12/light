@@ -83,7 +83,7 @@ public final class PvBridge {
         id("Wiki Tiki", "wiki_tiki");
         id("Titanoboa", "titanoboa");
         id("Frog Prince", "frog_prince");
-        id("Nesse", "nessie");
+        id("Nessie", "nessie");
         id("Giant Isopod", "giant_isopod");
         id("Grim Reaper", "grim_reaper");
         id("Reindrake", "reindrake");
@@ -110,7 +110,7 @@ public final class PvBridge {
     }
 
     /** Creatures whose API id is a guess - /light pvcheck reports them. */
-    private static final List<String> GUESSED = List.of("Jumpin' Jack", "Inkling", "Nesse", "Stridersurfer", "Puddle Jumper", "The Loch Emperor");
+    private static final List<String> GUESSED = List.of("Jumpin' Jack", "Inkling", "Nessie", "Stridersurfer", "Puddle Jumper", "The Loch Emperor");
     private static final List<String> HINTS = List.of("jack", "jump", "ink", "nes", "strider", "surf");
     private static volatile java.util.Set<String> lastIds = java.util.Set.of();
     private static volatile java.util.Set<String> lastFound = java.util.Set.of();

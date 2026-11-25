@@ -29,7 +29,7 @@ Light turns your rarest fishing moments into a show – and makes sure you never
 - Chance per sea creature by **rarity**, multiplied by your **Magic Find** and **Vincent's dye bonus**
 - Kills come from the **[SkyBlock Profile Viewer](https://modrinth.com/mod/skyblock-profile-viewer)** – open **`/pv`** once
 - **Loot share** kills count with **1/5** of the chance
-- New catches are counted **live** – also with custom catch messages from other mods
+- Kills are counted **live** – your own catches at full chance, loot share at 1/5, also with custom catch messages from other mods
 - Vincent's bonus (1x / 2x / 3x) is read automatically when you talk to him or open **`/dyes`**
 - Small **HUD** that only shows up while you fish, plus a detailed **Dyes** tab with your 50 % and 90 % kill marks
 
@@ -113,5 +113,6 @@ Light is a fork of SkyMaxx by Rachie. The bug fixes and new features were made w
 ## ❤️ Credits
 - Original mod **SkyMaxx** by **Rachie** – MIT License
 - Dye drop-chance tables (rarity brackets, creature lists) based on **DyeAddons** by **anlg** – Apache-2.0
+- Catch messages from the **SkyHanni-REPO**, bestiary ids from the **NEU-REPO**
 - Light by **Grundsteuer**
 - Not affiliated with Hypixel or Mojang
