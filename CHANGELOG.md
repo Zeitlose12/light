@@ -35,7 +35,7 @@
 - Sack value: prices every 10 minutes (5 / 10 / 15 adjustable), compact numbers (902,97M / 1,21B) and a list to choose which sacks count (e.g. leave out the Bait Sack)
 - HUDs tab: every HUD has its own on/off and a clear yellow **Move** button
 - Sack value is remembered across restarts ("Last read" in the Bazaar tab), bait sacks are left out by default
-- Journal: sharp text (whole-number scaling, darker ink) and a real silk bookmark
+- Journal: text without drop shadow (like real books) in darker ink, bigger again, silk bookmark in the gutter
 - Reindrake scene runs smoother
 - Yeti: his own show - drums his chest, slams the machine (snow falls off the roof), roars with a blizzard while the claw goes down, jumps for joy on a win or kicks the machine on a miss
 - Thunder: prismarine lightning rods left and right of the roulette, charging up and struck by lightning

@@ -33,7 +33,9 @@ public final class JournalScreen extends Screen {
     private static final int PAPER = 0xFFF2E4C2;
     private static final int PAPER_EDGE = 0xFFE2CFA4;
     private static final int INK = 0xFF1A0E04;
-    private static final int INK_SOFT = 0xFF4A3018;
+    private static final int GOLD_INK = 0xFF7A4E00;
+    private static final int ITEM_INK = 0xFF3C0C5C;
+    private static final int INK_SOFT = 0xFF3A2410;
     private static final int GOLD = 0xFFD8A84A;
     private static final int LEATHER = 0xFF6E3518;
     private static final int LEATHER_DARK = 0xFF4A2210;
@@ -73,7 +75,7 @@ public final class JournalScreen extends Screen {
     /** Scale from page units to GUI pixels: whole numbers only (1x, 2x), so the pixel font stays sharp. */
     private float k() {
         float fit = Math.min((this.width - 40) / (2f * PW + 16), (this.height - 56) / (PH + 16f));
-        return Math.max(1f, (float) Math.floor(fit));
+        return Math.max(1f, Math.min(1.8f, fit));
     }
 
     private void play(SoundEvent ev, float pitch, float vol) {
@@ -105,7 +107,7 @@ public final class JournalScreen extends Screen {
         }
         ps.popMatrix();
         if (t >= HOLD_MS + OPEN_MS) {
-            int bottom = (int) (cy + (PH / 2f + 10) * k);
+            int bottom = (int) (cy + (PH / 2f + 16) * k);
             String nav = "Page " + (spread * 2 + 1) + " - " + (spread * 2 + 2) + " of " + pages.size();
             ctx.centeredText(this.font, Component.literal((spread > 0 ? "§f◀  " : "§8◀  ") + "§7" + nav + (spread < spreads() - 1 ? "  §f▶" : "  §8▶")), this.width / 2, bottom + 4, -1);
             ctx.centeredText(this.font, Component.literal("§e(Debug test) §8Arrow keys / wheel / click to turn · ESC to close"), this.width / 2, bottom + 16, -1);
@@ -197,24 +199,26 @@ public final class JournalScreen extends Screen {
         ribbon(ctx);
     }
 
-    /** A silk bookmark: comes out of the spine at the top, lies on the right page, hangs out below with a V cut. */
+    /** A silk bookmark lying in the gutter along the spine (never over the text), hanging out below with a V cut. */
     private void ribbon(GuiGraphicsExtractor ctx) {
-        int x = 10;
-        int top = -PH / 2 - 3;
-        int bottom = PH / 2 + 18;
-        for (int y = top; y < bottom; y += 3) {
-            int dx = y < PH / 2 ? (int) ((y - top) * 0.04f) : (int) ((PH / 2 - top) * 0.04f) + (int) ((y - PH / 2) * 0.15f);
-            int xx = x + dx;
-            ctx.fill(xx + 5, y, xx + 7, y + 3, 0x30000000);          // shadow on the page
-            ctx.fill(xx, y, xx + 1, y + 3, 0xFF5A0E10);                  // dark edge
-            ctx.fill(xx + 1, y, xx + 3, y + 3, 0xFFA8202A);              // silk
-            ctx.fill(xx + 3, y, xx + 4, y + 3, 0xFFD24A54);              // sheen
-            ctx.fill(xx + 4, y, xx + 5, y + 3, 0xFF7A1418);              // dark edge
+        int top = -PH / 2 - 4;
+        int inside = PH / 2;
+        ctx.fill(3, top, 5, inside, 0x28000000);
+        ctx.fill(-2, top, -1, inside, 0xFF5A0E10);
+        ctx.fill(-1, top, 1, inside, 0xFFA8202A);
+        ctx.fill(1, top, 2, inside, 0xFFD24A54);
+        ctx.fill(2, top, 3, inside, 0xFF7A1418);
+        int len = 12;
+        for (int i = 0; i < len; i += 2) {
+            int dx = (int) (i * 0.35f);
+            int y = inside + i;
+            ctx.fill(-2 + dx, y, -1 + dx, y + 2, 0xFF5A0E10);
+            ctx.fill(-1 + dx, y, 1 + dx, y + 2, 0xFFA8202A);
+            ctx.fill(1 + dx, y, 2 + dx, y + 2, 0xFFD24A54);
+            ctx.fill(2 + dx, y, 3 + dx, y + 2, 0xFF7A1418);
         }
-        // V cut at the end
-        int endX = x + (int) ((PH / 2 - top) * 0.04f) + (int) ((bottom - PH / 2) * 0.15f);
-        ctx.fill(endX + 2, bottom - 3, endX + 3, bottom, 0xFF1A0E10);
-        ctx.fill(endX + 1, bottom - 2, endX + 4, bottom, 0xFF1A0E10);
+        int ex = (int) (len * 0.35f);
+        ctx.fill(ex, inside + len - 2, ex + 1, inside + len, 0xFF140A0C);
     }
 
     private void shadow(GuiGraphicsExtractor ctx, float open) {
@@ -267,7 +271,7 @@ public final class JournalScreen extends Screen {
         ctx.outline(x0 + 8, top + 8, PW - 16, PH - 16, 0x406A4E30);
         int cx = x0 + PW / 2;
         int index = pages.indexOf(what);
-        if (index >= 0) ctx.centeredText(this.font, Component.literal(String.valueOf(index + 1)), cx, top + PH - 18, 0x906A4E30);
+        if (index >= 0) ink(ctx, Component.literal(String.valueOf(index + 1)), cx, top + PH - 18, 0x906A4E30);
         if (what == null || "end".equals(what)) return;
         if ("toc".equals(what)) {
             heading(ctx, "Contents", cx, top + 22);
@@ -275,30 +279,30 @@ public final class JournalScreen extends Screen {
             boolean withTest = GambleLog.hasTest();
             for (int i = 0; i < names.length; i++) {
                 int ly = top + 46 + i * 20;
-                ctx.text(this.font, Component.literal(names[i]), x0 + 16, ly, INK);
+                ctx.text(this.font, Component.literal(names[i]), x0 + 16, ly, INK, false);
                 String n = String.valueOf(GambleLog.drops(GambleLog.MOBS[i], withTest));
-                ctx.text(this.font, Component.literal(n), x0 + PW - 16 - this.font.width(n), ly, INK_SOFT);
+                ctx.text(this.font, Component.literal(n), x0 + PW - 16 - this.font.width(n), ly, INK_SOFT, false);
                 int dotsFrom = x0 + 20 + this.font.width(names[i]);
                 for (int d = dotsFrom; d < x0 + PW - 22 - this.font.width(n); d += 4) ctx.fill(d, ly + 7, d + 1, ly + 8, 0x806A4E30);
             }
-            ctx.centeredText(this.font, Component.literal("drops per mob"), cx, top + 196, INK_SOFT);
+            ink(ctx, Component.literal("drops per mob"), cx, top + 196, INK_SOFT);
             return;
         }
         if ("sum".equals(what)) {
             boolean withTest = GambleLog.hasTest();
             heading(ctx, "Totals", cx, top + 22);
             GambleLog.Entry best = GambleLog.best(withTest);
-            stat(ctx, x0, top + 46, "Total", LavaPrices.format(GambleLog.total(withTest)), 0xFF8A6400);
+            stat(ctx, x0, top + 46, "Total", LavaPrices.format(GambleLog.total(withTest)), 0xFF7A4E00);
             stat(ctx, x0, top + 80, "Best hit", best == null ? "-" : best.drop, 0xFF9A3A00);
             stat(ctx, x0, top + 114, "Drops", GambleLog.drops(null, withTest) + " of " + GambleLog.count(withTest) + " kills", INK);
-            stat(ctx, x0, top + 148, "RNG fanfares", GambleLog.fanfares(withTest) + " ★", 0xFF8A6400);
+            stat(ctx, x0, top + 148, "RNG fanfares", GambleLog.fanfares(withTest) + " ★", 0xFF7A4E00);
             return;
         }
         if ("empty".equals(what)) {
             heading(ctx, "No drops yet", cx, top + 22);
-            ctx.centeredText(this.font, Component.literal("Your first gambling"), cx, top + 70, INK_SOFT);
-            ctx.centeredText(this.font, Component.literal("drop gets its own"), cx, top + 82, INK_SOFT);
-            ctx.centeredText(this.font, Component.literal("page right here."), cx, top + 94, INK_SOFT);
+            ink(ctx, Component.literal("Your first gambling"), cx, top + 70, INK_SOFT);
+            ink(ctx, Component.literal("drop gets its own"), cx, top + 82, INK_SOFT);
+            ink(ctx, Component.literal("page right here."), cx, top + 94, INK_SOFT);
             return;
         }
         if (what instanceof Map<?, ?> none) {
@@ -308,8 +312,8 @@ public final class JournalScreen extends Screen {
                 int ly = top + 44 + i * 30;
                 if (ly > top + PH - 50) break;
                 int n = (Integer) me.getValue();
-                ctx.text(this.font, Component.literal(String.valueOf(me.getKey())), x0 + 16, ly, INK);
-                ctx.text(this.font, Component.literal(String.valueOf(n)), x0 + PW - 16 - this.font.width(String.valueOf(n)), ly, INK_SOFT);
+                ctx.text(this.font, Component.literal(String.valueOf(me.getKey())), x0 + 16, ly, INK, false);
+                ctx.text(this.font, Component.literal(String.valueOf(n)), x0 + PW - 16 - this.font.width(String.valueOf(n)), ly, INK_SOFT, false);
                 for (int q = 0; q < Math.min(n, 25); q++) {
                     int gx = x0 + 16 + (q / 5) * 24 + (q % 5) * 4;
                     if (q % 5 == 4) {
@@ -320,7 +324,7 @@ public final class JournalScreen extends Screen {
                 }
                 i++;
             }
-            if (none.isEmpty()) ctx.centeredText(this.font, Component.literal("Every kill dropped!"), cx, top + 70, INK_SOFT);
+            if (none.isEmpty()) ink(ctx, Component.literal("Every kill dropped!"), cx, top + 70, INK_SOFT);
             return;
         }
         if (what instanceof GambleLog.Entry e) {
@@ -329,20 +333,25 @@ public final class JournalScreen extends Screen {
             ctx.fill(x0 + 30, top + 34, x0 + PW - 30, top + 35, col);
             ctx.fill(cx - 2, top + 33, cx + 2, top + 36, col);
             String date = new SimpleDateFormat("dd.MM.yyyy · HH:mm", Locale.GERMANY).format(new Date(e.ms));
-            ctx.centeredText(this.font, Component.literal(date), cx, top + 42, INK_SOFT);
-            if (e.test) ctx.centeredText(this.font, Component.literal("test entry"), cx, top + 52, 0xFFB08000);
+            ink(ctx, Component.literal(date), cx, top + 42, INK);
+            if (e.test) ink(ctx, Component.literal("test entry"), cx, top + 53, 0xFF8A3A00);
             ctx.fill(cx - 30, top + 64, cx + 30, top + 124, 0x18402010);
             ctx.outline(cx - 30, top + 64, 60, 60, 0x506A4E30);
             GambleArt.item(ctx, this.font, LavaScene.iconForDrop(e.drop), cx, top + 94, 44, 1f);
             if (e.fanfare) {
-                ctx.text(this.font, Component.literal("★ RNG").withStyle(ChatFormatting.BOLD), cx + 36, top + 66, 0xFFA07400);
+                ctx.text(this.font, Component.literal("★ RNG").withStyle(ChatFormatting.BOLD), cx + 36, top + 66, 0xFF8A5A00, false);
             }
-            ctx.centeredText(this.font, Component.literal(e.drop).withStyle(ChatFormatting.BOLD), cx, top + 134, 0xFF4A1468);
-            if (e.price > 0) ctx.centeredText(this.font, Component.literal(LavaPrices.format(e.price)), cx, top + 148, 0xFF8A6400);
-            if (e.dry > 0) ctx.centeredText(this.font, Component.literal("after " + String.format(Locale.GERMANY, "%,d", e.dry) + " " + e.mobName), cx, top + 162, INK);
-            if (e.share) ctx.centeredText(this.font, Component.literal("(loot share)"), cx, top + 174, INK_SOFT);
+            ink(ctx, Component.literal(e.drop).withStyle(ChatFormatting.BOLD), cx, top + 134, ITEM_INK);
+            if (e.price > 0) ink(ctx, Component.literal(LavaPrices.format(e.price)).withStyle(ChatFormatting.BOLD), cx, top + 148, GOLD_INK);
+            if (e.dry > 0) ink(ctx, Component.literal("after " + String.format(Locale.GERMANY, "%,d", e.dry) + " " + e.mobName), cx, top + 162, INK);
+            if (e.share) ink(ctx, Component.literal("(loot share)"), cx, top + 174, INK_SOFT);
             ctx.fill(x0 + 40, top + PH - 32, x0 + PW - 40, top + PH - 31, 0x406A4E30);
         }
+    }
+
+    /** Centered text WITHOUT the drop shadow (dark ink on paper reads badly with a shadow - books have none). */
+    private void ink(GuiGraphicsExtractor ctx, Component text, int cx, int y, int color) {
+        ctx.text(this.font, text, cx - this.font.width(text) / 2, y, color, false);
     }
 
     private static int darker(int rgb) {
@@ -358,17 +367,18 @@ public final class JournalScreen extends Screen {
         Matrix3x2fStack ps = ctx.pose();
         ps.pushMatrix();
         ps.translate(cx, y);
-        float s = this.font.width(text) * 2 <= PW - 24 ? 2f : 1f;
+        Component c = Component.literal(text).withStyle(ChatFormatting.BOLD);
+        float s = Math.min(2f, (PW - 28f) / Math.max(1, this.font.width(c)));
         ps.scale(s, s);
-        ctx.centeredText(this.font, Component.literal(text).withStyle(ChatFormatting.BOLD), 0, -4, color);
+        ink(ctx, c, 0, -4, color);
         ps.popMatrix();
     }
 
     private void stat(GuiGraphicsExtractor ctx, int x0, int y, String label, String value, int color) {
-        ctx.text(this.font, Component.literal(label), x0 + 16, y, INK_SOFT);
+        ctx.text(this.font, Component.literal(label), x0 + 16, y, INK_SOFT, false);
         String v = value;
         while (v.length() > 3 && this.font.width(v) > PW - 34) v = v.substring(0, v.length() - 1);
-        ctx.text(this.font, Component.literal(v).withStyle(ChatFormatting.BOLD), x0 + 16, y + 12, color);
+        ctx.text(this.font, Component.literal(v).withStyle(ChatFormatting.BOLD), x0 + 16, y + 12, color, false);
     }
 
     // ------------------------------------------------------------------ input
