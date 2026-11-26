@@ -37,7 +37,19 @@ public enum Achievements {
     BOOKWORM(Category.DYES, "Bookworm", "Load your kills with /pv", s -> com.skymaxx.tiki.light.dye.DyeTracker.hasData()),
     OVERDUE(Category.DYES, "Overdue", "Reach a 90% dye chance without that dye", s -> Achievements.overdue()),
     DRY_SPELL(Category.LUCK, "Dry Spell", "Go 300 Wiki Tikis without a drop", s -> s.worstDryStreak >= 300),
-    LUCKY(Category.LUCK, "Born Lucky", "Be +50% lucky after 200 kills", s -> s.kills + s.boaKills >= 200 && Luck.overall(s) >= 50.0);
+    LUCKY(Category.LUCK, "Born Lucky", "Be +50% lucky after 200 kills", s -> s.kills + s.boaKills >= 200 && Luck.overall(s) >= 50.0),
+    JACKPOT(Category.LAVA, "Jackpot!", "Win a gambling game", s -> GambleLog.drops(null, false) >= 1),
+    GLOWING(Category.LAVA, "Glowing", "Get a Radioactive Vial from Lord Jawbus", s -> GambleLog.dropped("jawbus", "radioactive vial")),
+    STORM_CHASER(Category.LAVA, "Storm Chaser", "Get a drop from Thunder", s -> GambleLog.dropped("thunder", null)),
+    BOUNTY_HUNTER(Category.LAVA, "Bounty Hunter", "Hit in Ragnarok's shooting gallery", s -> GambleLog.dropped("ragnarok", null)),
+    BUBBLE_POPPER(Category.LAVA, "Bubble Popper", "Get a drop from Plhlegblast", s -> GambleLog.dropped("plhlegblast", null)),
+    HARVEST_MOON(Category.FESTIVALS, "Harvest Moon", "Get a drop from the Grim Reaper", s -> GambleLog.dropped("grim", null)),
+    CLAW_MASTER(Category.FESTIVALS, "Claw Master", "Get a drop from the Yeti", s -> GambleLog.dropped("yeti", null)),
+    UNWRAPPED(Category.FESTIVALS, "Unwrapped", "Get a drop from the Reindrake", s -> GambleLog.dropped("reindrake", null)),
+    TEN_MILLION(Category.GAMBLING, "Ten Million Club", "One gambling drop worth 10,000,000 coins", s -> GambleLog.bestPrice() >= 10_000_000L),
+    HIGH_ROLLER(Category.GAMBLING, "High Roller", "100,000,000 coins from gambling drops", s -> GambleLog.total(false) >= 100_000_000L),
+    PATIENCE(Category.GAMBLING, "Patience", "50 lava mobs of one kind without a drop", s -> GambleLog.longestDry(GambleLog.LAVA) >= 50),
+    FULL_SWEEP(Category.GAMBLING, "Full Sweep", "A drop from every gambling mob", s -> Achievements.fullSweep());
 
     public final Category category;
     public final String title;
@@ -53,6 +65,20 @@ public enum Achievements {
         this.title = title;
         this.description = description;
         this.rule = rule;
+    }
+
+    private static boolean fullSweep() {
+        for (String m : GambleLog.MOBS) if (!GambleLog.dropped(m, null)) return false;
+        return true;
+    }
+
+    /** Debug: takes an achievement away again (e.g. one unlocked by a bug). It comes back if its rule is still met. */
+    public static boolean remove(TikiConfig cfg, Achievements a) {
+        Set<String> have = Achievements.unlocked(cfg);
+        if (!have.remove(a.name())) return false;
+        cfg.lightAchievements = String.join(",", have);
+        cfg.save();
+        return true;
     }
 
     private static int dye(com.skymaxx.tiki.light.dye.Dye dye) {
@@ -177,9 +203,7 @@ public enum Achievements {
         if (cfg != null && !cfg.lightAchievementFx) {
             return;
         }
-        mc.gui.hud.setTimes(10, 70, 20);
-        mc.gui.hud.setSubtitle((Component)Component.literal("\u00a7f" + a.title + " \u00a77\u00b7 " + a.description));
-        mc.gui.hud.setTitle((Component)Component.literal("\u00a7d\u00a7lACHIEVEMENT UNLOCKED"));
+        AchievementPopup.show(a.title, a.description);
         float volume = cfg == null ? 0.5f : Math.max(0.0f, Math.min(1.0f, cfg.lightAchievementVolume));
         if (volume > 0.0f) {
             mc.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, volume));
@@ -193,7 +217,10 @@ public enum Achievements {
         DROPS("Drops"),
         DYES("Dyes"),
         ANIMATIONS("Animations"),
-        LUCK("Luck");
+        LUCK("Luck"),
+        LAVA("Lava"),
+        FESTIVALS("Festivals"),
+        GAMBLING("Gambling");
 
         public final String title;
 

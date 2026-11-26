@@ -100,6 +100,12 @@ public final class LavaScene {
     private static String name = "";
     private static boolean lootShare;
     private static boolean test;
+    /** Light 1.2: the logged result of this scene (History) + the beta extras (dry streak, RNG fanfare). */
+    private static GambleLog.Entry entry;
+    private static float fanfareAt = -1;
+    private static boolean fanfareShot;
+    private static boolean forceFanfare;
+    private static boolean betaBroken;
     private static LivingEntity mob;
     private static LivingEntity horse;
     private static float finalShot = -1;
@@ -195,6 +201,30 @@ public final class LavaScene {
         return true;
     }
 
+    /** /light test fanfare: plays the scene with this drop and always fires the RNG fanfare. */
+    public static boolean testWith(String which, String loot, boolean fanfare) {
+        Look l = lookOf(which);
+        if (l == null) return false;
+        start(l, false, true, null);
+        forceFanfare = fanfare;
+        if (loot != null && !loot.isBlank()) addDrop(capital(loot.trim().toLowerCase(Locale.ROOT)));
+        return true;
+    }
+
+    private static boolean beta() {
+        TikiConfig c = cfg();
+        return c != null && c.betaFeatures && !betaBroken;
+    }
+
+    private static void betaFailed(Throwable t) {
+        betaBroken = true;
+        TikiGambleClient.LOGGER.warn("[Light] beta feature switched off", t);
+        try {
+            if (cfg() != null && cfg().debug) TikiGambleClient.chat("\u00a7c[Light] Beta feature switched off (animation keeps running): " + t);
+        } catch (Throwable ignored) {
+        }
+    }
+
     private static String capital(String s) {
         StringBuilder b = new StringBuilder();
         for (String w : s.split(" ")) {
@@ -210,6 +240,10 @@ public final class LavaScene {
         lootShare = share;
         test = isTest;
         horse = null;
+        entry = null;
+        fanfareAt = -1;
+        fanfareShot = false;
+        forceFanfare = false;
         finalShot = -1;
         hitShot = -1;
         if (l.game == Game.SHOOT) {
@@ -441,6 +475,11 @@ public final class LavaScene {
         if (stopAt < 0 && resultAt >= 0 && t >= GAMBLE_AT + MIN_SPIN) {
             stopAt = Math.max(t, resultAt + 0.2f);
             decide();
+            try {
+                entry = GambleLog.record(look.key, look.creature, win() ? resultName : null, lootShare, test);
+            } catch (Throwable e) {
+                TikiGambleClient.LOGGER.warn("[Light] gamble log failed", e);
+            }
             float speed = speedOf(game);
             if (game == Game.SLOTS) {
                 if (win()) {
@@ -478,7 +517,7 @@ public final class LavaScene {
                 + (game == Game.GRAVES ? 0.9f : 0f) + (game == Game.CLAW ? CLAW_GRAB : 0f));
         float burstAt = settled + (stopAt >= 0 && win() ? 1.8f : 1.0f);
         float nameAt = burstAt + 0.3f;
-        float fadeAt = nameAt + 2.8f;
+        float fadeAt = nameAt + 2.8f + (fanfareAt >= 0 ? 2.4f : 0f);
         float length = fadeAt + 0.7f;
         if (t >= length) {
             active = false;
@@ -656,8 +695,11 @@ public final class LavaScene {
 
         List<String> lines = new ArrayList<>();
         List<Integer> colors = new ArrayList<>();
+        Long resultPrice = null;
         if (resultName != null) {
             Long price = LavaPrices.price(resultName);
+            resultPrice = price;
+            if (price != null && entry != null) GambleLog.setPrice(entry, price);
             lines.add("★ " + resultName + (price != null ? "  §7" + LavaPrices.format(price) : ""));
             colors.add(0xFFCC33);
         }
@@ -671,6 +713,27 @@ public final class LavaScene {
             lines.add("No rare drop");
             colors.add(0x9A8A80);
         }
+        if (beta() && entry != null) {
+            try {
+                String mobs = look.creature + (entry.dry == 1 ? "" : (look.creature.endsWith("s") ? "" : "s"));
+                lines.add(win() ? "after " + String.format(Locale.GERMANY, "%,d", entry.dry) + " " + mobs
+                    : String.format(Locale.GERMANY, "%,d", entry.dry) + " " + mobs + " without a drop");
+                colors.add(0xBFE9FF);
+                if (fanfareAt < 0 && win() && st < 2.0f && fanfareWorthy(resultName, resultPrice)) {
+                    fanfareAt = t;
+                    GambleLog.setFanfare(entry);
+                }
+            } catch (Throwable e) {
+                betaFailed(e);
+            }
+        }
+        if (fanfareAt >= 0 && beta()) {
+            try {
+                drawFanfare(ctx, font, t - fanfareAt, a, sw, sh, cy);
+            } catch (Throwable e) {
+                betaFailed(e);
+            }
+        }
         int w = 120;
         for (String l : lines) w = Math.max(w, font.width(l) + 20);
         int h = 10 + lines.size() * 12;
@@ -683,6 +746,66 @@ public final class LavaScene {
             ctx.centeredText(font, Component.literal(lines.get(i)), 0, 6 + i * 12, argb(ra, colors.get(i)));
         }
         pose.popMatrix();
+    }
+
+    /** RNG fanfare: a dye, or a drop worth at least the threshold from the Settings tab. */
+    private static boolean fanfareWorthy(String drop, Long price) {
+        TikiConfig c = cfg();
+        if (c == null || !c.fanfareEnabled) return false;
+        if (forceFanfare) return true;
+        if (drop != null && drop.toLowerCase(Locale.ROOT).contains("dye")) return true;
+        return price != null && price >= (long) (c.fanfareMillions * 1_000_000.0);
+    }
+
+    /** Golden rays, falling coins, a flash and a short shake, "RNG!" above the result; optional screenshot. */
+    private static void drawFanfare(GuiGraphicsExtractor ctx, Font font, float ft, float a, int sw, int sh, float cy) {
+        float in = clamp(ft / 0.3f) * a;
+        if (ft < 0.12f) ctx.fill(0, 0, sw, sh, argb((1 - ft / 0.12f) * 0.55f * a, 0xFFF0B4));
+        Matrix3x2fStack pose = ctx.pose();
+        float cx = sw / 2.0f, ry = cy + 30;
+        // rays
+        pose.pushMatrix();
+        pose.translate(cx, ry);
+        for (int i = 0; i < 14; i++) {
+            pose.pushMatrix();
+            pose.rotate(i * (float) (Math.PI * 2 / 14) + ft * 0.35f);
+            ctx.fillGradient(-6, 0, 6, (int) (Math.max(sw, sh) * 0.9f), argb(in * 0.22f, 0xFFD24A), argb(0, 0xFFD24A));
+            pose.popMatrix();
+        }
+        pose.popMatrix();
+        // coins
+        for (int i = 0; i < 70; i++) {
+            float l = (ft * 0.45f + i * 0.137f) % 1.0f;
+            float x = (i * 97) % Math.max(1, sw) + (float) Math.sin(ft * 2 + i) * 10;
+            float y = l * sh * 1.15f - 20;
+            int s = i % 4 == 0 ? 5 : 4;
+            ctx.fill((int) x, (int) y, (int) x + s, (int) y + s, argb(in * 0.9f, i % 3 == 0 ? 0xFFF3B0 : 0xFFD24A));
+            ctx.fill((int) x, (int) y, (int) x + s, (int) y + 1, argb(in, 0xFFFFFF));
+        }
+        float sc = ft < 0.2f ? 6.0f - 2.5f * (ft / 0.2f) : 3.5f + 0.2f * (float) Math.sin(ft * 6);
+        float shake = ft < 0.5f ? (1 - ft / 0.5f) * 5 : 0;
+        pose.pushMatrix();
+        pose.translate(cx + shake * (RNG.nextFloat() * 2 - 1), Math.max(16, cy - 26) + shake * (RNG.nextFloat() * 2 - 1));
+        pose.scale(sc, sc);
+        ctx.centeredText(font, Component.literal("RNG!").withStyle(ChatFormatting.BOLD), 0, -4, argb(in, 0xFFD24A));
+        pose.popMatrix();
+        if (ft < 0.1f) {
+            sound(12, SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, 1.2f, 0.9f);
+            sound(13, SoundEvents.FIREWORK_ROCKET_LARGE_BLAST, 1.0f, 0.8f);
+        }
+        if (ft > 0.5f && ft < 0.6f) sound(14, SoundEvents.PLAYER_LEVELUP, 1.0f, 0.7f);
+        TikiConfig c = cfg();
+        if (!fanfareShot && ft > 0.9f && c != null && c.fanfareScreenshot && !test) {
+            fanfareShot = true;
+            Minecraft mc = Minecraft.getInstance();
+            mc.execute(() -> {
+                try {
+                    net.minecraft.client.Screenshot.grab(mc, false);
+                } catch (Throwable e) {
+                    TikiGambleClient.LOGGER.warn("[Light] screenshot failed", e);
+                }
+            });
+        }
     }
 
     private static float speedOf(Game g) {
@@ -709,6 +832,24 @@ public final class LavaScene {
 
     private static ItemStack iconOf(Sym s) {
         return GambleArt.icon(s.label);
+    }
+
+    /** The icon for a logged drop (History / Journal), or null for an unknown item ("?"). */
+    public static ItemStack iconForDrop(String drop) {
+        if (drop == null) return GambleArt.icon("x");
+        String low = drop.toLowerCase(Locale.ROOT);
+        for (Look l : LOOKS) {
+            for (Sym s : l.pool) {
+                if (s.match != null && !s.match.isEmpty() && low.contains(s.match)) return iconOf(s);
+            }
+        }
+        return null;
+    }
+
+    /** The title color of a gambling mob (Journal). */
+    public static int colorOf(String key) {
+        Look l = lookOf(key);
+        return l == null ? 0x3A2410 : l.color;
     }
 
     /** Lord Jawbus: an iron slot machine with lava in its seams and three real, scrolling reels. */

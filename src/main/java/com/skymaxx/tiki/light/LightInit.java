@@ -35,7 +35,25 @@ public final class LightInit implements ClientModInitializer {
                 return LightInit.testAchievement(StringArgumentType.getString(c, "name"));
             }))).then(ClientCommands.literal("pvcheck").executes(c -> {
                 return com.skymaxx.tiki.light.dye.PvBridge.check();
-            })).then(ClientCommands.literal("dragonfix").then(ClientCommands.argument("yaw", com.mojang.brigadier.arguments.FloatArgumentType.floatArg()).then(ClientCommands.argument("pitch", com.mojang.brigadier.arguments.FloatArgumentType.floatArg()).then(ClientCommands.argument("y", com.mojang.brigadier.arguments.FloatArgumentType.floatArg()).executes(c -> {
+            })).then(ClientCommands.literal("test")
+                .then(ClientCommands.literal("fanfare").then(ClientCommands.argument("mob", StringArgumentType.word()).suggests((c, b) -> {
+                    for (String n : GambleLog.MOBS) b.suggest(n);
+                    return b.buildFuture();
+                }).then(ClientCommands.argument("loot", StringArgumentType.greedyString()).executes(c -> LightInit.testFanfare(StringArgumentType.getString(c, "mob"), StringArgumentType.getString(c, "loot"))))))
+                .then(ClientCommands.literal("dry").then(ClientCommands.argument("mob", StringArgumentType.word()).suggests((c, b) -> {
+                    for (String n : GambleLog.MOBS) b.suggest(n);
+                    return b.buildFuture();
+                }).then(ClientCommands.argument("kills", com.mojang.brigadier.arguments.IntegerArgumentType.integer(0)).executes(c -> LightInit.testDry(StringArgumentType.getString(c, "mob"), com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(c, "kills"))))))
+                .then(ClientCommands.literal("history").executes(c -> LightInit.testHistory()))
+                .then(ClientCommands.literal("clear").executes(c -> LightInit.testClear())))
+            .then(ClientCommands.literal("journal").executes(c -> LightInit.openJournal()))
+            .then(ClientCommands.literal("achievement")
+                .then(ClientCommands.literal("list").executes(c -> LightInit.listAchievements()))
+                .then(ClientCommands.literal("remove").then(ClientCommands.argument("name", StringArgumentType.word()).suggests((c, b) -> {
+                    for (Achievements a : Achievements.values()) b.suggest(a.name().toLowerCase(Locale.ROOT));
+                    return b.buildFuture();
+                }).executes(c -> LightInit.removeAchievement(StringArgumentType.getString(c, "name"))))))
+            .then(ClientCommands.literal("dragonfix").then(ClientCommands.argument("yaw", com.mojang.brigadier.arguments.FloatArgumentType.floatArg()).then(ClientCommands.argument("pitch", com.mojang.brigadier.arguments.FloatArgumentType.floatArg()).then(ClientCommands.argument("y", com.mojang.brigadier.arguments.FloatArgumentType.floatArg()).executes(c -> {
                 com.skymaxx.tiki.light.MobView.dragonYawFix = com.mojang.brigadier.arguments.FloatArgumentType.getFloat(c, "yaw");
                 com.skymaxx.tiki.light.MobView.dragonPitchFix = com.mojang.brigadier.arguments.FloatArgumentType.getFloat(c, "pitch");
                 com.skymaxx.tiki.light.MobView.dragonYFix = com.mojang.brigadier.arguments.FloatArgumentType.getFloat(c, "y");
@@ -54,6 +72,7 @@ public final class LightInit implements ClientModInitializer {
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("light", "dye_hud"), DyeHud::render);
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("light", "lava_scene"), LavaScene::render);
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("light", "shark_popup"), SharkPopup::render);
+        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("light", "achievement_popup"), AchievementPopup::render);
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             Achievements.tick();
             DyeTracker.tick(client);
@@ -84,6 +103,95 @@ public final class LightInit implements ClientModInitializer {
                 }
         }
         TikiGambleClient.chat("\u00a78[Light] Test only - nothing was counted. The result is random.");
+        return 1;
+    }
+
+    private static boolean needDebug(String what) {
+        if (TikiGambleClient.config == null || !TikiGambleClient.config.debug) {
+            TikiGambleClient.chat("\u00a7c[Light] Turn on \"Debug log\" in /light -> General to " + what + ".");
+            return false;
+        }
+        return true;
+    }
+
+    private static boolean needBeta() {
+        if (TikiGambleClient.config == null || !TikiGambleClient.config.betaFeatures) {
+            TikiGambleClient.chat("\u00a7e[Light] Tip: turn on \"Beta features\" (General) - otherwise the dry streak and fanfare stay hidden.");
+            return false;
+        }
+        return true;
+    }
+
+    /** /light test fanfare <mob> <loot>: the scene with this drop and the RNG fanfare. Counted nowhere. */
+    private static int testFanfare(String mob, String loot) {
+        if (!needDebug("test the fanfare")) return 0;
+        needBeta();
+        if (!LavaScene.testWith(mob.toLowerCase(Locale.ROOT), loot, true)) {
+            TikiGambleClient.chat("\u00a7c[Light] Unknown mob: " + mob + " (" + String.join(", ", GambleLog.MOBS) + ")");
+            return 0;
+        }
+        TikiGambleClient.chat("\u00a78[Light] Test only - nothing is counted.");
+        return 1;
+    }
+
+    /** /light test dry <mob> <kills>: the next test scene shows this dry streak. */
+    private static int testDry(String mob, int kills) {
+        if (!needDebug("test the dry streak")) return 0;
+        needBeta();
+        GambleLog.dryOverride = kills;
+        if (!LavaScene.test(mob.toLowerCase(Locale.ROOT), false)) {
+            GambleLog.dryOverride = -1L;
+            TikiGambleClient.chat("\u00a7c[Light] Unknown mob: " + mob + " (" + String.join(", ", GambleLog.MOBS) + ")");
+            return 0;
+        }
+        TikiGambleClient.chat("\u00a78[Light] Test only - dry streak " + kills + ", nothing is counted.");
+        return 1;
+    }
+
+    private static int testHistory() {
+        if (!needDebug("fill a test history")) return 0;
+        GambleLog.fillTest();
+        TikiGambleClient.chat("\u00a78[Light] Test entries added to History (yellow [Test]). Remove them with /light test clear.");
+        return 1;
+    }
+
+    private static int testClear() {
+        if (!needDebug("clear test data")) return 0;
+        GambleLog.clearTest();
+        TikiGambleClient.chat("\u00a78[Light] Test entries removed. Your real history is untouched.");
+        return 1;
+    }
+
+    private static int openJournal() {
+        if (!needDebug("open the journal (test)")) return 0;
+        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+        mc.execute(() -> mc.gui.setScreen(new JournalScreen(null)));
+        return 1;
+    }
+
+    private static int listAchievements() {
+        if (!needDebug("list achievements")) return 0;
+        StringBuilder b = new StringBuilder("\u00a78[Light] ");
+        for (Achievements a : Achievements.values()) {
+            b.append(a.isUnlocked(TikiGambleClient.config) ? "\u00a7a" : "\u00a77").append(a.name().toLowerCase(Locale.ROOT)).append("\u00a78, ");
+        }
+        TikiGambleClient.chat(b.toString());
+        return 1;
+    }
+
+    /** Debug: removes an achievement (e.g. unlocked by a bug). It comes back if its rule is still met. */
+    private static int removeAchievement(String name) {
+        if (!needDebug("remove achievements")) return 0;
+        Achievements a = Achievements.byName(name);
+        if (a == null) {
+            TikiGambleClient.chat("\u00a7c[Light] Unknown achievement: " + name + " - see /light achievement list");
+            return 0;
+        }
+        if (!Achievements.remove(TikiGambleClient.config, a)) {
+            TikiGambleClient.chat("\u00a77[Light] " + a.title + " was not unlocked.");
+            return 0;
+        }
+        TikiGambleClient.chat("\u00a7d[Light] \u00a7fRemoved: \u00a7d" + a.title + (a.reached(TikiGambleClient.stats) ? " \u00a7e(its rule is still met - it will come back)" : ""));
         return 1;
     }
 

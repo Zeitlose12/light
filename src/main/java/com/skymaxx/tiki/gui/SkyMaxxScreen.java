@@ -188,6 +188,7 @@ extends Screen {
                 case GENERAL -> y = this.buildGeneral(left, y, w);
                 case STATS -> y = this.buildStats(left, y, w);
                 case ACHIEVEMENTS -> y = this.buildAchievements(left, y, w);
+                case HISTORY -> y = this.buildHistory(left, y, w);
             }
         }
         this.contentHeight = y;
@@ -427,7 +428,65 @@ extends Screen {
         y = this.note(y, "Median = middle of the 5 cheapest, ignores troll listings.");
         y = this.note(y, "\u00a78Data: SkyCofl - sky.coflnet.com/data. One request per drop,");
         y = this.note(y, "\u00a78cached 10 min, max 20 a minute. Off = Light uses no internet.");
+        y = this.heading(y, "RNG fanfare (Beta)");
+        y = this.note(y, "\u00a77Needs \"Beta features\" in General.");
+        y = this.toggle(x, y, w, "RNG fanfare", () -> this.cfg.fanfareEnabled, v -> {
+            this.cfg.fanfareEnabled = v;
+        });
+        y = this.slider(x, y, w, "Fanfare from", 1.0f, 200.0f, () -> Float.valueOf(this.cfg.fanfareMillions), v -> {
+            this.cfg.fanfareMillions = Math.round(v.floatValue());
+        }, ConfigSlider.Format.MILLIONS, null);
+        y = this.toggle(x, y, w, "Screenshot on RNG", () -> this.cfg.fanfareScreenshot, v -> {
+            this.cfg.fanfareScreenshot = v;
+        });
+        y = this.note(y, "\u00a77Dyes always get the fanfare.");
         return y;
+    }
+
+    private int buildHistory(int x, int y, int w) {
+        java.util.List<com.skymaxx.tiki.light.GambleLog.Entry> list = com.skymaxx.tiki.light.GambleLog.entries();
+        boolean withTest = com.skymaxx.tiki.light.GambleLog.hasTest();
+        y = this.heading(y, "Summary" + (withTest ? " \u00a7e(with test entries)" : ""));
+        com.skymaxx.tiki.light.GambleLog.Entry best = com.skymaxx.tiki.light.GambleLog.best(withTest);
+        y = this.note(y, "Total  \u00a76" + com.skymaxx.tiki.light.LavaPrices.format(com.skymaxx.tiki.light.GambleLog.total(withTest)));
+        y = this.note(y, "Best hit  " + (best == null ? "\u00a78-" : "\u00a7d" + best.drop + " \u00a78\u00b7 \u00a76" + com.skymaxx.tiki.light.LavaPrices.format(best.price)));
+        y = this.note(y, "This session  \u00a7a" + com.skymaxx.tiki.light.LavaPrices.format(com.skymaxx.tiki.light.GambleLog.perHour()) + " \u00a77/ h");
+        y = this.note(y, "Results  \u00a7f" + list.size() + " \u00a77(" + com.skymaxx.tiki.light.GambleLog.drops(null, withTest) + " with a drop)");
+        if (this.cfg.debug) {
+            this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal("\u00a76Open as Journal \u00a78(Debug)"), b -> {
+                if (this.minecraft != null) this.minecraft.gui.setScreen(new com.skymaxx.tiki.light.JournalScreen(this));
+            }).bounds(x, y + 4, w, 20).build(), y + 4));
+            y += 26;
+        }
+        y = this.heading(y, "Drops");
+        if (list.isEmpty()) {
+            y = this.note(y, "\u00a77Nothing yet - every Jawbus, Thunder, Ragnarok, Plhlegblast,");
+            y = this.note(y, "\u00a77Grim Reaper, Yeti and Reindrake animation lands here.");
+        }
+        java.text.SimpleDateFormat time = new java.text.SimpleDateFormat("HH:mm");
+        java.text.SimpleDateFormat day = new java.text.SimpleDateFormat("dd.MM. HH:mm");
+        long today = java.time.LocalDate.now().atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli();
+        int shown = 0;
+        for (com.skymaxx.tiki.light.GambleLog.Entry e : list) {
+            if (++shown > 150) {
+                y = this.note(y, "\u00a78... older ones are kept but not listed.");
+                break;
+            }
+            String when = (e.ms >= today ? time : day).format(new java.util.Date(e.ms));
+            String what = e.drop == null ? "\u00a78no drop"
+                : "\u00a7d" + e.drop + (e.price > 0 ? " \u00a76" + com.skymaxx.tiki.light.LavaPrices.format(e.price) : "");
+            y = this.note(y, (e.test ? "\u00a7e[Test] " : "") + "\u00a77" + when + "  \u00a7f" + e.mobName + (e.share ? " \u00a78(share)" : "") + (e.fanfare ? " \u00a76\u2605 RNG" : ""));
+            y = this.note(y - 4, "   " + what) + 3;
+        }
+        this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal("\u00a7cClear history"), b -> {
+            if (this.minecraft == null) return;
+            this.minecraft.gui.setScreen((Screen)new ConfirmScreen(yes -> {
+                if (yes) com.skymaxx.tiki.light.GambleLog.clearAll();
+                this.minecraft.gui.setScreen((Screen)this);
+            }, (Component)Component.literal("Clear the drop history?"), (Component)Component.literal("All gambling results, prices and dry streaks are deleted. This cannot be undone."),
+                (Component)Component.literal("\u00a7cClear"), (Component)Component.literal("Cancel")));
+        }).bounds(x, y + 8, w, 20).build(), y + 8));
+        return y + 34;
     }
 
     private int buildHuds(int x, int y, int w) {
@@ -444,6 +503,13 @@ extends Screen {
         this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal((String)"\u00a7dMove and resize dye HUD"), b -> {
             if (this.minecraft != null) {
                 this.minecraft.gui.setScreen((Screen)new com.skymaxx.tiki.light.dye.DyeHudEditScreen((Screen)this));
+            }
+        }).bounds(x, y, w, 20).build(), y));
+        y += 22;
+        y = this.heading(y, "Achievement pop-up");
+        this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal("\u00a7dMove and resize achievement pop-up"), b -> {
+            if (this.minecraft != null) {
+                this.minecraft.gui.setScreen((Screen)new com.skymaxx.tiki.light.AchievementPopupEditScreen((Screen)this));
             }
         }).bounds(x, y, w, 20).build(), y));
         y += 22;
@@ -616,7 +682,12 @@ extends Screen {
         y = this.toggle(x, y, w, "Summary in chat", () -> this.cfg.chatSummary, v -> {
             this.cfg.chatSummary = v;
         });
-        y = this.toggle(x, y, w, "Achievement title & sound", () -> this.cfg.lightAchievementFx, v -> {
+        y = this.toggle(x, y, w, "Beta features", () -> this.cfg.betaFeatures, v -> {
+            this.cfg.betaFeatures = v;
+        });
+        y = this.note(y, "\u00a77Dry streak + RNG fanfare in the gambling result.");
+        y = this.note(y, "\u00a77Off = the animations run exactly as before.");
+        y = this.toggle(x, y, w, "Achievement pop-up & sound", () -> this.cfg.lightAchievementFx, v -> {
             this.cfg.lightAchievementFx = v;
         });
         y = this.slider(x, y, w, "Achievement sound volume", 0.0f, 1.0f, () -> Float.valueOf(this.cfg.lightAchievementVolume), v -> {
@@ -836,9 +907,16 @@ extends Screen {
 
     private int buildAchievements(int x, int y, int w) {
         this.achievementsTop = y + 20;
-        return this.achievementsTop + com.skymaxx.tiki.light.Achievements.values().length * 38 + com.skymaxx.tiki.light.Achievements.Category.values().length * 26 + 6;
+        int h = 0;
+        for (com.skymaxx.tiki.light.Achievements.Category cat : com.skymaxx.tiki.light.Achievements.Category.values()) {
+            int n = 0;
+            for (com.skymaxx.tiki.light.Achievements a : com.skymaxx.tiki.light.Achievements.values()) if (a.category == cat) ++n;
+            h += 26 + ((n + 1) / 2) * 46;
+        }
+        return this.achievementsTop + h + 6;
     }
 
+    /** Achievements as a two-column grid of cards: gold star and frame when unlocked. */
     private void drawAchievements(GuiGraphicsExtractor ctx) {
         int x = this.cardLeft + 14;
         int right = this.cardRight - 14 - 3 - 4;
@@ -847,37 +925,40 @@ extends Screen {
         int total = com.skymaxx.tiki.light.Achievements.values().length;
         ctx.text(this.font, (Component)Component.literal((String)("Achievements  \u00a7f" + got + " / " + total)), x, top + 3, PINK);
         int y = this.viewTop + this.achievementsTop - this.scroll;
+        int colW = (right - x + 8 - 8) / 2;
         for (com.skymaxx.tiki.light.Achievements.Category cat : com.skymaxx.tiki.light.Achievements.Category.values()) {
-        int inCat = 0;
-        int doneInCat = 0;
-        for (com.skymaxx.tiki.light.Achievements a : com.skymaxx.tiki.light.Achievements.values()) {
-            if (a.category != cat) continue;
-            ++inCat;
-            if (a.isUnlocked(this.cfg)) ++doneInCat;
-        }
-        if (y > this.viewTop - 30 && y < this.viewBottom + 4) {
-            ctx.text(this.font, (Component)Component.literal((String)(cat.title + "  \u00a77" + doneInCat + " / " + inCat)), x, y + 8, PINK);
-            int from = x + this.font.width(cat.title + "  " + doneInCat + " / " + inCat) + 8;
-            if (from < right) {
-                ctx.fill(from, y + 12, right, y + 13, PINK_LINE);
+            int inCat = 0;
+            int doneInCat = 0;
+            for (com.skymaxx.tiki.light.Achievements a : com.skymaxx.tiki.light.Achievements.values()) {
+                if (a.category != cat) continue;
+                ++inCat;
+                if (a.isUnlocked(this.cfg)) ++doneInCat;
             }
-        }
-        y += 26;
-        for (com.skymaxx.tiki.light.Achievements a : com.skymaxx.tiki.light.Achievements.values()) {
-            if (a.category != cat) continue;
-            boolean done = a.isUnlocked(this.cfg);
             if (y > this.viewTop - 30 && y < this.viewBottom + 4) {
-                ctx.fill(x - 4, y, right + 4, y + 32, done ? 0x30FF6FB0 : 0x14FFFFFF);
-                if (done) {
-                    ctx.fill(x - 4, y, x - 2, y + 32, PINK);
-                }
-                ctx.text(this.font, (Component)Component.literal((String)a.title), x + 6, y + 6, done ? PINK : -3355444);
-                ctx.text(this.font, (Component)Component.literal((String)a.description), x + 6, y + 18, -7695484);
-                String mark = done ? "\u00a7a\u2714 unlocked" : "\u00a78locked";
-                ctx.text(this.font, (Component)Component.literal((String)mark), right - 4 - this.font.width(mark), y + 12, -1);
+                ctx.text(this.font, (Component)Component.literal((String)(cat.title + "  \u00a77" + doneInCat + " / " + inCat)), x, y + 8, PINK);
+                int from = x + this.font.width(cat.title + "  " + doneInCat + " / " + inCat) + 8;
+                if (from < right) ctx.fill(from, y + 12, right, y + 13, PINK_LINE);
             }
-            y += 38;
-        }
+            y += 26;
+            int i = 0;
+            for (com.skymaxx.tiki.light.Achievements a : com.skymaxx.tiki.light.Achievements.values()) {
+                if (a.category != cat) continue;
+                boolean done = a.isUnlocked(this.cfg);
+                int cx = x - 4 + (i % 2) * (colW + 8);
+                int cy = y + (i / 2) * 46;
+                if (cy > this.viewTop - 46 && cy < this.viewBottom + 4) {
+                    ctx.fill(cx, cy, cx + colW, cy + 40, done ? 0x22FFD24A : 0x40000000);
+                    ctx.outline(cx, cy, colW, 40, done ? 0xFFFFD24A : 0xFF555555);
+                    ctx.text(this.font, (Component)Component.literal(done ? "\u00a76\u2605" : "\u00a78\u2606"), cx + 7, cy + 16, -1);
+                    ctx.text(this.font, (Component)Component.literal((String)a.title), cx + 20, cy + 8, done ? -1 : -5592406);
+                    String desc = a.description;
+                    while (desc.length() > 3 && this.font.width(desc) > colW - 26) desc = desc.substring(0, desc.length() - 2);
+                    if (!desc.equals(a.description)) desc = desc.trim() + "\u2026";
+                    ctx.text(this.font, (Component)Component.literal((String)desc), cx + 20, cy + 23, -7697782);
+                }
+                ++i;
+            }
+            y += ((i + 1) / 2) * 46;
         }
     }
 
@@ -1263,6 +1344,7 @@ extends Screen {
         BAZAAR("Bazaar"),
         HUDS("HUDs"),
         STATS("Stats"),
+        HISTORY("History"),
         ACHIEVEMENTS("Achievements"),
         SETTINGS("Settings");
 

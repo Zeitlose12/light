@@ -42,6 +42,7 @@ extends AbstractSliderButton {
             case 3 -> Math.round(v) + " BPM";
             case 4 -> String.format("%.2f", Float.valueOf(v));
             case 5 -> ConfigSlider.health(v);
+            case 6 -> String.format(Locale.GERMANY, "%,d", Math.round(v) * 1_000_000L) + " Coins";
         };
         this.setMessage((Component)Component.literal((String)("\u00a77" + this.label + ": \u00a7f" + (String)text)));
     }
@@ -71,7 +72,8 @@ extends AbstractSliderButton {
         DEGREES,
         BPM,
         PLAIN,
-        HEALTH;
+        HEALTH,
+        MILLIONS;
 
     }
 }

@@ -109,6 +109,16 @@ public class TikiConfig {
     public boolean lavaGambleOwnOnly = false;
     public float lavaGambleVolume = 0.6f;
     public boolean lavaGamblePrices = true;
+    /** Light 1.2 beta: dry streak + RNG fanfare in the gambling result (off = everything exactly as before). */
+    public boolean betaFeatures = false;
+    public boolean fanfareEnabled = true;
+    /** Fanfare from this many million coins (dyes always). */
+    public float fanfareMillions = 10.0f;
+    public boolean fanfareScreenshot = false;
+    /** Achievement pop-up position (-1 = top right) and size. */
+    public float achPopupX = -1f;
+    public float achPopupY = -1f;
+    public float achPopupScale = 1.0f;
     /** Spooky Festival / Season of Jerry gambling (test, only with Debug log). */
     public boolean spookyGambleEnabled = true;
     public boolean winterGambleEnabled = true;

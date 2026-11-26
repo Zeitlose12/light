@@ -18,6 +18,9 @@ Light turns your rarest fishing moments into a show – and makes sure you never
 - Skip any animation with **`ESC`**
 - **🌋 Lava Gambling** *(still in testing)* – after a **Lord Jawbus**, **Thunder**, **Ragnarok** or **Plhlegblast** kill the real 3D mob rises out of the lava and plays its own game of chance: Jawbus' iron slot machine, Thunder's storm roulette, Ragnarok's bounty shooting gallery and Plhlegblast's jelly bubbles – it always lands on your *real* drop
 - Every mob has its own category in the menu: **on/off**, **animation speed** and a **preview** button
+- **📜 History** – every gambling drop with price, total, best hit and coins per hour
+- **🏆 Achievements** for the gambling mobs, with a movable pop-up
+- *Beta:* **dry streak** ("after 412 Lord Jawbus") and an **RNG fanfare** for big drops
 - **💰 Drop prices** from **SkyCofl** right in the result (Bazaar insta-sell / sell offer, auction lowest BIN / median) – can be turned off in the **Settings** tab
 - **🎃 Spooky Fishing** *(still in testing)* – the **Grim Reaper**'s scythe slashes open the grave with your drop
 - **❄️ Winter Fishing** *(still in testing)* – the **Yeti**'s ice claw machine and the **Reindrake** (an Ender Dragon) dropping gifts for a gift shuffle

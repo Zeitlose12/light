@@ -25,6 +25,12 @@
 - **🎃 Spooky Fishing** *(test)*: Grim Reaper – graveyard, the scythe opens the grave with your drop
 - **❄️ Winter Fishing** *(test)*: Yeti – ice claw machine; Reindrake – an Ender Dragon drops three gifts, gift shuffle
 
+- **📜 History** tab: every gambling result with drop, price and time – total, best hit and coins per hour this session
+- **12 new achievements** (Lava, Festivals, Gambling) shown as cards with a gold star; new **achievement pop-up** you can move and resize in the HUDs tab
+- *Beta (General → Beta features):* **dry streak** in the result ("after 412 Lord Jawbus") and the **RNG fanfare** (gold rays, coin rain, sound, optional screenshot) for dyes and drops above a price you choose
+- *Debug test:* **My Fishing Journey** – the history as a book you can open and page through (`/light journal`)
+- Debug commands: `/light test fanfare|dry|history|clear`, `/light achievement list|remove`
+
 ### 🔧 Changed
 - Achievements are grouped into categories in the menu
 - Menu tabs shrink on small windows so every tab stays visible
