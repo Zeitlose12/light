@@ -368,7 +368,9 @@ public final class LavaScene {
     }
 
     private static void addDrop(String item) {
-        if (DROPS.size() >= 6) return;
+        if (DROPS.size() >= 6 || item == null) return;
+        // no shards of any kind (attribute / hunting shards) - they are never a gambling result
+        if (item.toLowerCase(Locale.ROOT).contains("shard")) return;
         for (String d : DROPS) if (d.equalsIgnoreCase(item)) return;
         DROPS.add(item);
         LavaPrices.price(item); // fetch early so the price is there when the result shows

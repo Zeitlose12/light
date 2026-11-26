@@ -34,7 +34,7 @@
 - Menu background gets darker (adjustable in General)
 - Sack value: compact numbers (902,97M / 1,21B) and a list to choose which sacks count (e.g. leave out the Bait Sack)
 - HUDs tab: every HUD has its own on/off and a clear yellow **Move** button
-- Drop boards checked against the wiki: Thunder now has the **Flash I** book, Lord Jawbus now has **Bobbin' Scriptures**
+- Drop boards checked against the wiki: Thunder now has the **Flash I** book, Lord Jawbus now has **Bobbin' Scriptures**; shards (attribute / hunting) never count as a gambling drop
 - RNG fanfare: calmer glow and one short ray burst instead of spinning rays; "RNG!" no longer covers the mob name
 - `/light achievement remove` now really keeps it locked (`/light achievement restore` undoes it)
 - Credits: Wiki Tiki & Titanoboa from SkyMaxx by Rachie, dye chances based on DyeAddons, everything else by Grundsteuer (built with the help of AI)
