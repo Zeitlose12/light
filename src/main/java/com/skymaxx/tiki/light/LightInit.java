@@ -73,9 +73,11 @@ public final class LightInit implements ClientModInitializer {
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("light", "lava_scene"), LavaScene::render);
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("light", "shark_popup"), SharkPopup::render);
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("light", "achievement_popup"), AchievementPopup::render);
+        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("light", "sack_value"), SackValue::render);
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             Achievements.tick();
             DyeTracker.tick(client);
+            SackValue.tick(client);
             if (openRequested) {
                 openRequested = false;
                 client.gui.setScreen(SkyMaxxScreen.create());

@@ -115,6 +115,15 @@ public class TikiConfig {
     /** Fanfare from this many million coins (dyes always). */
     public float fanfareMillions = 10.0f;
     public boolean fanfareScreenshot = false;
+    /** Sack value HUD: on/off, BOX or TEXT, SELL_OFFER or INSTA_SELL, position (-1 = top left) and size. */
+    public boolean sackHudEnabled = true;
+    public String sackHudStyle = "BOX";
+    public String sackPriceMode = "SELL_OFFER";
+    public float sackHudX = -1f;
+    public float sackHudY = -1f;
+    public float sackHudScale = 1.0f;
+    /** How dark the game gets behind the Light menu (0 - 0.9). */
+    public float menuDim = 0.55f;
     /** Achievement pop-up position (-1 = top right) and size. */
     public float achPopupX = -1f;
     public float achPopupY = -1f;

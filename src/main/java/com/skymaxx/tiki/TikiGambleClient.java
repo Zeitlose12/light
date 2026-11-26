@@ -82,6 +82,7 @@ implements ClientModInitializer {
         }
         com.skymaxx.tiki.light.LavaScene.onChat(message, overlay);
         com.skymaxx.tiki.light.SharkPopup.onChat(message, overlay);
+        com.skymaxx.tiki.light.SackValue.onChat(message, overlay);
     }
     private static TotemHud totem;
     private static JungleOverlay jungle;

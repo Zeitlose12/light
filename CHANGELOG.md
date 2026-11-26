@@ -30,6 +30,9 @@
 - *Beta (General → Beta features):* **dry streak** in the result ("after 412 Lord Jawbus") and the **RNG fanfare** (gold rays, coin rain, sound, optional screenshot) for dyes and drops above a price you choose
 - *Debug test:* **My Fishing Journey** – the history as a book you can open and page through (`/light journal`)
 - Debug commands: `/light test fanfare|dry|history|clear`, `/light achievement list|remove`
+- **🎒 Sack value HUD** (Bazaar tab): value of all your sacks, sell offer or insta-sell, box or text only, movable
+- Menu background gets darker (adjustable in General)
+- Credits: Wiki Tiki & Titanoboa from SkyMaxx by Rachie, dye chances based on DyeAddons, everything else by Grundsteuer (built with the help of AI)
 
 ### 🔧 Changed
 - Achievements are grouped into categories in the menu

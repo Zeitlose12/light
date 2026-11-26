@@ -4,7 +4,7 @@
 
 Light turns your rarest fishing moments into a show – and makes sure you never insta-sell millions by accident.
 
-> 🎣 Client-side Fabric mod for **Minecraft 26.2** · based on **SkyMaxx** by **Rachie** (MIT)
+> 🎣 Client-side Fabric mod for **Minecraft 26.2** · by **Grundsteuer** · Wiki Tiki & Titanoboa animations from **SkyMaxx** by **Rachie** (MIT)
 
 ---
 
@@ -21,6 +21,7 @@ Light turns your rarest fishing moments into a show – and makes sure you never
 - **📜 History** – every gambling drop with price, total, best hit and coins per hour
 - **🏆 Achievements** for the gambling mobs, with a movable pop-up
 - *Beta:* **dry streak** ("after 412 Lord Jawbus") and an **RNG fanfare** for big drops
+- **🎒 Sack value** – a tiny HUD with the value of everything in your sacks (sell offer or insta-sell), two looks
 - **💰 Drop prices** from **SkyCofl** right in the result (Bazaar insta-sell / sell offer, auction lowest BIN / median) – can be turned off in the **Settings** tab
 - **🎃 Spooky Fishing** *(still in testing)* – the **Grim Reaper**'s scythe slashes open the grave with your drop
 - **❄️ Winter Fishing** *(still in testing)* – the **Yeti**'s ice claw machine and the **Reindrake** (an Ender Dragon) dropping gifts for a gift shuffle
@@ -89,7 +90,7 @@ Light is **client-side only**. It does **not**:
 - show hidden entities or players
 
 It only displays information you already get and blocks **your own** clicks on the Bazaar sell button.
-The dye tracker never connects to the internet – it only reads the data the SkyBlock Profile Viewer has already loaded. The only network feature is the **drop prices** in the gambling animations: Light asks [SkyCofl](https://sky.coflnet.com/data) once per real rare drop for its price (cached 10 minutes, at most 20 requests per minute). Only the item id is sent – nothing about you or your account. You can switch prices off any time in **`/light` → Settings**, then Light never goes online.
+The dye tracker never connects to the internet – it only reads the data the SkyBlock Profile Viewer has already loaded. The only network feature is the **drop prices** in the gambling animations: Light asks [SkyCofl](https://sky.coflnet.com/data) once per real rare drop for its price (cached 10 minutes, at most 20 requests per minute). Only the item id is sent – nothing about you or your account. The **sack value HUD** asks Hypixel's public bazaar API every 5 minutes (no key, no account data). Switch prices off in **`/light` → Settings** and the sack value HUD off in **`/light` → Bazaar** – then Light never goes online.
 
 *No mod is ever officially approved by Hypixel – use any mod at your own risk.*
 </details>
@@ -113,7 +114,7 @@ With a lot of Magic Find you will look a bit luckier than you really are.
 <details>
 <summary><b>🤖 AI disclosure</b></summary>
 
-Light is a fork of SkyMaxx by Rachie. The bug fixes and new features were made with the help of AI.
+Light started as a fork of SkyMaxx by Rachie, which brought the Wiki Tiki and Titanoboa animations. Everything else - the bug fixes and all new features - was built by Grundsteuer with the help of AI.
 </details>
 
 ---
@@ -130,9 +131,10 @@ The finished jar is in `build/libs/`.
 ---
 
 ## ❤️ Credits
-- Original mod **SkyMaxx** by **Rachie** – MIT License
-- Dye drop-chance tables (rarity brackets, creature lists) based on **DyeAddons** by **anlg** – Apache-2.0
+- **Wiki Tiki & Titanoboa animations:** **SkyMaxx** by **Rachie** – MIT License
+- **Dye tracker:** drop-chance tables (rarity brackets, creature lists) based on **DyeAddons** by **anlg** – Apache-2.0
 - Catch messages from the **SkyHanni-REPO**, bestiary ids, item ids and head skins from the **NEU-REPO**
 - Drop prices (optional) from **SkyCofl** – [sky.coflnet.com/data](https://sky.coflnet.com/data)
-- Light by **Grundsteuer**
+- Sack value prices from Hypixel's public bazaar API
+- **Everything else:** **Grundsteuer**, built with the help of AI
 - Not affiliated with Hypixel or Mojang

@@ -204,6 +204,28 @@ extends Screen {
     }
 
     private int buildBazaar(int x, int y, int w) {
+        y = this.heading(y, "Sack value");
+        y = this.toggle(x, y, w, "Sack value HUD", () -> this.cfg.sackHudEnabled, v -> {
+            this.cfg.sackHudEnabled = v;
+        });
+        int half = (w - 4) / 2;
+        this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal(SkyMaxxScreen.sackPriceLabel(this.cfg.sackPriceMode)), b -> {
+            this.cfg.sackPriceMode = "INSTA_SELL".equals(this.cfg.sackPriceMode) ? "SELL_OFFER" : "INSTA_SELL";
+            this.cfg.save();
+            b.setMessage((Component)Component.literal(SkyMaxxScreen.sackPriceLabel(this.cfg.sackPriceMode)));
+        }).bounds(x, y, half, 20).build(), y));
+        this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal(SkyMaxxScreen.sackStyleLabel(this.cfg.sackHudStyle)), b -> {
+            this.cfg.sackHudStyle = "TEXT".equals(this.cfg.sackHudStyle) ? "BOX" : "TEXT";
+            this.cfg.save();
+            b.setMessage((Component)Component.literal(SkyMaxxScreen.sackStyleLabel(this.cfg.sackHudStyle)));
+        }).bounds(x + half + 4, y, w - half - 4, 20).build(), y));
+        y += 22;
+        this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal("\u00a7dMove and resize sack value HUD"), b -> {
+            if (this.minecraft != null) this.minecraft.gui.setScreen((Screen)new com.skymaxx.tiki.light.SackEditScreen((Screen)this));
+        }).bounds(x, y, w, 20).build(), y));
+        y += 22;
+        y = this.note(y, "\u00a77Open each of your sacks once - after that the [Sacks]");
+        y = this.note(y, "\u00a77messages keep it up to date. Prices: Hypixel bazaar API.");
         y = this.heading(y, "Bazaar");
         y = this.toggle(x, y, w, "Lock Sell Sacks Now", () -> this.cfg.lockBazaarSellSacks, v -> {
             this.cfg.lockBazaarSellSacks = v;
@@ -443,6 +465,14 @@ extends Screen {
         return y;
     }
 
+    private static String sackPriceLabel(String mode) {
+        return "Price: " + ("INSTA_SELL".equals(mode) ? "\u00a7eInsta-Sell" : "\u00a7aSell Offer");
+    }
+
+    private static String sackStyleLabel(String style) {
+        return "Look: " + ("TEXT".equals(style) ? "\u00a7fText only" : "\u00a7dBox");
+    }
+
     private int buildHistory(int x, int y, int w) {
         java.util.List<com.skymaxx.tiki.light.GambleLog.Entry> list = com.skymaxx.tiki.light.GambleLog.entries();
         boolean withTest = com.skymaxx.tiki.light.GambleLog.hasTest();
@@ -504,6 +534,14 @@ extends Screen {
             if (this.minecraft != null) {
                 this.minecraft.gui.setScreen((Screen)new com.skymaxx.tiki.light.dye.DyeHudEditScreen((Screen)this));
             }
+        }).bounds(x, y, w, 20).build(), y));
+        y += 22;
+        y = this.heading(y, "Sack value");
+        y = this.toggle(x, y, w, "Sack value HUD", () -> this.cfg.sackHudEnabled, v -> {
+            this.cfg.sackHudEnabled = v;
+        });
+        this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal("\u00a7dMove and resize sack value HUD"), b -> {
+            if (this.minecraft != null) this.minecraft.gui.setScreen((Screen)new com.skymaxx.tiki.light.SackEditScreen((Screen)this));
         }).bounds(x, y, w, 20).build(), y));
         y += 22;
         y = this.heading(y, "Achievement pop-up");
@@ -682,6 +720,9 @@ extends Screen {
         y = this.toggle(x, y, w, "Summary in chat", () -> this.cfg.chatSummary, v -> {
             this.cfg.chatSummary = v;
         });
+        y = this.slider(x, y, w, "Menu background dim", 0.0f, 0.9f, () -> Float.valueOf(this.cfg.menuDim), v -> {
+            this.cfg.menuDim = v.floatValue();
+        }, ConfigSlider.Format.PERCENT, null);
         y = this.toggle(x, y, w, "Beta features", () -> this.cfg.betaFeatures, v -> {
             this.cfg.betaFeatures = v;
         });
@@ -1170,10 +1211,11 @@ extends Screen {
         int after = this.winLeft + 12 + titleWidth * 2 + 14;
         ctx.text(this.font, (Component)Component.literal((String)"Wiki Tiki \u00b7 Titanoboa \u00b7 Bazaar"), after, this.winTop + 15, -7695484);
         // Light: credits for the original mod
-        int creditY = this.winBottom - 28 - 24;
+        int creditY = this.winBottom - 28 - 34;
         if (creditY > this.headerBottom + 8 + Tab.values().length * this.tabStep() + 4) {
-            ctx.text(this.font, (Component)Component.literal((String)"Based on SkyMaxx"), this.winLeft + 10, creditY, -7695484);
-            ctx.text(this.font, (Component)Component.literal((String)"by Rachie \u00b7 MIT"), this.winLeft + 10, creditY + 10, -7695484);
+            ctx.text(this.font, (Component)Component.literal((String)"Light by Grundsteuer"), this.winLeft + 10, creditY, -7695484);
+            ctx.text(this.font, (Component)Component.literal((String)"Tiki & Boa: SkyMaxx"), this.winLeft + 10, creditY + 10, -7695484);
+            ctx.text(this.font, (Component)Component.literal((String)"by Rachie \u00b7 MIT"), this.winLeft + 10, creditY + 20, -7695484);
         }
     }
 
@@ -1184,7 +1226,8 @@ extends Screen {
             super.extractBackground(ctx, mouseX, mouseY, partial);
             return;
         }
-        ctx.fill(0, 0, this.width, this.height, 0x30000000);
+        int dim = Math.round(Math.max(0f, Math.min(0.9f, this.cfg == null ? 0.55f : this.cfg.menuDim)) * 255f);
+        ctx.fill(0, 0, this.width, this.height, dim << 24);
     }
 
     private void drawTabs(GuiGraphicsExtractor ctx, int mouseX, int mouseY) {
