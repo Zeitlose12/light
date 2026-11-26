@@ -245,10 +245,23 @@ extends Screen {
             y = this.note(y, "\u00a77All of them count - switch one off to leave it out.");
             y = this.note(y, "\u00a77Bait sacks are off by default (bait, not loot).");
             if (known.isEmpty()) y = this.note(y, "\u00a77No sacks read yet - open them once in game.");
+            // compact grid: 3 small switches per row (2 on narrow windows)
+            int cols = w >= 330 ? 3 : 2;
+            int gap = 4;
+            int bw = (w - 10 - gap * (cols - 1)) / cols;
+            int i = 0;
             for (String sack : known) {
-                y = this.toggle(x + 10, y, w - 10, sack, () -> !com.skymaxx.tiki.light.SackValue.excluded(sack), v -> com.skymaxx.tiki.light.SackValue.setExcluded(sack, !v));
+                String shortName = sack.replaceAll("(?i)\\s*Sack$", "");
+                int bx = x + 10 + (i % cols) * (bw + gap);
+                int by = y + (i / cols) * 22;
+                this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal(SkyMaxxScreen.sackChip(shortName, !com.skymaxx.tiki.light.SackValue.excluded(sack))), b -> {
+                    boolean on = com.skymaxx.tiki.light.SackValue.excluded(sack);
+                    com.skymaxx.tiki.light.SackValue.setExcluded(sack, !on);
+                    b.setMessage((Component)Component.literal(SkyMaxxScreen.sackChip(shortName, on)));
+                }).bounds(bx, by, bw, 20).build(), by));
+                ++i;
             }
-            y += 4;
+            y += ((i + cols - 1) / cols) * 22 + 4;
         }
         y = this.note(y, "\u00a77Open each sack once - Light remembers it and the [Sacks]");
         y = this.note(y, "\u00a77messages keep it up to date. Prices: Hypixel bazaar API,");
@@ -494,6 +507,10 @@ extends Screen {
 
     private static String sackPriceLabel(String mode) {
         return "Price: " + ("INSTA_SELL".equals(mode) ? "\u00a7eInsta-Sell" : "\u00a7aSell Offer");
+    }
+
+    private static String sackChip(String name, boolean on) {
+        return (on ? "\u00a7a\u2714 \u00a7f" : "\u00a78\u2718 \u00a77") + name;
     }
 
     private static String refreshLabel(int minutes) {

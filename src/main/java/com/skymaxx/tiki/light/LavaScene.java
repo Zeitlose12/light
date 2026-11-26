@@ -1901,6 +1901,7 @@ public final class LavaScene {
         // jumps for joy on a win or kicks the machine on a miss
         float dd = t - arrive;
         boolean roaring = dd >= 0 && dd < 0.9f;
+        boolean blizzard = dd >= 0 && dd < 1.8f;
         if (t >= RISE_AT && t < burstAt && mob != null && MobView.available()) {
             float rise = ease((t - RISE_AT) / (GAMBLE_AT - RISE_AT));
             int cy = (int) (ground + ypx * 0.6f - (ground + ypx * 0.6f - yStand) * rise);
@@ -1954,9 +1955,22 @@ public final class LavaScene {
             }
         }
         // the roar: a short blizzard
-        if (roaring) {
-            ctx.fill(0, 0, sw, sh, argb(a * 0.12f * (float) Math.sin(dd / 0.9f * Math.PI), 0xEAF6FF));
-            snowfall(ctx, t * 3, a, sw, sh, 110, -90, 5);
+        if (blizzard) {
+            float bz = (float) Math.sin(Math.min(1f, dd / 1.8f) * Math.PI);
+            ctx.fill(0, 0, sw, sh, argb(a * 0.28f * bz, 0xEAF6FF));
+            // wind streaks blowing across the screen
+            for (int i = 0; i < 60; i++) {
+                float x = wrap(i * 131 - t * (420 + (i % 7) * 40), sw + 80) - 40;
+                float y = (i * 47 + (float) Math.sin(t * 3 + i) * 6) % sh;
+                int len = 10 + (i % 5) * 6;
+                ctx.fill((int) x, (int) y, (int) x + len, (int) y + 1 + (i % 3 == 0 ? 1 : 0), argb(a * 0.75f * bz, 0xFFFFFF));
+            }
+            for (int i = 0; i < 160; i++) {
+                float x = wrap(i * 97 - t * (260 + (i % 9) * 30), sw + 10) - 5;
+                float y = wrap(i * 53 + t * (60 + i % 40), sh + 10) - 5;
+                int s2 = i % 4 == 0 ? 4 : (i % 2 == 0 ? 3 : 2);
+                ctx.fill((int) x, (int) y, (int) x + s2, (int) y + s2, argb(a * 0.9f * bz, 0xFFFFFF));
+            }
         }
         // joy: snow drops from the top of the screen with every landing
         if (t >= settled && win()) snowfall(ctx, t * 1.5f, a, sw, sh, 70, -10, 6);
@@ -2252,7 +2266,8 @@ public final class LavaScene {
             if (st < 0.18f) {
                 GambleArt.bolt(ctx, x + (k == 0 ? 30 : -30), 0, x, top - 5 - orb, a * (1 - st / 0.18f), (long) ((t + k * 1.15f) / 2.3f) * 31 + k, 0xE8F6FF);
                 GambleArt.disc(ctx, x, top - 5 - orb, orb + 14, argb(a * 0.25f * (1 - st / 0.18f), 0xE8F6FF), 2);
-                if (st < 0.03f) sound(-1, SoundEvents.TRIDENT_THUNDER.value(), 1.6f, 0.12f);
+                boolean quiet = stopAt >= 0 && t > stopAt + STOP_LEN;
+                if (st < 0.03f && !quiet) sound(-1, SoundEvents.TRIDENT_THUNDER.value(), 1.6f, 0.12f);
             }
         }
     }
