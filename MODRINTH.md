@@ -61,6 +61,10 @@ Light turns your rarest fishing moments into a show – and makes sure you never
 
 ---
 
+## ⚠️ Known limitations
+
+- **Double hook:** if two Lava, Spooky or Winter gambling mobs die close together, only **one** gambling animation plays. Both kills are still counted in the History and the Journal (each with its own drop). Wiki Tiki and Titanoboa are not affected.
+
 ## ⌨️ Commands
 
 | Command | What it does |

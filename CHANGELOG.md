@@ -44,6 +44,8 @@
 - Ragnarok stops shooting as soon as a shot hits
 
 ### 🐛 Fixed
+- Kills of big sea creatures that vanish without showing 0 HP (e.g. Ragnarok) are recognised: your own creature that was nearly dead and close to you counts as killed
+- Double hook: a second gambling kill during a running animation is no longer lost (it goes into the History and the Journal)
 - Gambling: items that land in your inventory a moment before a loot share kill is counted (e.g. Magma Lord Fragment) are part of the result
 - Gambling: a drop that arrives after the result shows a small "Late drop" banner and is added to the History and Journal
 - Enchanted books get their bazaar price (also from Hypixel's own bazaar list); missing prices are filled in later
@@ -65,6 +67,9 @@
 - Gambling: "Waiting for your drop" ends sooner when nothing dropped (5 s instead of 10 s); several drops of one kill are collected for a moment so the best one wins
 - Ragnarok: shows the red rider on his skeleton horse (no more two stacked horses); if the rider can't be found, a red-armoured stand-in rides the horse
 - Sliders: the knob stays under your mouse when you click or drag
+
+### ⚠️ Known limitations
+- Double hook: when two Lava/Spooky/Winter gambling mobs die close together only one animation plays – both kills are still counted in the History and the Journal
 
 ### ❤️ Credits
 - **Big shoutout to Gesundheitskarte** – the inspiration behind many gambling animations and features

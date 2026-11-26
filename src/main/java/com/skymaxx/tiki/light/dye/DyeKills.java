@@ -137,6 +137,7 @@ public final class DyeKills {
         int deadTick = -1;
         boolean seen;
         boolean pendingKill;
+        double maxHp = -1, lastHp = -1;
 
         Tracked(Entity entity, String creature, int level, boolean owned, long firstSeenMs) {
             this.entity = entity;
@@ -298,6 +299,11 @@ public final class DyeKills {
                 TRACKED.put(e.getId(), t);
             }
             t.seen = true;
+            double hpNow = DyeKills.health(text, t.creature);
+            if (hpNow > 0) {
+                t.maxHp = Math.max(t.maxHp, hpNow);
+                t.lastHp = hpNow;
+            }
             if (t.body == null) t.body = DyeKills.findBody(mc, e);
             if (t.deadTick < 0 && (DyeKills.health(text, t.creature) == 0.0 || DyeKills.bodyDead(t))) {
                 t.hpZero = true;
@@ -308,8 +314,12 @@ public final class DyeKills {
         while (it.hasNext()) {
             Tracked t = it.next().getValue();
             if (!t.seen && t.deadTick < 0) {
-                t.hpZero = DyeKills.bodyDead(t);
-                t.deadTick = tick; // nametag gone: died or despawned
+                // nametag gone: died or despawned. Some big ones (Ragnarok) vanish at once without showing 0 HP -
+                // your own creature that was nearly dead and close to you when it vanished counts as killed
+                boolean nearlyDead = t.maxHp > 0 && t.lastHp >= 0 && t.lastHp <= t.maxHp * 0.35;
+                boolean close = t.entity.distanceToSqr(mc.player) <= KILL_RADIUS_SQ;
+                t.hpZero = DyeKills.bodyDead(t) || (t.owned && nearlyDead && close);
+                t.deadTick = tick;
             }
             if (t.pendingKill) {
                 // died before its catch message arrived (one-shot kills): wait a moment for the message

@@ -196,7 +196,15 @@ public final class LavaScene {
             Look l = lookOf(creature);
             if (l == null || !catOn(l) || !mobOn(l)) return;
             if (share && cfg().lavaGambleOwnOnly) return;
-            if (active && look == l && !test) return; // the same kill reported twice (chat + nametag)
+            if (active && !test) {
+                // a second gambling mob died while a scene runs (double hook): no second animation,
+                // but it is counted - History and Journal get it once this scene's drops are known
+                if (body != null && body == startBody) return; // the same kill reported twice
+                SECOND.add(new Object[]{l, share});
+                if (stopAt >= 0) flushSecond();
+                return;
+            }
+            startBody = body;
             start(l, share, false, body);
         } catch (Throwable t) {
             TikiGambleClient.LOGGER.warn("[Light] lava gambling failed", t);
@@ -299,6 +307,7 @@ public final class LavaScene {
                 + " mob=" + (mob == null ? "none" : mob.getType().toShortString()) + " 3d=" + MobView.available());
         }
         DROPS.clear();
+        SECOND.clear();
         firstDropAt = -1f;
         lastFadeAt = -1f;
         lastLength = -1f;
@@ -565,6 +574,39 @@ public final class LavaScene {
         }
     }
 
+    private static LivingEntity startBody;
+    /** Gambling kills that came while a scene was running (double hook): {Look, Boolean share}. */
+    private static final java.util.List<Object[]> SECOND = new java.util.ArrayList<>();
+
+    /** Records the waiting second kills: each one gets the best drop of its board that the scene did not use. */
+    private static void flushSecond() {
+        if (SECOND.isEmpty()) return;
+        java.util.List<String> used = new java.util.ArrayList<>();
+        if (resultName != null && win()) used.add(resultName);
+        for (Object[] o : new java.util.ArrayList<>(SECOND)) {
+            Look l = (Look) o[0];
+            String best = null;
+            double br = Double.MAX_VALUE;
+            for (String d : DROPS) {
+                if (used.contains(d) || boardIndex(l, d) < 0) continue;
+                double rk = rank(l, d);
+                if (rk < br) {
+                    br = rk;
+                    best = d;
+                }
+            }
+            if (best != null) used.add(best);
+            try {
+                GambleLog.Entry e2 = GambleLog.record(l.key, l.creature, best, (Boolean) o[1], false);
+                Long p = best == null ? null : LavaPrices.price(best);
+                if (p != null) GambleLog.setPrice(e2, p);
+            } catch (Throwable ex) {
+                TikiGambleClient.LOGGER.warn("[Light] second kill log failed", ex);
+            }
+        }
+        SECOND.clear();
+    }
+
     /** A board drop that arrives after the scene (usually the [Sacks] message): fix the history entry. */
     private static void lateDrop(String item) {
         if (lastEntry == null || lastLook == null || System.currentTimeMillis() - lastAt > 35_000L) return;
@@ -784,6 +826,7 @@ public final class LavaScene {
                     lastEntry = entry;
                     lastLook = look;
                     lastAt = System.currentTimeMillis();
+                    flushSecond();
                 }
             } catch (Throwable e) {
                 TikiGambleClient.LOGGER.warn("[Light] gamble log failed", e);
