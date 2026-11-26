@@ -1269,11 +1269,12 @@ extends Screen {
         int after = this.winLeft + 12 + titleWidth * 2 + 14;
         ctx.text(this.font, (Component)Component.literal((String)"Wiki Tiki \u00b7 Titanoboa \u00b7 Bazaar"), after, this.winTop + 15, -7695484);
         // Light: credits for the original mod
-        int creditY = this.winBottom - 28 - 34;
+        int creditY = this.winBottom - 28 - 44;
         if (creditY > this.headerBottom + 8 + Tab.values().length * this.tabStep() + 4) {
             ctx.text(this.font, (Component)Component.literal((String)"Light by Grundsteuer"), this.winLeft + 10, creditY, -7695484);
             ctx.text(this.font, (Component)Component.literal((String)"Tiki & Boa: SkyMaxx"), this.winLeft + 10, creditY + 10, -7695484);
             ctx.text(this.font, (Component)Component.literal((String)"by Rachie \u00b7 MIT"), this.winLeft + 10, creditY + 20, -7695484);
+            ctx.text(this.font, (Component)Component.literal((String)"\u2764 Gesundheitskarte"), this.winLeft + 10, creditY + 30, -7695484);
         }
     }
 

@@ -138,4 +138,5 @@ The finished jar is in `build/libs/`.
 - Drop prices (optional) from **SkyCofl** – [sky.coflnet.com/data](https://sky.coflnet.com/data)
 - Sack value prices from Hypixel's public bazaar API
 - **Everything else:** **Grundsteuer**, built with the help of AI
+- **Big shoutout to Gesundheitskarte** – the inspiration behind many gambling animations and features
 - Not affiliated with Hypixel or Mojang

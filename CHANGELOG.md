@@ -1,24 +1,8 @@
 # 📜 Changelog
 
-## 1.2.0 – Fishing Dye Tracker
-- **Custom buttons:** every button, switch and slider in the menu now follows the menu theme (rounded buttons with hover glow, sliding ON/OFF pills, category bars, slim sliders with a round knob).
-- Frost and Lava themes: a bit more snow, bubbles and embers.
+## 1.3.0 – Gambling, Themes & Achievements
 
 ### ✨ New
-- **🎨 Fishing Dye Tracker** for Aquamarine, Iceberg, Carmine and Midnight Dye
-  - Chance per sea creature by rarity × **Magic Find** × **Vincent's dye bonus**
-  - Kills come from the **SkyBlock Profile Viewer** – just open `/pv` once
-  - **Loot share** kills count with 1/5 of the chance
-  - Kills are counted **live**: your catch message marks the creature as yours, the kill counts when it dies – no matter who lands the last hit
-  - Catch messages are read before other mods touch them, so custom catch messages (e.g. FEESH) don't break it
-  - Other players' creatures only count as **loot share** when you take part in the kill – standing AFK in a busy hotspot counts nothing
-  - Double Hook, Water Hydra and Fiery Scuttler are counted correctly; Tadgang's tadpoles don't roll for dyes and are skipped
-  - Vincent's bonus (1x / 2x / 3x) is loaded automatically when you talk to him or open `/dyes`, and resets when a new SkyBlock year starts
-- **Dye HUD** – show it only with a fishing rod in hand or always; move and resize it in the menu
-- **Dyes tab** – one card per dye: chance, expected drops, your kills, loot share, 50 % / 90 % kill marks and the best creature
-- **6 new dye achievements** – 23 achievements in total, now sorted into 5 categories
-- **`/light pvcheck`** – shows which sea creatures Light found in your `/pv` data
-
 - **🌋 Lava Gambling** *(still in testing – please report bugs)*: Lord Jawbus (iron slot machine), Thunder (storm roulette), Ragnarok (bounty shooting gallery with the Titanoboa rifle), Plhlegblast (jelly bubbles) – real 3D mobs, always your real drop (also drops that only show up in the [Sacks] message)
 - Every gambling mob has its **own category**: on/off, **speed (50 – 200 %)** and a **preview** button
 - **💰 Drop prices** from SkyCofl in the result – new **Settings** tab: Bazaar insta-sell or sell offer, auction lowest BIN or median of the 5 lowest BINs
@@ -26,7 +10,6 @@
 - **Shark pop-up** *(test)* for Great White Sharks: Megalodon / Shark Tooth
 - **🎃 Spooky Fishing** *(test)*: Grim Reaper – graveyard, the scythe opens the grave with your drop
 - **❄️ Winter Fishing** *(test)*: Yeti – ice claw machine; Reindrake – an Ender Dragon drops three gifts, gift shuffle
-
 - **📜 History** tab: every gambling result with drop, price and time – total, best hit and coins per hour this session
 - **12 new achievements** (Lava, Festivals, Gambling) shown as cards with a gold star; new **achievement pop-up** you can move and resize in the HUDs tab
 - *Beta (General → Beta features):* **dry streak** in the result ("after 412 Lord Jawbus") and the **RNG fanfare** (gold rays, coin rain, sound, optional screenshot) for dyes and drops above a price you choose
@@ -46,18 +29,51 @@
 - RNG fanfare: calmer glow and one short ray burst instead of spinning rays; "RNG!" no longer covers the mob name
 - `/light achievement remove` now really keeps it locked (`/light achievement restore` undoes it)
 - Credits: Wiki Tiki & Titanoboa from SkyMaxx by Rachie, dye chances based on DyeAddons, everything else by Grundsteuer (built with the help of AI)
+- **Custom buttons:** every button, switch and slider in the menu now follows the menu theme (rounded buttons with hover glow, sliding ON/OFF pills, category bars, slim sliders with a round knob).
+- Frost and Lava themes: a bit more snow, bubbles and embers.
 
 ### 🔧 Changed
-- Achievements are grouped into categories in the menu
 - Menu tabs shrink on small windows so every tab stays visible
 - Cleaner menu: new tab order (General first, Settings last); in Gambling only one category is open at a time and every mob is one line (on/off · speed · preview)
 - Ragnarok stops shooting as soon as a shot hits
 
+### 🐛 Fixed
+- Gambling: drop lines that arrive a moment before the kill is counted are no longer lost (e.g. Thunder showed the Thunder Fragment although Flash I dropped)
+- Gambling: "Enchanted Book (Flash I)" style drop lines are read correctly
+- Gambling: loot share items ("LOOT SHARE You received … for assisting …") count as your drop
+- Gambling: "Waiting for your drop" ends sooner when nothing dropped (5 s instead of 10 s); several drops of one kill are collected for a moment so the best one wins
+- Ragnarok: shows the red rider on his skeleton horse (no more two stacked horses); if the rider can't be found, a red-armoured stand-in rides the horse
+- Sliders: the knob stays under your mouse when you click or drag
+
 ### ❤️ Credits
-- Drop prices from **SkyCofl** (sky.coflnet.com/data)
+- **Big shoutout to Gesundheitskarte** – the inspiration behind many gambling animations and features
+- Drop prices from **SkyCofl** (sky.coflnet.com/data), sack prices from Hypixel's public bazaar API
+
+---
+
+## 1.2.0 – Fishing Dye Tracker
+
+### ✨ New
+- **🎨 Fishing Dye Tracker** for Aquamarine, Iceberg, Carmine and Midnight Dye
+  - Chance per sea creature by rarity × **Magic Find** × **Vincent's dye bonus**
+  - Kills come from the **SkyBlock Profile Viewer** – just open `/pv` once
+  - **Loot share** kills count with 1/5 of the chance
+  - Kills are counted **live**: your catch message marks the creature as yours, the kill counts when it dies – no matter who lands the last hit
+  - Catch messages are read before other mods touch them, so custom catch messages (e.g. FEESH) don't break it
+  - Other players' creatures only count as **loot share** when you take part in the kill – standing AFK in a busy hotspot counts nothing
+  - Double Hook, Water Hydra and Fiery Scuttler are counted correctly; Tadgang's tadpoles don't roll for dyes and are skipped
+  - Vincent's bonus (1x / 2x / 3x) is loaded automatically when you talk to him or open `/dyes`, and resets when a new SkyBlock year starts
+- **Dye HUD** – show it only with a fishing rod in hand or always; move and resize it in the menu
+- **Dyes tab** – one card per dye: chance, expected drops, your kills, loot share, 50 % / 90 % kill marks and the best creature
+- **6 new dye achievements** – 23 achievements in total, now sorted into 5 categories
+- **`/light pvcheck`** – shows which sea creatures Light found in your `/pv` data
+
+### 🔧 Changed
+- Achievements are grouped into categories in the menu
+
+### ❤️ Credits
 - Dye drop-chance tables (rarity brackets, creature lists) based on **DyeAddons** by **anlg** (Apache-2.0)
 - Catch messages from the **SkyHanni-REPO**, bestiary ids from the **NEU-REPO**
-
 ---
 
 ## 1.1.0 – First release

@@ -35,7 +35,11 @@ public final class LavaScene {
     private static final float GAMBLE_AT = 1.4f;
     private static final float MIN_SPIN = 2.2f;
     private static final float STOP_LEN = 1.6f;
-    private static final float WAIT_MAX = 10.0f;
+    private static final float WAIT_MAX = 5.0f;
+    /** Drop lines Hypixel sends a moment before the kill is counted - kept for a short while so none get lost. */
+    private static final java.util.List<Object[]> RECENT = new java.util.ArrayList<>();
+    private static final long RECENT_MS = 2500L;
+    private static float firstDropAt = -1f;
     private static final int PARTICLES = 50;
     private static final int CHUNKS = 30;
     private static final int SLOT_MACHINE_H = 182;
@@ -257,10 +261,23 @@ public final class LavaScene {
                 else if (body != null && body.getFirstPassenger() instanceof LivingEntity r) {
                     horseBody = body;
                     riderBody = r;
+                } else if (isHorse(body)) {
+                    // only the horse was found (Hypixel does not always link the rider): look for the rider on top
+                    horseBody = body;
+                    riderBody = riderNear(body);
                 }
             } catch (Throwable ignored) {
             }
+            if (isHorse(riderBody)) riderBody = null; // never a second horse as the rider
             mob = MobView.snapshot(riderBody, l.standIn);
+            if (mob == null || isHorse(mob)) mob = MobView.snapshot(null, l.standIn);
+            if (mob != null && (riderBody == null || mob.isInvisible() || mob instanceof net.minecraft.world.entity.decoration.ArmorStand)) {
+                if (riderBody != null) mob = MobView.snapshot(null, l.standIn);
+                if (mob != null) {
+                    mob.setInvisible(false);
+                    dressStandIn(l.game);
+                }
+            }
             horse = MobView.snapshot(horseBody, EntityTypes.SKELETON_HORSE);
             try {
                 if (mob != null && horse != null) mob.startRiding(horse, true, false);
@@ -289,6 +306,14 @@ public final class LavaScene {
                 + " mob=" + (mob == null ? "none" : mob.getType().toShortString()) + " 3d=" + MobView.available());
         }
         DROPS.clear();
+        firstDropAt = -1f;
+        if (!isTest) {
+            long now = System.currentTimeMillis();
+            synchronized (RECENT) {
+                for (Object[] o : RECENT) if (now - (Long) o[0] <= RECENT_MS) addDrop((String) o[1]);
+                RECENT.clear();
+            }
+        }
         resultAt = -1;
         stopAt = -1;
         resultIdx = -1;
@@ -312,11 +337,46 @@ public final class LavaScene {
         active = true;
     }
 
+    private static boolean isHorse(net.minecraft.world.entity.Entity e) {
+        return e instanceof net.minecraft.world.entity.animal.equine.AbstractHorse;
+    }
+
+    /** The rider sitting on a horse Hypixel did not link: the closest living mob just above it. */
+    private static LivingEntity riderNear(LivingEntity horseBody) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null || horseBody == null) return null;
+        LivingEntity best = null;
+        double bestD = Double.MAX_VALUE;
+        var box = horseBody.getBoundingBox().inflate(1.5, 2.5, 1.5);
+        for (LivingEntity e : mc.level.getEntitiesOfClass(LivingEntity.class, box)) {
+            if (e == horseBody || isHorse(e) || e instanceof net.minecraft.world.entity.player.Player
+                || e instanceof net.minecraft.world.entity.decoration.ArmorStand || e.isInvisible()) continue;
+            if (e.getY() < horseBody.getY() - 0.2) continue;
+            double d = e.distanceToSqr(horseBody);
+            if (d < bestD) {
+                bestD = d;
+                best = e;
+            }
+        }
+        return best;
+    }
+
     /** Test scenes (no real body): dress the stand-in like the SkyBlock mob - its real head skin from the NEU repo. */
     private static void dressStandIn(Game g) {
         try {
             var head = net.minecraft.world.entity.EquipmentSlot.HEAD;
-            if (g == Game.GRAVES) {
+            if (g == Game.SHOOT) {
+                var red = new net.minecraft.world.item.component.DyedItemColor(0xC0141E);
+                ItemStack helm = new ItemStack(net.minecraft.world.item.Items.LEATHER_HELMET);
+                ItemStack chest = new ItemStack(net.minecraft.world.item.Items.LEATHER_CHESTPLATE);
+                ItemStack legs = new ItemStack(net.minecraft.world.item.Items.LEATHER_LEGGINGS);
+                ItemStack boots = new ItemStack(net.minecraft.world.item.Items.LEATHER_BOOTS);
+                for (ItemStack st : new ItemStack[]{helm, chest, legs, boots}) st.set(net.minecraft.core.component.DataComponents.DYED_COLOR, red);
+                mob.setItemSlot(head, helm);
+                mob.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST, chest);
+                mob.setItemSlot(net.minecraft.world.entity.EquipmentSlot.LEGS, legs);
+                mob.setItemSlot(net.minecraft.world.entity.EquipmentSlot.FEET, boots);
+            } else if (g == Game.GRAVES) {
                 mob.setItemSlot(head, GambleArt.icon("GRIMHEAD").copy());
                 mob.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, new ItemStack(net.minecraft.world.item.Items.NETHERITE_HOE));
             } else if (g == Game.CLAW) {
@@ -336,16 +396,33 @@ public final class LavaScene {
 
     /** RARE DROP / PET DROP lines while the scene runs. */
     public static void onChat(Component message, boolean overlay) {
-        if (!active || overlay || message == null || test) return;
+        if (overlay || message == null || (active && test)) return;
         try {
             String s = message.getString().replaceAll("§.", "").trim();
             String up = s.toUpperCase(Locale.ROOT);
             String item = null;
             if (up.startsWith("RARE DROP!")) item = s.substring(10).trim();
             else if (up.startsWith("PET DROP!")) item = s.substring(9).trim();
+            else if (up.startsWith("LOOT SHARE")) {
+                // "LOOT SHARE You received <items> for assisting <name>!"
+                java.util.regex.Matcher m = java.util.regex.Pattern.compile("(?i)you received (.+?) for assisting").matcher(s);
+                if (m.find()) item = m.group(1).trim();
+            }
             if (item == null || item.isEmpty()) return;
             int mf = item.indexOf("(+");
             if (mf > 0) item = item.substring(0, mf).trim();
+            if (item.toLowerCase(Locale.ROOT).startsWith("enchanted book (") && item.endsWith(")")) {
+                item = item.substring(16, item.length() - 1).trim(); // "Enchanted Book (Flash I)" -> "Flash I"
+            }
+            item = item.replaceFirst("^\\d+x\\s+", "");
+            if (!active) {
+                synchronized (RECENT) {
+                    long now = System.currentTimeMillis();
+                    RECENT.removeIf(o -> now - (Long) o[0] > RECENT_MS);
+                    RECENT.add(new Object[]{now, item});
+                }
+                return;
+            }
             addDrop(item);
         } catch (Throwable t) {
             TikiGambleClient.LOGGER.warn("[Light] lava gambling chat failed", t);
@@ -486,7 +563,12 @@ public final class LavaScene {
         Game game = look.game;
         int n = look.pool.length;
 
-        if (resultAt < 0 && (test || !DROPS.isEmpty() || t >= WAIT_MAX)) resultAt = t;
+        // a drop is there: wait a moment for more lines of the same kill (the best one wins), then lock the result
+        if (resultAt < 0 && !DROPS.isEmpty()) {
+            if (firstDropAt < 0) firstDropAt = t;
+            if (t >= firstDropAt + 0.8f) resultAt = t;
+        }
+        if (resultAt < 0 && (test || t >= WAIT_MAX)) resultAt = t;
         if (stopAt < 0 && resultAt >= 0 && t >= GAMBLE_AT + MIN_SPIN) {
             stopAt = Math.max(t, resultAt + 0.2f);
             decide();
