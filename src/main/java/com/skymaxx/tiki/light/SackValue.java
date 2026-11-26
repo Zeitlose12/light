@@ -51,7 +51,6 @@ public final class SackValue {
     private static final Pattern STORED = Pattern.compile("(?i)Stored:\\s*([\\d,]+)\\s*/");
     private static final Pattern REMOVED = Pattern.compile("^\\s*-([\\d,]+)\\s+(.+?)\\s*\\((.+)\\)\\s*$");
     private static final Pattern ADDED = Pattern.compile("^\\s*\\+([\\d,]+)\\s+(.+?)\\s*\\((.+)\\)\\s*$");
-    private static final long BAZAAR_MS = 5 * 60_000L;
     private static final long ITEMS_MS = 7L * 24 * 3_600_000L;
 
     /** sack name (without Small/Medium/Large) -> item name -> amount */
@@ -179,7 +178,7 @@ public final class SackValue {
             dirty = false;
             save();
         }
-        if (tick % 200 == 0 && mc.level != null && System.currentTimeMillis() - bazaarMs > BAZAAR_MS) refresh();
+        if (tick % 200 == 0 && mc.level != null && System.currentTimeMillis() - bazaarMs > Math.max(5, c.sackRefreshMinutes) * 60_000L) refresh();
     }
 
     private static void scan(AbstractContainerScreen<?> container) {

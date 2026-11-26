@@ -126,6 +126,8 @@ public class TikiConfig {
     public float sackHudScale = 1.0f;
     /** Compact numbers (902,97M / 1,21B) and sacks that do not count (comma separated, e.g. "Bait Sack"). */
     public boolean sackCompact = false;
+    /** How often the bazaar prices for the sack value are fetched (minutes: 5, 10 or 15). */
+    public int sackRefreshMinutes = 10;
     public String sackExcluded = "";
     /** How dark the game gets behind the Light menu (0 - 0.9). */
     public float menuDim = 0.55f;

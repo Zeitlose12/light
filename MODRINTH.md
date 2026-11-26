@@ -90,7 +90,7 @@ Light is **client-side only**. It does **not**:
 - show hidden entities or players
 
 It only displays information you already get and blocks **your own** clicks on the Bazaar sell button.
-The dye tracker never connects to the internet – it only reads the data the SkyBlock Profile Viewer has already loaded. The only network feature is the **drop prices** in the gambling animations: Light asks [SkyCofl](https://sky.coflnet.com/data) once per real rare drop for its price (cached 10 minutes, at most 20 requests per minute). Only the item id is sent – nothing about you or your account. The **sack value HUD** asks Hypixel's public bazaar API every 5 minutes (no key, no account data). Switch prices off in **`/light` → Settings** and the sack value HUD off in **`/light` → Bazaar** – then Light never goes online.
+The dye tracker never connects to the internet – it only reads the data the SkyBlock Profile Viewer has already loaded. The only network feature is the **drop prices** in the gambling animations: Light asks [SkyCofl](https://sky.coflnet.com/data) once per real rare drop for its price (cached 10 minutes, at most 20 requests per minute). Only the item id is sent – nothing about you or your account. The **sack value HUD** asks Hypixel's public bazaar API every 10 minutes (adjustable: 5 / 10 / 15) (no key, no account data). Switch prices off in **`/light` → Settings** and the sack value HUD off in **`/light` → Bazaar** – then Light never goes online.
 
 *No mod is ever officially approved by Hypixel – use any mod at your own risk.*
 </details>

@@ -32,7 +32,7 @@
 - Debug commands: `/light test fanfare|dry|history|clear`, `/light achievement list|remove`
 - **🎒 Sack value HUD** (Bazaar tab): value of all your sacks, sell offer or insta-sell, box or text only, movable
 - Menu background gets darker (adjustable in General)
-- Sack value: compact numbers (902,97M / 1,21B) and a list to choose which sacks count (e.g. leave out the Bait Sack)
+- Sack value: prices every 10 minutes (5 / 10 / 15 adjustable), compact numbers (902,97M / 1,21B) and a list to choose which sacks count (e.g. leave out the Bait Sack)
 - HUDs tab: every HUD has its own on/off and a clear yellow **Move** button
 - Drop boards checked against the wiki: Thunder now has the **Flash I** book and the **Thunder Fragment**, Lord Jawbus now has **Bobbin' Scriptures** and the **Magma Lord Fragment** (several drops at once: the best one is shown); Grim Reaper, Yeti and Reindrake have the **Aquamarine Dye**, Reindrake has **Bobbin' Scriptures**; shards and guaranteed drops (Prosperity I) never count as a gambling drop
 - RNG fanfare: calmer glow and one short ray burst instead of spinning rays; "RNG!" no longer covers the mob name

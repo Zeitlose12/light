@@ -228,6 +228,13 @@ extends Screen {
         y = this.toggle(x, y, w, "Compact numbers (902,97M / 1,21B)", () -> this.cfg.sackCompact, v -> {
             this.cfg.sackCompact = v;
         });
+        this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal(SkyMaxxScreen.refreshLabel(this.cfg.sackRefreshMinutes)), b -> {
+            int m = this.cfg.sackRefreshMinutes;
+            this.cfg.sackRefreshMinutes = m <= 5 ? 10 : (m <= 10 ? 15 : 5);
+            this.cfg.save();
+            b.setMessage((Component)Component.literal(SkyMaxxScreen.refreshLabel(this.cfg.sackRefreshMinutes)));
+        }).bounds(x, y, w, 20).build(), y));
+        y += 22;
         y = this.sectionHeader(x, y + 2, w, "Counted sacks", null, sacksOpen, () -> {
             sacksOpen = !sacksOpen;
         });
@@ -240,7 +247,8 @@ extends Screen {
             y += 4;
         }
         y = this.note(y, "\u00a77Open each of your sacks once - after that the [Sacks]");
-        y = this.note(y, "\u00a77messages keep it up to date. Prices: Hypixel bazaar API.");
+        y = this.note(y, "\u00a77messages keep it up to date. Prices: Hypixel bazaar API,");
+        y = this.note(y, "\u00a77one request for all items at the interval above.");
         y = this.heading(y, "Bazaar");
         y = this.toggle(x, y, w, "Lock Sell Sacks Now", () -> this.cfg.lockBazaarSellSacks, v -> {
             this.cfg.lockBazaarSellSacks = v;
@@ -482,6 +490,10 @@ extends Screen {
 
     private static String sackPriceLabel(String mode) {
         return "Price: " + ("INSTA_SELL".equals(mode) ? "\u00a7eInsta-Sell" : "\u00a7aSell Offer");
+    }
+
+    private static String refreshLabel(int minutes) {
+        return "Update prices every: \u00a7f" + Math.max(5, minutes) + " min";
     }
 
     private static String sackStyleLabel(String style) {
