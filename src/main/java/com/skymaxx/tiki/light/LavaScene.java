@@ -109,6 +109,10 @@ public final class LavaScene {
     private static boolean test;
     /** Light 1.2: the logged result of this scene (History) + the beta extras (dry streak, RNG fanfare). */
     private static GambleLog.Entry entry;
+    /** The last real result, so a drop that only shows up in the [Sacks] message later can still be added. */
+    private static GambleLog.Entry lastEntry;
+    private static Look lastLook;
+    private static long lastAt;
     private static float fanfareAt = -1;
     private static boolean fanfareShot;
     private static boolean forceFanfare;
@@ -269,6 +273,7 @@ public final class LavaScene {
             } catch (Throwable ignored) {
             }
             if (isHorse(riderBody)) riderBody = null; // never a second horse as the rider
+            if (riderBody == null && seenRider != null && System.currentTimeMillis() - seenRiderAt < 90_000L) riderBody = seenRider;
             mob = MobView.snapshot(riderBody, l.standIn);
             if (mob == null || isHorse(mob)) mob = MobView.snapshot(null, l.standIn);
             if (mob != null && (riderBody == null || mob.isInvisible() || mob instanceof net.minecraft.world.entity.decoration.ArmorStand)) {
@@ -307,6 +312,8 @@ public final class LavaScene {
         }
         DROPS.clear();
         firstDropAt = -1f;
+        lastFadeAt = -1f;
+        lastLength = -1f;
         if (!isTest) {
             long now = System.currentTimeMillis();
             synchronized (RECENT) {
@@ -339,6 +346,30 @@ public final class LavaScene {
 
     private static boolean isHorse(net.minecraft.world.entity.Entity e) {
         return e instanceof net.minecraft.world.entity.animal.equine.AbstractHorse;
+    }
+
+    private static LivingEntity seenRider;
+    private static long seenRiderAt;
+    private static int trackTick;
+
+    /** While Ragnarok is alive: remember his rider (when he dies Hypixel removes the rider before the horse). */
+    public static void tick(Minecraft mc) {
+        try {
+            if (mc.level == null || mc.player == null || ++trackTick % 10 != 0) return;
+            TikiConfig c = cfg();
+            if (c == null || !c.lavaGambleEnabled || !c.lavaGambleRagnarok) return;
+            var box = mc.player.getBoundingBox().inflate(40.0, 20.0, 40.0);
+            for (LivingEntity e : mc.level.getEntitiesOfClass(LivingEntity.class, box, LavaScene::isHorse)) {
+                if (!(e instanceof net.minecraft.world.entity.animal.equine.SkeletonHorse)) continue;
+                LivingEntity r = e.getFirstPassenger() instanceof LivingEntity p && !isHorse(p)
+                    && !(p instanceof net.minecraft.world.entity.decoration.ArmorStand) ? p : riderNear(e);
+                if (r != null && !r.isInvisible()) {
+                    seenRider = r;
+                    seenRiderAt = System.currentTimeMillis();
+                }
+            }
+        } catch (Throwable ignored) {
+        }
     }
 
     /** The rider sitting on a horse Hypixel did not link: the closest living mob just above it. */
@@ -415,6 +446,7 @@ public final class LavaScene {
                 item = item.substring(16, item.length() - 1).trim(); // "Enchanted Book (Flash I)" -> "Flash I"
             }
             item = item.replaceFirst("^\\d+x\\s+", "");
+            if (active && stopAt >= 0) lateDrop(item); // a line for this kill that came after the result was locked
             if (!active) {
                 synchronized (RECENT) {
                     long now = System.currentTimeMillis();
@@ -431,7 +463,7 @@ public final class LavaScene {
 
     /** Rare items that went straight into sacks/inventory (some drops have no RARE DROP line). */
     public static void onItemGained(String name, String id, int count, boolean viaSack) {
-        if (!active || name == null || test) return;
+        if (name == null || (active && test)) return;
         try {
             String l = name.replaceAll("§.", "").trim();
             String low = l.toLowerCase(Locale.ROOT);
@@ -440,7 +472,9 @@ public final class LavaScene {
                 || low.contains("flaming heart") || low.contains("enrager") || low.contains("flash")
                 || low.contains("vampire fang") || low.contains("deep sea orb") || low.contains("baby yeti")
                 || low.contains("yeti rod") || low.contains("true ice") || low.contains("magma lord fragment") || low.contains("thunder fragment");
-            if (rare) addDrop(l);
+            if (!rare) return;
+            if (active && stopAt < 0) addDrop(l);
+            else lateDrop(l);
         } catch (Throwable t) {
             TikiGambleClient.LOGGER.warn("[Light] lava gambling item failed", t);
         }
@@ -448,6 +482,7 @@ public final class LavaScene {
 
     private static void addDrop(String item) {
         if (DROPS.size() >= 6 || item == null) return;
+        item = LavaPrices.display(item);
         // no shards of any kind (attribute / hunting shards) - they are never a gambling result
         if (item.toLowerCase(Locale.ROOT).contains("shard")) return;
         // guaranteed drops are never a gambling result (Reindrake: Prosperity I for the spawner)
@@ -493,33 +528,52 @@ public final class LavaScene {
         Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(ev, pitch, volume));
     }
 
-    /** Locks the result: first drop that is on this mob's board, otherwise ??? with its name, otherwise nothing. */
+    /** Board slot of a drop for this mob, or -1 when it is not on the board (junk like Rampart Leggings). */
+    private static int boardIndex(Look l, String drop) {
+        if (l == null || drop == null) return -1;
+        String low = drop.toLowerCase(Locale.ROOT);
+        for (int i = 0; i < l.pool.length; i++) {
+            Sym s = l.pool[i];
+            if (s.match != null && !s.match.isEmpty() && low.contains(s.match)) return i;
+        }
+        return -1;
+    }
+
+    /** Ranking of a drop: a dye always first, then the higher price, then the board order. Lower is better. */
+    private static double rank(Look l, String drop) {
+        int i = boardIndex(l, drop);
+        if (i < 0) return Double.MAX_VALUE;
+        if (l.pool[i].match.contains("dye")) return -1e18;
+        Long p = LavaPrices.price(drop);
+        return p != null && p > 0 ? -p - 1e12 : i; // known prices beat the board order
+    }
+
+    /** Locks the result: the best drop on this mob's board; drops that are not on the board count as nothing. */
     private static void decide() {
         resultIdx = indexOf(NONE);
         resultName = null;
-        // several drops at once (e.g. Magma Lord Fragment + Radioactive Vial): the best one wins -
-        // a dye first, then the order of the board (most valuable first)
-        int bestRank = Integer.MAX_VALUE;
+        double best = Double.MAX_VALUE;
         for (String d : DROPS) {
-            String low = d.toLowerCase(Locale.ROOT);
-            for (int i = 0; i < look.pool.length; i++) {
-                Sym s = look.pool[i];
-                if (s.match != null && !s.match.isEmpty() && low.contains(s.match)) {
-                    int rank = s.match.contains("dye") ? -1 : i;
-                    if (rank < bestRank) {
-                        bestRank = rank;
-                        resultIdx = i;
-                        resultName = d;
-                    }
-                    break;
-                }
+            int i = boardIndex(look, d);
+            if (i < 0) continue;
+            double r = rank(look, d);
+            if (r < best) {
+                best = r;
+                resultIdx = i;
+                resultName = d;
             }
         }
-        if (resultName != null) return;
-        if (!DROPS.isEmpty()) {
-            resultIdx = indexOf(OTHER);
-            resultName = DROPS.get(0);
-        }
+    }
+
+    /** A board drop that arrives after the scene (usually the [Sacks] message): fix the history entry. */
+    private static void lateDrop(String item) {
+        if (lastEntry == null || lastLook == null || System.currentTimeMillis() - lastAt > 35_000L) return;
+        item = LavaPrices.display(item);
+        if (boardIndex(lastLook, item) < 0) return;
+        if (lastEntry.drop != null && rank(lastLook, item) >= rank(lastLook, lastEntry.drop)) return;
+        GambleLog.setDrop(lastEntry, item);
+        Long p = LavaPrices.price(item);
+        if (p != null) GambleLog.setPrice(lastEntry, p);
     }
 
     private static int indexOf(Sym s) {
@@ -546,16 +600,72 @@ public final class LavaScene {
         TARGET_P[k] = base + Math.floorMod(finalIdx - base, n);
     }
 
+    /** A scene is running and covers the whole screen (Light then hides chat, titles and other HUDs). */
+    public static boolean ownsScreen() {
+        TikiConfig c = cfg();
+        return active && (c == null || !corner(c)) && (c == null || c.gambleHideHud);
+    }
+
+    /** A scene is running and chat / titles should be hidden. */
+    public static boolean hidesChat() {
+        TikiConfig c = cfg();
+        return active && (c == null || c.gambleHideHud);
+    }
+
+    private static boolean corner(TikiConfig c) {
+        return c.gambleView != null && !"FULL".equals(c.gambleView);
+    }
+
     public static void render(GuiGraphicsExtractor ctx, DeltaTracker delta) {
         if (!active) return;
+        TikiConfig c = cfg();
+        boolean small = c != null && corner(c);
+        var pose = ctx.pose();
+        int sw = ctx.guiWidth(), sh = ctx.guiHeight();
+        float s = 0.42f;
+        int cw = Math.round(sw * s), ch = Math.round(sh * s);
+        int x0 = c != null && c.gambleView.endsWith("LEFT") ? 6 : sw - cw - 6;
+        int y0 = c != null && c.gambleView.startsWith("TOP") ? 6 : sh - ch - 6;
+        boolean pushed = false, scissor = false;
         try {
+            if (small) {
+                // the whole scene shrunk into a corner, with a thin frame - the game stays visible
+                Theme.round(ctx, x0 - 2, y0 - 2, x0 + cw + 2, y0 + ch + 2, 0xC0101018);
+                ctx.enableScissor(x0, y0, x0 + cw, y0 + ch);
+                scissor = true;
+                ctx.fill(x0, y0, x0 + cw, y0 + ch, 0xFF07060A);
+                pose.pushMatrix();
+                pushed = true;
+                pose.translate(x0, y0);
+                pose.scale(s, s);
+                MobView.vx = x0;
+                MobView.vy = y0;
+                MobView.vs = s;
+            } else if (c == null || c.gambleHideHud) {
+                // full screen: nothing of the game shines through (no spoiler)
+                ctx.fill(0, 0, sw, sh, argb(fadeAlpha(), 0x050308));
+            }
             draw(ctx);
         } catch (Throwable t) {
             active = false;
             mob = null;
             TikiGambleClient.LOGGER.warn("[Light] lava gambling render failed", t);
+        } finally {
+            if (pushed) pose.popMatrix();
+            if (scissor) ctx.disableScissor();
+            MobView.vx = 0f;
+            MobView.vy = 0f;
+            MobView.vs = 1f;
         }
     }
+
+    /** Fade of the whole scene (in at the start, out at the end) for the full-screen cover. */
+    private static float fadeAlpha() {
+        float t = time();
+        return clamp(t / RISE_AT) * (lastLength > 0 && t > lastFadeAt ? clamp(1.0f - (t - lastFadeAt) / (lastLength - lastFadeAt)) : 1.0f);
+    }
+
+    private static float lastFadeAt = -1f, lastLength = -1f;
 
     private static void draw(GuiGraphicsExtractor ctx) {
         Minecraft mc = Minecraft.getInstance();
@@ -574,6 +684,11 @@ public final class LavaScene {
             decide();
             try {
                 entry = GambleLog.record(look.key, look.creature, win() ? resultName : null, lootShare, test);
+                if (!test) {
+                    lastEntry = entry;
+                    lastLook = look;
+                    lastAt = System.currentTimeMillis();
+                }
             } catch (Throwable e) {
                 TikiGambleClient.LOGGER.warn("[Light] gamble log failed", e);
             }
@@ -616,6 +731,8 @@ public final class LavaScene {
         float nameAt = burstAt + 0.3f;
         float fadeAt = nameAt + 2.8f + (fanfareAt >= 0 ? 2.4f : 0f);
         float length = fadeAt + 0.7f;
+        lastFadeAt = fadeAt;
+        lastLength = length;
         if (t >= length) {
             active = false;
             mob = null;
@@ -801,7 +918,7 @@ public final class LavaScene {
             colors.add(0xFFCC33);
         }
         for (String d : DROPS) {
-            if (d.equals(resultName)) continue;
+            if (d.equals(resultName) || boardIndex(look, d) < 0) continue; // junk is not listed
             Long price = LavaPrices.price(d);
             lines.add(d + (price != null ? "  §7" + LavaPrices.format(price) : ""));
             colors.add(0xD9D9D9);
@@ -955,7 +1072,20 @@ public final class LavaScene {
                 if (s.match != null && !s.match.isEmpty() && low.contains(s.match)) return iconOf(s);
             }
         }
+        // Wiki Tiki / Titanoboa drops (Journal)
+        if (low.contains("mask")) return new ItemStack(net.minecraft.world.item.Items.CARVED_PUMPKIN);
+        if (low.contains("bubble")) return new ItemStack(net.minecraft.world.item.Items.HEART_OF_THE_SEA);
+        if (low.contains("snake eyes")) return new ItemStack(net.minecraft.world.item.Items.ENDER_EYE);
+        if (low.contains("shed")) return new ItemStack(net.minecraft.world.item.Items.RABBIT_HIDE);
+        if (low.contains("lily pad")) return new ItemStack(net.minecraft.world.item.Items.LILY_PAD);
         return null;
+    }
+
+    /** Is this drop on the gambling board of that mob? (Wiki Tiki / Titanoboa drops always count.) */
+    public static boolean onBoard(String mobKey, String drop) {
+        if ("tiki".equals(mobKey) || "boa".equals(mobKey)) return drop != null;
+        Look l = lookOf(mobKey);
+        return l != null && boardIndex(l, drop) >= 0;
     }
 
     /** The title color of a gambling mob (Journal). */
@@ -1395,7 +1525,14 @@ public final class LavaScene {
                 int riderPx = (int) (horsePx * rh);
                 float rx = hit ? baseX : hx;
                 float ry = hy - horsePx * 0.45f + (hit ? ft * ft * 520 - ft * 60 : 0);
-                if (!hit || ry < ground + riderPx) MobView.drawPosed(ctx, mob, (int) (rx + shakeX), (int) (ry + shakeY), riderPx, -90.0f, hit ? ft * 120.0f : 0.0f, 0.0f);
+                if (!hit || ry < ground + riderPx) {
+                    MobView.headStraight = true; // the rider looks where the horse runs
+                    try {
+                        MobView.drawPosed(ctx, mob, (int) (rx + shakeX), (int) (ry + shakeY), riderPx, -90.0f, hit ? ft * 120.0f : 0.0f, 0.0f);
+                    } finally {
+                        MobView.headStraight = false;
+                    }
+                }
             }
             ctx.nextStratum();
         }

@@ -16,6 +16,14 @@ public class GuiHudMixin {
      */
     @WrapMethod(method={"extractRenderState"})
     private void skymaxx$drawTotemAndOwnTheScreen(GuiGraphicsExtractor ctx, DeltaTracker delta, Operation<Void> original) {
+        // Light: a full-screen gambling scene hides the whole HUD (chat, titles, other mods) - no spoilers
+        try {
+            if (com.skymaxx.tiki.light.LavaScene.ownsScreen()) {
+                com.skymaxx.tiki.light.LavaScene.render(ctx, delta);
+                return;
+            }
+        } catch (Throwable ignored) {
+        }
         if (!TikiGambleClient.renderTotemBeforeHud(ctx, delta)) {
             original.call(new Object[]{ctx, delta});
             return;

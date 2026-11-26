@@ -32,12 +32,23 @@
 - **Custom buttons:** every button, switch and slider in the menu now follows the menu theme (rounded buttons with hover glow, sliding ON/OFF pills, category bars, slim sliders with a round knob).
 - Frost and Lava themes: a bit more snow, bubbles and embers.
 
+- **Gambling view** (Gambling tab): full screen hides the game, chat, titles and other HUDs while a scene runs (no spoiler from drop messages) – or show the scene small in a corner of your choice
+- **History** is folded by day (today open), so long sessions stay tidy; Wiki Tiki and Titanoboa results are listed too
+- **Journal:** one page per drop with a counter (e.g. "Flash I ×2"), only real drops (no Thunder Fragments or junk), Wiki Tiki and Titanoboa in the contents
+- Menu header: "Fishing Gambling Mod" with the credits next to the search bar
+
 ### 🔧 Changed
 - Menu tabs shrink on small windows so every tab stays visible
 - Cleaner menu: new tab order (General first, Settings last); in Gambling only one category is open at a time and every mob is one line (on/off · speed · preview)
 - Ragnarok stops shooting as soon as a shot hits
 
 ### 🐛 Fixed
+- Gambling: when several drops come at once the **most valuable** one wins (a dye always first); the price below is always the price of the shown drop
+- Gambling: book drops ("Enchanted Book (Flash 1)") get their price; prices that fail to load are fetched again and filled into the History later
+- Gambling: drops that are not on the mob's board (e.g. Rampart Leggings) count as nothing
+- Gambling: a board drop that only shows up later in the [Sacks] message is added to the History afterwards
+- Ragnarok: Light remembers the rider while Ragnarok is alive, so the real red rider is shown; his head looks where the horse runs
+- Frost snow is spread over the whole screen (it fell in two stripes before); HUD particles stay inside the HUD frame
 - Gambling: drop lines that arrive a moment before the kill is counted are no longer lost (e.g. Thunder showed the Thunder Fragment although Flash I dropped)
 - Gambling: "Enchanted Book (Flash I)" style drop lines are read correctly
 - Gambling: loot share items ("LOOT SHARE You received … for assisting …") count as your drop

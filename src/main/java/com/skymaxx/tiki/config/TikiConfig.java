@@ -109,6 +109,10 @@ public class TikiConfig {
     public boolean lavaGambleRagnarok = true;
     public boolean lavaGamblePlhlegblast = true;
     public boolean lavaGambleOwnOnly = false;
+    /** Gambling scenes (Lava, Spooky, Winter): FULL covers the game; TOP_LEFT/TOP_RIGHT/BOTTOM_LEFT/BOTTOM_RIGHT = small in a corner. */
+    public String gambleView = "FULL";
+    /** Hide chat, titles and the other HUDs while a gambling scene runs (no spoiler from drop messages). */
+    public boolean gambleHideHud = true;
     public float lavaGambleVolume = 0.6f;
     public boolean lavaGamblePrices = true;
     /** Light 1.2 beta: dry streak + RNG fanfare in the gambling result (off = everything exactly as before). */

@@ -89,6 +89,11 @@ public final class MobView {
 
     /** {@code look}: how far it looks down (positive) or up (negative), in body heights. */
     public static void draw(GuiGraphicsExtractor ctx, LivingEntity e, int cx, int cy, int px, float turn, float look) {
+        if (vs != 1f) {
+            cx = Math.round(vx + cx * vs);
+            cy = Math.round(vy + cy * vs);
+            px = Math.round(px * vs);
+        }
         if (broken || e == null || px < 4) return;
         try {
             float h = height(e);
@@ -119,6 +124,11 @@ public final class MobView {
     /** Like drawPosed, plus limb swing (walk cycle position/speed) and an arm swing (attack 0..1). */
     public static void drawPosed(GuiGraphicsExtractor ctx, LivingEntity e, int cx, int cy, int px, float yaw, float bodyPitch, float headPitch,
                                  float walkPos, float walkSpeed, float attack) {
+        if (vs != 1f) {
+            cx = Math.round(vx + cx * vs);
+            cy = Math.round(vy + cy * vs);
+            px = Math.round(px * vs);
+        }
         if (broken || e == null || px < 4) return;
         try {
             float h = height(e);
@@ -134,7 +144,7 @@ public final class MobView {
             st.outlineColor = 0;
             if (st instanceof net.minecraft.client.renderer.entity.state.LivingEntityRenderState ls) {
                 ls.bodyRot = 180.0f + yaw;
-                ls.yRot = yaw;
+                ls.yRot = headStraight ? 0.0f : yaw; // yRot is the head turn relative to the body
                 ls.xRot = headPitch;
                 ls.boundingBoxWidth /= ls.scale;
                 ls.boundingBoxHeight /= ls.scale;
@@ -156,6 +166,15 @@ public final class MobView {
         }
     }
 
+    /**
+     * 3D mobs are not moved by the GUI pose: while a scene is drawn small in a corner these move and scale
+     * them the same way (gui x = vx + x * vs).
+     */
+    public static float vx, vy, vs = 1f;
+
+    /** True while drawing a mob whose head should look the same way as its body (Ragnarok's rider). */
+    public static boolean headStraight;
+
     private static boolean dragonBroken;
     /** Debug fine-tuning for the dragon view (/light dragonfix yaw pitch y). */
     public static float dragonYawFix = 0.0f;
@@ -170,6 +189,11 @@ public final class MobView {
      */
     public static void drawDragon(GuiGraphicsExtractor ctx, LivingEntity e, int cx, int cy, int span, float yaw, float pitch,
                                   float flap, float sway, float t, float death) {
+        if (vs != 1f) {
+            cx = Math.round(vx + cx * vs);
+            cy = Math.round(vy + cy * vs);
+            span = Math.round(span * vs);
+        }
         if (broken || dragonBroken || e == null || span < 8) return;
         try {
             net.minecraft.client.renderer.entity.EntityRenderer r = Minecraft.getInstance().getEntityRenderDispatcher().getRenderer(e);

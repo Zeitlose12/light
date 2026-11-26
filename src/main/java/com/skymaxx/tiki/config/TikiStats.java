@@ -105,6 +105,14 @@ public class TikiStats {
             ++this.reachedFinalReel;
         }
         this.count(prize);
+        // Light: the result also goes into the History and the Journal
+        com.skymaxx.tiki.light.GambleLog.recordExternal("tiki", "Wiki Tiki", prize == null || !prize.dropped() ? null : switch (prize) {
+            case BOBBIN -> "Bobbin' Scriptures";
+            case BUBBLE -> "Troubled Bubble";
+            case MASK -> "Tiki Mask";
+            case AQUAMARINE -> "Aquamarine Dye";
+            default -> null;
+        });
         if (prize != null && prize.dropped()) {
             this.dryStreak = 0;
         } else {
@@ -153,6 +161,15 @@ public class TikiStats {
             this.segmentsDown[n] = this.segmentsDown[n] + 1;
         }
         this.count(prize);
+        // Light: the result also goes into the History and the Journal
+        com.skymaxx.tiki.light.GambleLog.recordExternal("boa", "Titanoboa", prize == null || !prize.dropped() ? null : switch (prize) {
+            case LILY_PAD -> "Condensed Lily Pad";
+            case BOBBIN -> "Bobbin' Scriptures";
+            case SHED -> "Titanoboa Shed";
+            case SNAKE_EYES -> "Snake Eyes";
+            case AQUAMARINE -> "Aquamarine Dye";
+            default -> null;
+        });
         if (prize != null && prize.dropped()) {
             this.boaDryStreak = 0;
         } else {

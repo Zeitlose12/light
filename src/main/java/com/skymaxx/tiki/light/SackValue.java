@@ -426,7 +426,7 @@ public final class SackValue {
         Theme th = Theme.hud();
         if (th.noBox()) textOnly = true;
         if (textOnly) {
-            th.hudFx(ctx, -2, -2, Math.max(font.width(label), font.width(num)) + 4, 32);
+            th.hudFx(ctx, 0, 0, Math.max(font.width(textOnlyLabel(offer)), font.width(value < 0 ? num : num(value))) + 1, 20);
             ctx.text(font, Component.literal(textOnlyLabel(offer)), 0, 0, th.accent);
             ctx.text(font, Component.literal(value < 0 ? num : num(value)), 0, 11, value < 0 ? 0xFF9E9890 : 0xFFFFD24A);
             if (plus > 0) ctx.text(font, Component.literal("+" + num(plus)), 0, 22, 0xFF55FF55);

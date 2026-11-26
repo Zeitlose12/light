@@ -127,15 +127,18 @@ public enum Theme {
         if (snows()) {
             for (int i = 0; i < 11; i++) {
                 float l = (t * (0.18f + (i % 3) * 0.05f) + i * 0.091f) % 1f;
-                int x = x0 + (int) ((i * 37 + Math.sin(t + i) * 4) % w + w) % w;
-                int y = y0 + (int) (l * h);
-                ctx.fill(x, y, x + 1 + (i % 2), y + 1 + (i % 2), (int) (200 * (1 - l * 0.6f)) << 24 | 0xFFFFFF);
+                int s = 1 + (i % 2);
+                // stays inside the HUD's frame (the yellow box when you move it)
+                int x = x0 + (int) Math.floor(((hash(i) * w + Math.sin(t + i) * 4) % w + w) % w);
+                x = Math.min(x, x1 - s);
+                int y = Math.min(y0 + (int) (l * h), y1 - s);
+                ctx.fill(x, y, x + s, y + s, (int) (200 * (1 - l * 0.6f)) << 24 | 0xFFFFFF);
             }
         } else if (this.effect == 3) {
             for (int i = 0; i < 8; i++) {
                 float l = (t * (0.25f + (i % 3) * 0.08f) + i * 0.125f) % 1f;
-                int x = x0 + (i * 41) % w;
-                int y = y1 - (int) (l * h);
+                int x = Math.min(x0 + (int) (hash(i + 50) * w), x1 - 1);
+                int y = Math.max(y0, Math.min(y1 - 1 - (int) (l * h), y1 - 1));
                 ctx.fill(x, y, x + 1, y + 1, (int) (220 * (1 - l)) << 24 | (i % 2 == 0 ? 0xFF9A2A : 0xFFD04A));
             }
         }
@@ -164,13 +167,13 @@ public enum Theme {
                 }
                 for (int i = 0; i < 7; i++) {
                     float l = (t * 0.7f + i * 0.143f) % 1f;
-                    int x = left + 20 + (i * 97) % Math.max(1, right - left - 40);
+                    int x = left + 20 + (int) (hash(i + 7) * Math.max(1, right - left - 40));
                     int r = (int) (l * 3);
                     ctx.fill(x - r, bottom - 5 - r, x + r + 1, bottom - 4, (int) (180 * (1 - l)) << 24 | 0xFFD04A);
                 }
                 for (int i = 0; i < 14; i++) {
                     float l = (t * 0.22f + i * 0.0714f) % 1f;
-                    int x = left + 10 + (i * 61) % Math.max(1, right - left - 20);
+                    int x = left + 10 + (int) (hash(i + 23) * Math.max(1, right - left - 20));
                     int y = bottom - 8 - (int) (l * (bottom - top) * 0.6f);
                     ctx.fill(x, y, x + 1, y + 1, (int) (200 * (1 - l)) << 24 | 0xFF8A2A);
                 }
@@ -181,14 +184,21 @@ public enum Theme {
         }
     }
 
+    /** A fixed pseudo-random number in [0, 1) for particle i. */
+    private static float hash(int i) {
+        double v = Math.sin(i * 12.9898 + 78.233) * 43758.5453;
+        return (float) (v - Math.floor(v));
+    }
+
     /** Snow over the whole screen (Frost, Clean in December) while the menu is open. */
     public void screenSnow(GuiGraphicsExtractor ctx, int sw, int sh) {
         if (!snows()) return;
         float t = (System.currentTimeMillis() % 100000L) / 1000f;
-        for (int i = 0; i < 120; i++) {
-            float sp = 14 + (i * 37 % 30);
-            float y = ((i * 53 + t * sp) % (sh + 10)) - 5;
-            float x = (((i * 97 + t * -8 * (0.5f + (i % 5) * 0.2f) + (float) Math.sin(t * 1.1f + i) * 6) % (sw + 10)) + sw + 10) % (sw + 10) - 5;
+        for (int i = 0; i < 140; i++) {
+            // every flake gets its own random column and speed (spread over the whole screen)
+            float sp = 14 + hash(i + 300) * 26;
+            float y = ((hash(i + 600) * (sh + 10) + t * sp) % (sh + 10)) - 5;
+            float x = (((hash(i) * (sw + 10) - t * 8 * (0.5f + hash(i + 900) * 0.8f) + (float) Math.sin(t * 1.1f + i) * 6) % (sw + 10)) + sw + 10) % (sw + 10) - 5;
             int s = i % 7 == 0 ? 2 : 1;
             ctx.fill((int) x, (int) y, (int) x + s, (int) y + s, (i % 3 == 0 ? 0xE0 : 0xA0) << 24 | 0xFFFFFF);
         }

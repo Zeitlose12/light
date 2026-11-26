@@ -59,7 +59,37 @@ public final class LavaPrices {
     /** The SkyBlock id for a drop name, or null if Light does not know it yet. */
     public static String tag(String itemName) {
         if (itemName == null) return null;
-        return TAGS.get(itemName.replaceAll("§.", "").trim().toLowerCase(Locale.ROOT));
+        String k = norm(itemName);
+        String t = TAGS.get(k);
+        if (t == null) t = TAGS.get("enchanted book (" + k + ")");
+        return t;
+    }
+
+    private static final String[] ROMAN = {"", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X"};
+
+    /** "Enchanted Book (Flash 1)" / "Flash 1" / "Flash I" -> "flash i" (Hypixel writes book levels as digits). */
+    public static String norm(String itemName) {
+        String k = itemName.replaceAll("§.", "").trim();
+        if (k.toLowerCase(Locale.ROOT).startsWith("enchanted book (") && k.endsWith(")")) k = k.substring(16, k.length() - 1).trim();
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("^(.*\\S)\\s+(\\d{1,2})$").matcher(k);
+        if (m.matches()) {
+            int n = Integer.parseInt(m.group(2));
+            if (n >= 1 && n <= 10) k = m.group(1) + " " + ROMAN[n];
+        }
+        return k.toLowerCase(Locale.ROOT);
+    }
+
+    /** Display name with a roman book level: "Flash 1" -> "Flash I". */
+    public static String display(String itemName) {
+        if (itemName == null) return null;
+        String k = itemName.replaceAll("§.", "").trim();
+        if (k.toLowerCase(Locale.ROOT).startsWith("enchanted book (") && k.endsWith(")")) k = k.substring(16, k.length() - 1).trim();
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("^(.*\\S)\\s+(\\d{1,2})$").matcher(k);
+        if (m.matches()) {
+            int n = Integer.parseInt(m.group(2));
+            if (n >= 1 && n <= 10) k = m.group(1) + " " + ROMAN[n];
+        }
+        return k;
     }
 
 
@@ -100,9 +130,11 @@ public final class LavaPrices {
                 }
                 long p = lowestBin(tag);
                 long[] bz = p < 0 ? bazaar(tag) : new long[]{-1, -1};
-                CACHE.put(tag, new Cached(p, bz[0], bz[1], System.currentTimeMillis()));
+                boolean none = p < 0 && bz[0] < 0 && bz[1] < 0;
+                CACHE.put(tag, new Cached(p, bz[0], bz[1], System.currentTimeMillis() - (none ? CACHE_MS - 30_000L : 0L)));
             } catch (Throwable t) {
-                CACHE.put(tag, new Cached(-1, -1, -1, System.currentTimeMillis()));
+                // failed: try again in about 30 seconds instead of waiting for the full cache time
+                CACHE.put(tag, new Cached(-1, -1, -1, System.currentTimeMillis() - CACHE_MS + 30_000L));
             } finally {
                 IN_FLIGHT.remove(tag);
             }

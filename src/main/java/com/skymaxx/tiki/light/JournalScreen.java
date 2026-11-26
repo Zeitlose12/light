@@ -55,17 +55,39 @@ public final class JournalScreen extends Screen {
         pages.add("toc");
         pages.add("sum");
         int drops = 0;
+        // one page per mob + drop (newest first); a new drop of the same kind only raises its count
+        Map<String, Group> groups = new LinkedHashMap<>();
         for (GambleLog.Entry e : GambleLog.entries()) {
-            if (e.drop != null) {
-                pages.add(e);
-                ++drops;
+            if (GambleLog.worthy(e)) {
+                Group g = groups.computeIfAbsent(e.mob + "|" + LavaPrices.norm(e.drop), k -> new Group(e));
+                g.count++;
+                if (e.price > g.best) g.best = e.price;
+                if (e.fanfare) g.fanfare = true;
+                if (e.share) g.shares++;
             } else {
                 none.merge(e.mobName, 1, Integer::sum);
             }
         }
+        for (Group g : groups.values()) {
+            pages.add(g);
+            ++drops;
+        }
         if (drops == 0) pages.add("empty");
         pages.add(none);
         if (pages.size() % 2 == 1) pages.add("end");
+    }
+
+    /** All drops of one kind from one mob: the newest one plus how often it dropped. */
+    private static final class Group {
+        final GambleLog.Entry last;
+        int count;
+        int shares;
+        long best = -1L;
+        boolean fanfare;
+
+        Group(GambleLog.Entry last) {
+            this.last = last;
+        }
     }
 
     private int spreads() {
@@ -275,17 +297,17 @@ public final class JournalScreen extends Screen {
         if (what == null || "end".equals(what)) return;
         if ("toc".equals(what)) {
             heading(ctx, "Contents", cx, top + 22);
-            String[] names = {"Lord Jawbus", "Thunder", "Ragnarok", "Plhlegblast", "Grim Reaper", "Yeti", "Reindrake"};
+            String[] names = GambleLog.JOURNAL_NAMES;
             boolean withTest = GambleLog.hasTest();
             for (int i = 0; i < names.length; i++) {
-                int ly = top + 46 + i * 20;
+                int ly = top + 44 + i * 16;
                 ctx.text(this.font, Component.literal(names[i]), x0 + 16, ly, INK, false);
-                String n = String.valueOf(GambleLog.drops(GambleLog.MOBS[i], withTest));
+                String n = String.valueOf(GambleLog.worthyDrops(GambleLog.JOURNAL[i], withTest));
                 ctx.text(this.font, Component.literal(n), x0 + PW - 16 - this.font.width(n), ly, INK_SOFT, false);
                 int dotsFrom = x0 + 20 + this.font.width(names[i]);
                 for (int d = dotsFrom; d < x0 + PW - 22 - this.font.width(n); d += 4) ctx.fill(d, ly + 7, d + 1, ly + 8, 0x806A4E30);
             }
-            ink(ctx, Component.literal("drops per mob"), cx, top + 196, INK_SOFT);
+            ink(ctx, Component.literal("drops per mob"), cx, top + 200, INK_SOFT);
             return;
         }
         if ("sum".equals(what)) {
@@ -327,24 +349,28 @@ public final class JournalScreen extends Screen {
             if (none.isEmpty()) ink(ctx, Component.literal("Every kill dropped!"), cx, top + 70, INK_SOFT);
             return;
         }
-        if (what instanceof GambleLog.Entry e) {
+        if (what instanceof Group g) {
+            GambleLog.Entry e = g.last;
             int col = 0xFF000000 | darker(LavaScene.colorOf(e.mob));
             heading(ctx, e.mobName, cx, top + 22, col);
             ctx.fill(x0 + 30, top + 34, x0 + PW - 30, top + 35, col);
             ctx.fill(cx - 2, top + 33, cx + 2, top + 36, col);
-            String date = new SimpleDateFormat("dd.MM.yyyy · HH:mm", Locale.GERMANY).format(new Date(e.ms));
+            String date = (g.count > 1 ? "last: " : "") + new SimpleDateFormat("dd.MM.yyyy · HH:mm", Locale.GERMANY).format(new Date(e.ms));
             ink(ctx, Component.literal(date), cx, top + 42, INK);
             if (e.test) ink(ctx, Component.literal("test entry"), cx, top + 53, 0xFF8A3A00);
             ctx.fill(cx - 30, top + 64, cx + 30, top + 124, 0x18402010);
             ctx.outline(cx - 30, top + 64, 60, 60, 0x506A4E30);
             GambleArt.item(ctx, this.font, LavaScene.iconForDrop(e.drop), cx, top + 94, 44, 1f);
-            if (e.fanfare) {
+            if (g.fanfare) {
                 ctx.text(this.font, Component.literal("★ RNG").withStyle(ChatFormatting.BOLD), cx + 36, top + 66, 0xFF8A5A00, false);
             }
-            ink(ctx, Component.literal(e.drop).withStyle(ChatFormatting.BOLD), cx, top + 134, ITEM_INK);
-            if (e.price > 0) ink(ctx, Component.literal(LavaPrices.format(e.price)).withStyle(ChatFormatting.BOLD), cx, top + 148, GOLD_INK);
-            if (e.dry > 0) ink(ctx, Component.literal("after " + String.format(Locale.GERMANY, "%,d", e.dry) + " " + e.mobName), cx, top + 162, INK);
-            if (e.share) ink(ctx, Component.literal("(loot share)"), cx, top + 174, INK_SOFT);
+            String name = LavaPrices.display(e.drop) + (g.count > 1 ? "  \u00d7" + g.count : "");
+            ink(ctx, Component.literal(name).withStyle(ChatFormatting.BOLD), cx, top + 134, ITEM_INK);
+            long price = e.price > 0 ? e.price : g.best;
+            if (price > 0) ink(ctx, Component.literal(LavaPrices.format(price)).withStyle(ChatFormatting.BOLD), cx, top + 148, GOLD_INK);
+            if (e.dry > 0) ink(ctx, Component.literal((g.count > 1 ? "last after " : "after ") + String.format(Locale.GERMANY, "%,d", e.dry) + " " + e.mobName), cx, top + 162, INK);
+            if (g.count > 1) ink(ctx, Component.literal("dropped " + g.count + " times"), cx, top + 174, INK_SOFT);
+            if (g.shares > 0) ink(ctx, Component.literal(g.shares == g.count ? "(loot share)" : "(" + g.shares + "x loot share)"), cx, top + 186, INK_SOFT);
             ctx.fill(x0 + 40, top + PH - 32, x0 + PW - 40, top + PH - 31, 0x406A4E30);
         }
     }

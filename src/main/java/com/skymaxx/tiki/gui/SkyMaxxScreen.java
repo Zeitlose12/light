@@ -77,6 +77,9 @@ extends Screen {
     private static String openGamble = "";
     private static boolean sacksOpen;
     private static boolean searchAll;
+    /** History tab: which days are folded open / closed (today is open unless closed). */
+    private static final java.util.Set<String> historyOpen = new java.util.HashSet<>();
+    private static final java.util.Set<String> historyClosed = new java.util.HashSet<>();
     private static boolean stampsOpen;
     private static final int SCROLLBAR_GRAB = 5;
     private boolean draggingScrollbar;
@@ -319,6 +322,7 @@ extends Screen {
     private int buildGambling(int x, int y, int w) {
         y = this.category(x, y, w, "tiki", "Wiki Tiki", this.cfg.tikiEnabled, () -> this.buildTiki(x + 10, 0, w - 10));
         y = this.category(x, y, w, "boa", "Titanoboa", this.cfg.titanoboaEnabled, () -> this.buildTitanoboa(x + 10, 0, w - 10));
+        y = this.category(x, y, w, "view", "Gambling view  \u00a78(Lava, Spooky, Winter)", null, () -> this.buildGambleView(x + 10, 0, w - 10));
         y = this.category(x, y, w, "lava", "Lava Fishing  \u00a78(Test)", this.cfg.lavaGambleEnabled, () -> this.buildLavaGambling(x + 10, 0, w - 10));
         y = this.category(x, y, w, "spooky", "Spooky Fishing  \u00a78(Test)", this.cfg.spookyGambleEnabled, () -> this.buildSpooky(x + 10, 0, w - 10));
         y = this.category(x, y, w, "winter", "Winter Fishing  \u00a78(Test)", this.cfg.winterGambleEnabled, () -> this.buildWinter(x + 10, 0, w - 10));
@@ -369,6 +373,32 @@ extends Screen {
     private int buildFishingAnims(int x, int y, int w) {
         y = this.note(y, "\u00a77Great White Shark: Megalodon / Shark Tooth pop-up.");
         y = this.buildSharkControls(x, y, w);
+        return y;
+    }
+
+    private static String gambleViewLabel(String v) {
+        return "Position: " + switch (v == null ? "FULL" : v) {
+            case "TOP_LEFT" -> "Top left";
+            case "TOP_RIGHT" -> "Top right";
+            case "BOTTOM_LEFT" -> "Bottom left";
+            case "BOTTOM_RIGHT" -> "Bottom right";
+            default -> "Full screen";
+        };
+    }
+
+    private int buildGambleView(int x, int y, int w) {
+        y = this.note(y, "\u00a77Full screen hides the game, so no drop message spoils the result.");
+        this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal(SkyMaxxScreen.gambleViewLabel(this.cfg.gambleView)), b -> {
+            String[] order = {"FULL", "TOP_LEFT", "TOP_RIGHT", "BOTTOM_LEFT", "BOTTOM_RIGHT"};
+            int i = java.util.Arrays.asList(order).indexOf(this.cfg.gambleView);
+            this.cfg.gambleView = order[(i + 1) % order.length];
+            this.cfg.save();
+            b.setMessage((Component)Component.literal(SkyMaxxScreen.gambleViewLabel(this.cfg.gambleView)));
+        }).bounds(x, y, w, 20).build(), y));
+        y += 24;
+        y = this.toggle(x, y, w, "Hide chat & titles while it runs", () -> this.cfg.gambleHideHud, v -> {
+            this.cfg.gambleHideHud = v;
+        });
         return y;
     }
 
@@ -550,23 +580,57 @@ extends Screen {
         }
         y = this.heading(y, "Drops");
         if (list.isEmpty()) {
-            y = this.note(y, "\u00a77Nothing yet - every Jawbus, Thunder, Ragnarok, Plhlegblast,");
-            y = this.note(y, "\u00a77Grim Reaper, Yeti and Reindrake animation lands here.");
+            y = this.note(y, "\u00a77Nothing yet - every gambling result (Wiki Tiki, Titanoboa,");
+            y = this.note(y, "\u00a77Lava, Spooky and Winter mobs) lands here.");
         }
+        // one fold per day (today open), so a long fishing session does not make the page endless
         java.text.SimpleDateFormat time = new java.text.SimpleDateFormat("HH:mm");
-        java.text.SimpleDateFormat day = new java.text.SimpleDateFormat("dd.MM. HH:mm");
-        long today = java.time.LocalDate.now().atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli();
-        int shown = 0;
+        java.text.SimpleDateFormat dayKey = new java.text.SimpleDateFormat("yyyy-MM-dd");
+        java.text.SimpleDateFormat dayName = new java.text.SimpleDateFormat("EEE dd.MM.yyyy", java.util.Locale.ENGLISH);
+        String todayKey = dayKey.format(new java.util.Date());
+        java.util.Map<String, java.util.List<com.skymaxx.tiki.light.GambleLog.Entry>> days = new java.util.LinkedHashMap<>();
         for (com.skymaxx.tiki.light.GambleLog.Entry e : list) {
-            if (++shown > 150) {
-                y = this.note(y, "\u00a78... older ones are kept but not listed.");
-                break;
+            days.computeIfAbsent(e.test ? "test" : dayKey.format(new java.util.Date(e.ms)), k -> new java.util.ArrayList<>()).add(e);
+        }
+        for (java.util.Map.Entry<String, java.util.List<com.skymaxx.tiki.light.GambleLog.Entry>> d : days.entrySet()) {
+            String key = d.getKey();
+            java.util.List<com.skymaxx.tiki.light.GambleLog.Entry> es = d.getValue();
+            int dropsOfDay = 0;
+            long coins = 0;
+            for (com.skymaxx.tiki.light.GambleLog.Entry e : es) {
+                if (e.drop != null) {
+                    dropsOfDay++;
+                    if (e.price > 0) coins += e.price;
+                }
             }
-            String when = (e.ms >= today ? time : day).format(new java.util.Date(e.ms));
-            String what = e.drop == null ? "\u00a78no drop"
-                : "\u00a7d" + e.drop + (e.price > 0 ? " \u00a76" + com.skymaxx.tiki.light.LavaPrices.format(e.price) : "");
-            y = this.note(y, (e.test ? "\u00a7e[Test] " : "") + "\u00a77" + when + "  \u00a7f" + e.mobName + (e.share ? " \u00a78(share)" : "") + (e.fanfare ? " \u00a76\u2605 RNG" : ""));
-            y = this.note(y - 4, "   " + what) + 3;
+            String title = ("test".equals(key) ? "\u00a7eTest entries" : key.equals(todayKey) ? "Today"
+                : dayName.format(es.get(0).ms)) + "  \u00a78" + es.size() + " kills \u00b7 " + dropsOfDay + " drops"
+                + (coins > 0 ? " \u00b7 \u00a76" + com.skymaxx.tiki.light.LavaPrices.format(coins) : "");
+            boolean open = historyOpen.contains(key) || (key.equals(todayKey) && !historyClosed.contains(key)) || searchAll;
+            y = this.sectionHeader(x, y, w, title, null, open, () -> {
+                boolean nowOpen = historyOpen.contains(key) || (key.equals(todayKey) && !historyClosed.contains(key));
+                if (nowOpen) {
+                    historyOpen.remove(key);
+                    historyClosed.add(key);
+                } else {
+                    historyOpen.add(key);
+                    historyClosed.remove(key);
+                }
+            });
+            if (!open) continue;
+            int shown = 0;
+            for (com.skymaxx.tiki.light.GambleLog.Entry e : es) {
+                if (++shown > 150) {
+                    y = this.note(y, "\u00a78... older ones of this day are kept but not listed.");
+                    break;
+                }
+                String when = time.format(new java.util.Date(e.ms));
+                String what = e.drop == null ? "\u00a78no drop"
+                    : "\u00a7d" + com.skymaxx.tiki.light.LavaPrices.display(e.drop) + (e.price > 0 ? " \u00a76" + com.skymaxx.tiki.light.LavaPrices.format(e.price) : "");
+                y = this.note(y, "\u00a77" + when + "  \u00a7f" + e.mobName + (e.share ? " \u00a78(share)" : "") + (e.fanfare ? " \u00a76\u2605 RNG" : ""));
+                y = this.note(y - 4, "   " + what) + 3;
+            }
+            y += 4;
         }
         this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal("\u00a7cClear history"), b -> {
             if (this.minecraft == null) return;
@@ -1267,14 +1331,22 @@ extends Screen {
         pose.popMatrix();
         int titleWidth = this.font.width((net.minecraft.network.chat.FormattedText)Component.literal("Light").withStyle(net.minecraft.ChatFormatting.BOLD));
         int after = this.winLeft + 12 + titleWidth * 2 + 14;
-        ctx.text(this.font, (Component)Component.literal((String)"Wiki Tiki \u00b7 Titanoboa \u00b7 Bazaar"), after, this.winTop + 15, -7695484);
-        // Light: credits for the original mod
-        int creditY = this.winBottom - 28 - 44;
+        ctx.text(this.font, (Component)Component.literal((String)"Fishing Gambling Mod"), after, this.winTop + 15, -7695484);
+        // credits on the right of the header, just left of the search bar (only if there is room)
+        int searchLeft = this.searchBox != null ? this.searchBox.getX() : this.winRight - 10;
+        String credit = "Tiki & Boa: SkyMaxx by Rachie \u00b7 MIT \u00b7 \u2764 Gesundheitskarte";
+        int cw = this.font.width(credit);
+        int afterSub = after + this.font.width("Fishing Gambling Mod") + 30;
+        if (searchLeft - 14 - cw < afterSub) {
+            credit = "SkyMaxx by Rachie \u00b7 \u2764 Gesundheitskarte";
+            cw = this.font.width(credit);
+        }
+        if (searchLeft - 14 - cw >= afterSub) {
+            ctx.text(this.font, (Component)Component.literal(credit), searchLeft - 14 - cw, this.winTop + 15, -7695484);
+        }
+        int creditY = this.winBottom - 28 - 14;
         if (creditY > this.headerBottom + 8 + Tab.values().length * this.tabStep() + 4) {
             ctx.text(this.font, (Component)Component.literal((String)"Light by Grundsteuer"), this.winLeft + 10, creditY, -7695484);
-            ctx.text(this.font, (Component)Component.literal((String)"Tiki & Boa: SkyMaxx"), this.winLeft + 10, creditY + 10, -7695484);
-            ctx.text(this.font, (Component)Component.literal((String)"by Rachie \u00b7 MIT"), this.winLeft + 10, creditY + 20, -7695484);
-            ctx.text(this.font, (Component)Component.literal((String)"\u2764 Gesundheitskarte"), this.winLeft + 10, creditY + 30, -7695484);
         }
     }
 

@@ -21,6 +21,25 @@ import net.fabricmc.loader.api.FabricLoader;
 public final class GambleLog {
     public static final String[] MOBS = {"jawbus", "thunder", "ragnarok", "plhlegblast", "grim", "yeti", "reindrake"};
     public static final String[] LAVA = {"jawbus", "thunder", "ragnarok", "plhlegblast"};
+    /** Every mob in the Journal (Wiki Tiki and Titanoboa only log their results, their animations are SkyMaxx's). */
+    public static final String[] JOURNAL = {"tiki", "boa", "jawbus", "thunder", "ragnarok", "plhlegblast", "grim", "yeti", "reindrake"};
+    public static final String[] JOURNAL_NAMES = {"Wiki Tiki", "Titanoboa", "Lord Jawbus", "Thunder", "Ragnarok", "Plhlegblast", "Grim Reaper", "Yeti", "Reindrake"};
+
+    /** Worth a page in the Journal: a real drop from the board, no cheap filler (Thunder Fragment, Rampart armor...). */
+    public static boolean worthy(Entry e) {
+        if (e == null || e.drop == null) return false;
+        String low = e.drop.toLowerCase(java.util.Locale.ROOT);
+        if (low.contains("thunder fragment") || low.contains("lily pad")) return false;
+        return LavaScene.onBoard(e.mob, e.drop);
+    }
+
+    /** Wiki Tiki / Titanoboa result (only logged - the SkyMaxx animations themselves are untouched). */
+    public static void recordExternal(String mob, String mobName, String drop) {
+        try {
+            record(mob, mobName, drop, false, false);
+        } catch (Throwable ignored) {
+        }
+    }
     private static final int MAX_ENTRIES = 1000;
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
@@ -183,6 +202,40 @@ public final class GambleLog {
         }
     }
 
+    /** A drop that showed up late (e.g. only in the [Sacks] message): put it on the entry afterwards. */
+    public static void setDrop(Entry e, String drop) {
+        if (e == null || drop == null || drop.equals(e.drop)) return;
+        Data d = data();
+        long kills = d.kills.getOrDefault(e.mob, 0L);
+        if (!e.test) {
+            e.dry = Math.max(1L, kills - d.killsAtItem.getOrDefault(itemKey(e.mob, drop), 0L));
+            d.killsAtDrop.put(e.mob, kills);
+            d.killsAtItem.put(itemKey(e.mob, drop), kills);
+        }
+        e.drop = drop;
+        e.price = -1L;
+        if (!e.test) save();
+    }
+
+    private static long lastTick;
+
+    /** Prices that were not known when the result showed are filled in later (every few seconds). */
+    public static void tick() {
+        long now = System.currentTimeMillis();
+        if (now - lastTick < 5000L) return;
+        lastTick = now;
+        try {
+            if (data == null) return;
+            for (Entry e : data.entries) {
+                if (now - e.ms > 3L * 3600_000L) break;
+                if (e.drop == null || e.price > 0) continue;
+                Long p = LavaPrices.price(e.drop);
+                if (p != null && p > 0) setPrice(e, p);
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
     /** Clears the whole real log (History tab button). */
     public static void clearAll() {
         data = new Data();
@@ -218,6 +271,13 @@ public final class GambleLog {
     public static int drops(String mob, boolean withTest) {
         int n = 0;
         for (Entry e : withTest ? entries() : data().entries) if (e.drop != null && (mob == null || mob.equals(e.mob))) n++;
+        return n;
+    }
+
+    /** Drops that get a page in the Journal (no cheap filler). */
+    public static int worthyDrops(String mob, boolean withTest) {
+        int n = 0;
+        for (Entry e : withTest ? entries() : data().entries) if (worthy(e) && (mob == null || mob.equals(e.mob))) n++;
         return n;
     }
 

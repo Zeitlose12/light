@@ -170,7 +170,21 @@ implements ClientModInitializer {
         HudElementRegistry.addLast((Identifier)TikiGambleClient.id("totem"), (HudElement)TikiGambleClient.guarded("totem", totem::renderAboveHud));
         HudElementRegistry.addLast((Identifier)TikiGambleClient.id("titanoboa"), (HudElement)TikiGambleClient.guarded("titanoboa", boaHud::renderAboveHud));
         for (Identifier element : VANILLA_HUD) {
-            HudElementRegistry.replaceElement((Identifier)element, TikiGambleClient::suppressWhileRunning);
+            boolean spoiler = element.equals(VanillaHudElements.CHAT) || element.equals(VanillaHudElements.TITLE_AND_SUBTITLE)
+                || element.equals(VanillaHudElements.OVERLAY_MESSAGE);
+            HudElementRegistry.replaceElement((Identifier)element, original -> {
+                HudElement inner = TikiGambleClient.suppressWhileRunning(original);
+                if (!spoiler) return inner;
+                // Light: chat and titles stay hidden while a gambling scene sits in a corner (no spoiler)
+                return (ctx, delta) -> {
+                    boolean hide = false;
+                    try {
+                        hide = com.skymaxx.tiki.light.LavaScene.hidesChat();
+                    } catch (Throwable ignored) {
+                    }
+                    if (!hide) inner.extractRenderState(ctx, delta);
+                };
+            });
         }
         inventory = new InventoryWatch(config);
         inventory.listen(tikiWatch::onItemGained);
