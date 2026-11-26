@@ -366,7 +366,8 @@ public final class JournalScreen extends Screen {
             }
             String name = LavaPrices.display(e.drop) + (g.count > 1 ? "  \u00d7" + g.count : "");
             ink(ctx, Component.literal(name).withStyle(ChatFormatting.BOLD), cx, top + 134, ITEM_INK);
-            long price = e.price > 0 ? e.price : g.best;
+            Long now = LavaPrices.journalPrice(e.drop); // current price: sell offer (bazaar) or lowest BIN (auction)
+            long price = now != null ? now : (e.price > 0 ? e.price : g.best);
             if (price > 0) ink(ctx, Component.literal(LavaPrices.format(price)).withStyle(ChatFormatting.BOLD), cx, top + 148, GOLD_INK);
             if (e.dry > 0) ink(ctx, Component.literal((g.count > 1 ? "last after " : "after ") + String.format(Locale.GERMANY, "%,d", e.dry) + " " + e.mobName), cx, top + 162, INK);
             if (g.count > 1) ink(ctx, Component.literal("dropped " + g.count + " times"), cx, top + 174, INK_SOFT);

@@ -74,7 +74,7 @@ public final class LavaScene {
     private static final Sym MDYE = new Sym("MDYE", 0x3A1A6A, "midnight dye");
     private static final Sym BYETI = new Sym("BYETI", 0xFFAA00, "baby yeti");
     private static final Sym ROD = new Sym("ROD", 0x7AD0FF, "yeti rod");
-    private static final Sym HILT = new Sym("HILT", 0xBFE9FF, "true ice");
+    private static final Sym HILT = new Sym("HILT", 0xBFE9FF, "true ice"); // "True Ice" (was Hilt of True Ice)
     private static final Sym IDYE = new Sym("IDYE", 0x4AB0D0, "iceberg dye");
 
     private record Look(String creature, String key, String cat, int color, Game game, EntityType<?> standIn, int[] palette, Sym[] pool) {
@@ -92,7 +92,7 @@ public final class LavaScene {
         new Look("Grim Reaper", "grim", "spooky", 0x78FFC8, Game.GRAVES, EntityTypes.WITHER_SKELETON,
             new int[]{0x1A1A22, 0x2E2A3A, 0x78FFC8, 0x3AD08A}, new Sym[]{FANG, ORB, NONE, BOOK, MDYE, ADYE, OTHER, NONE}),
         new Look("Yeti", "yeti", "winter", 0xBFE9FF, Game.CLAW, EntityTypes.ZOMBIE,
-            new int[]{0xF0F6FC, 0xBFE9FF, 0x8AB8D8, 0xFFFFFF}, new Sym[]{BYETI, ROD, NONE, HILT, BOOK, IDYE, ADYE, OTHER, NONE}),
+            new int[]{0xF0F6FC, 0xBFE9FF, 0x8AB8D8, 0xFFFFFF}, new Sym[]{BYETI, NONE, HILT, BOOK, IDYE, ADYE, OTHER, NONE}),
         new Look("Reindrake", "reindrake", "winter", 0xD03030, Game.GIFTS, EntityTypes.ENDER_DRAGON,
             new int[]{0xD03030, 0x30A050, 0xF0F0F0, 0xFFD24A}, new Sym[]{IDYE, ADYE, BOOK, OTHER, NONE}),
     };
@@ -1548,14 +1548,9 @@ public final class LavaScene {
             float d = t - at, lead = 0.16f, hold = 0.14f, back = 0.7f;
             if (d < -lead || d > hold + back) continue;
             float kk = d < 0 ? 0.9f * easeOut((d + lead) / lead) : d < hold ? 1f : 1f - easeInOut((d - hold) / back);
-            int style = (int) (hash01(dodgeSeed + k * 31) * 4);
+            // only to the left or the right - far enough that the cross hairs are clearly free
             float side = hash01(dodgeSeed + k * 17) < 0.5f ? -1f : 1f;
-            switch (style) {
-                case 0 -> jump += 46 * zoom * kk;                       // the horse leaps
-                case 1 -> dodgeX += side * lr * 0.6f * kk;              // swerves aside
-                case 2 -> duck += kk;                                   // rider ducks flat
-                default -> { dodgeX -= lr * 0.45f * kk; jump += 12 * zoom * kk; } // brakes hard
-            }
+            dodgeX += side * lr * (0.8f + 0.2f * hash01(dodgeSeed + k * 31)) * kk;
         }
         int horsePx = (int) (sh * 0.28f * zoom);
         float gallop = (float) Math.abs(Math.sin(t * 9)) * 4 * zoom;

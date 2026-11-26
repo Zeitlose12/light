@@ -24,8 +24,15 @@ public final class LavaPrices {
     private static final Map<String, String> TAGS = new HashMap<>();
 
     /** bin: chosen auction price; instaSell / sellOffer: bazaar. -1 = unknown. */
-    private record Cached(long bin, long instaSell, long sellOffer, long atMs) {
+    private record Cached(long bin, long minBin, long instaSell, long sellOffer, long atMs) {
     }
+
+    /** Where each drop is traded (checked by Grundsteuer in game): bazaar -> sell offer, auction house -> lowest BIN. */
+    private static final java.util.Set<String> BAZAAR = java.util.Set.of("RADIOACTIVE_VIAL", "ENCHANTMENT_ULTIMATE_FLASH_1",
+        "MAGMA_LORD_FRAGMENT", "BOBBIN_SCRIPTURES", "CHAIN_END_TIMES", "BRIMSTONE_HANDLE", "PET_ITEM_VAMPIRE_FANG", "DEEP_SEA_ORB",
+        "TROUBLED_BUBBLE", "TITANOBOA_SHED", "THUNDER_SHARDS", "FLAMING_HEART", "ENCHANTMENT_PROSPERITY_1");
+    private static final java.util.Set<String> AUCTION = java.util.Set.of("DYE_CARMINE", "DYE_MIDNIGHT", "DYE_ICEBERG",
+        "DYE_AQUAMARINE", "BURNT_TEXTS", "BABY_YETI", "HILT_OF_TRUE_ICE", "SNAKE_EYES", "TIKI_MASK", "GREAT_WHITE_SHARK_TOOTH");
 
     private static final Map<String, Cached> CACHE = new ConcurrentHashMap<>();
     static final long CACHE_MS = 10L * 60L * 1000L;
@@ -44,16 +51,39 @@ public final class LavaPrices {
         TAGS.put("midnight dye", "DYE_MIDNIGHT");
         TAGS.put("iceberg dye", "DYE_ICEBERG");
         TAGS.put("aquamarine dye", "DYE_AQUAMARINE");
-        TAGS.put("yeti rod", "YETI_ROD");
         TAGS.put("hilt of true ice", "HILT_OF_TRUE_ICE");
         TAGS.put("true ice", "HILT_OF_TRUE_ICE");
+        TAGS.put("baby yeti", "BABY_YETI");
+        TAGS.put("troubled bubble", "TROUBLED_BUBBLE");
+        TAGS.put("tiki mask", "TIKI_MASK");
+        TAGS.put("titanoboa shed", "TITANOBOA_SHED");
+        TAGS.put("snake eyes", "SNAKE_EYES");
         TAGS.put("enchanted book (prosperity i)", "ENCHANTMENT_PROSPERITY_1");
-        TAGS.put("enchanted book (flash i)", "ENCHANTMENT_FLASH_1");
+        TAGS.put("enchanted book (flash i)", "ENCHANTMENT_ULTIMATE_FLASH_1"); // Flash is an ultimate enchantment
         TAGS.put("magma lord fragment", "MAGMA_LORD_FRAGMENT");
         TAGS.put("thunder fragment", "THUNDER_SHARDS");
     }
 
     private LavaPrices() {
+    }
+
+    /**
+     * Journal price, always the same rule (whatever the Settings say): bazaar items -> current sell offer,
+     * auction items -> current lowest BIN. Null while not known.
+     */
+    public static Long journalPrice(String itemName) {
+        if (!enabled()) return null;
+        String tag = tag(itemName);
+        if (tag == null) return null;
+        Cached c = CACHE.get(tag);
+        if (c == null || System.currentTimeMillis() - c.atMs > CACHE_MS) request(tag);
+        boolean bz = BAZAAR.contains(tag) || (!AUCTION.contains(tag) && c != null && c.minBin < 0);
+        long v = c == null ? -1 : (bz ? c.sellOffer : c.minBin);
+        if (v <= 0 && bz) {
+            double hp = SackValue.bazaarPrice(tag, true);
+            if (hp > 0) v = Math.round(hp);
+        }
+        return v > 0 ? v : null;
     }
 
     /** The SkyBlock id for a drop name, or null if Light does not know it yet. */
@@ -112,7 +142,8 @@ public final class LavaPrices {
         if (c == null || System.currentTimeMillis() - c.atMs > CACHE_MS) {
             request(tag);
         }
-        long v = c == null ? -1 : (c.bin >= 0 ? c.bin : ("SELL_OFFER".equals(cfgBazaar()) ? c.sellOffer : c.instaSell));
+        boolean bz = BAZAAR.contains(tag) || (c != null && c.bin < 0);
+        long v = c == null ? -1 : (bz ? ("SELL_OFFER".equals(cfgBazaar()) ? c.sellOffer : c.instaSell) : c.bin);
         if (v < 0) {
             // fallback: Hypixel's own bazaar list (books are only sold there)
             double hp = SackValue.bazaarPrice(tag, "SELL_OFFER".equals(cfgBazaar()));
@@ -132,14 +163,14 @@ public final class LavaPrices {
                     if (SENT.size() >= 20) return;
                     SENT.addLast(now);
                 }
-                // enchanted books are only on the bazaar - no auction lookup
-                long p = tag.startsWith("ENCHANTMENT_") ? -1 : lowestBin(tag);
-                long[] bz = p < 0 ? bazaar(tag) : new long[]{-1, -1};
-                boolean none = p < 0 && bz[0] < 0 && bz[1] < 0;
-                CACHE.put(tag, new Cached(p, bz[0], bz[1], System.currentTimeMillis() - (none ? CACHE_MS - 30_000L : 0L)));
+                // bazaar items never ask the auction house and the other way round
+                long[] p = BAZAAR.contains(tag) || tag.startsWith("ENCHANTMENT_") ? new long[]{-1, -1} : lowestBin(tag);
+                long[] bz = p[0] < 0 && !AUCTION.contains(tag) ? bazaar(tag) : new long[]{-1, -1};
+                boolean none = p[0] < 0 && bz[0] < 0 && bz[1] < 0;
+                CACHE.put(tag, new Cached(p[0], p[1], bz[0], bz[1], System.currentTimeMillis() - (none ? CACHE_MS - 30_000L : 0L)));
             } catch (Throwable t) {
                 // failed: try again in about 30 seconds instead of waiting for the full cache time
-                CACHE.put(tag, new Cached(-1, -1, -1, System.currentTimeMillis() - CACHE_MS + 30_000L));
+                CACHE.put(tag, new Cached(-1, -1, -1, -1, System.currentTimeMillis() - CACHE_MS + 30_000L));
             } finally {
                 IN_FLIGHT.remove(tag);
             }
@@ -162,11 +193,11 @@ public final class LavaPrices {
     }
 
     /** GET /api/auctions/tag/{TAG}/active/bin -> cheapest active BIN. */
-    private static long lowestBin(String tag) throws Exception {
+    private static long[] lowestBin(String tag) throws Exception {
         String body = get("https://sky.coflnet.com/api/auctions/tag/" + tag + "/active/bin");
-        if (body == null) return -1;
+        if (body == null) return new long[]{-1, -1};
         com.google.gson.JsonElement root = com.google.gson.JsonParser.parseString(body);
-        if (!root.isJsonArray()) return -1;
+        if (!root.isJsonArray()) return new long[]{-1, -1};
         java.util.List<Long> prices = new java.util.ArrayList<>();
         for (com.google.gson.JsonElement e : root.getAsJsonArray()) {
             if (!e.isJsonObject() || !e.getAsJsonObject().has("startingBid")) continue;
@@ -174,14 +205,14 @@ public final class LavaPrices {
             int count = e.getAsJsonObject().has("count") ? Math.max(1, e.getAsJsonObject().get("count").getAsInt()) : 1;
             if (v > 0) prices.add(v / count);
         }
-        if (prices.isEmpty()) return -1;
+        if (prices.isEmpty()) return new long[]{-1, -1};
         java.util.Collections.sort(prices);
         if ("MEDIAN_5".equals(cfgAuction())) {
             // median of the 5 cheapest: one troll listing can't fake the price
             int n = Math.min(5, prices.size());
-            return prices.get(n / 2);
+            return new long[]{prices.get(n / 2), prices.get(0)};
         }
-        return prices.get(0);
+        return new long[]{prices.get(0), prices.get(0)};
     }
 
     /**
