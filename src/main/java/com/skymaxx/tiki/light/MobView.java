@@ -113,6 +113,12 @@ public final class MobView {
      */
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static void drawPosed(GuiGraphicsExtractor ctx, LivingEntity e, int cx, int cy, int px, float yaw, float bodyPitch, float headPitch) {
+        drawPosed(ctx, e, cx, cy, px, yaw, bodyPitch, headPitch, 0f, 0f, 0f);
+    }
+
+    /** Like drawPosed, plus limb swing (walk cycle position/speed) and an arm swing (attack 0..1). */
+    public static void drawPosed(GuiGraphicsExtractor ctx, LivingEntity e, int cx, int cy, int px, float yaw, float bodyPitch, float headPitch,
+                                 float walkPos, float walkSpeed, float attack) {
         if (broken || e == null || px < 4) return;
         try {
             float h = height(e);
@@ -133,6 +139,13 @@ public final class MobView {
                 ls.boundingBoxWidth /= ls.scale;
                 ls.boundingBoxHeight /= ls.scale;
                 ls.scale = 1.0f;
+                if (walkSpeed > 0) {
+                    ls.walkAnimationPos = walkPos;
+                    ls.walkAnimationSpeed = walkSpeed;
+                }
+            }
+            if (attack > 0 && st instanceof net.minecraft.client.renderer.entity.state.ArmedEntityRenderState as) {
+                as.attackTime = Math.min(1f, attack);
             }
             org.joml.Vector3f tr = new org.joml.Vector3f(0.0f, st.boundingBoxHeight / 2.0f + 0.0625f, 0.0f);
             org.joml.Quaternionf tilt = new org.joml.Quaternionf().rotateX((float) Math.toRadians(bodyPitch));

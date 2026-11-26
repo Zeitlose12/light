@@ -1720,7 +1720,35 @@ public final class LavaScene {
 
     // ---------------------------------------------------------------- Yeti: the ice claw machine
 
+    /** Screen shake of the Yeti scene: the slam on the machine, the jumps of joy, the kick. */
+    private static float yetiShake(float t, float settled) {
+        float m = 0;
+        if (stopAt >= 0 && t > stopAt + 0.2f && t < stopAt + 0.5f) m = 3.5f * (1 - (t - stopAt - 0.2f) / 0.3f);
+        if (t >= settled) {
+            float u = t - settled;
+            if (win()) {
+                float ph = (u * 7f) % (float) Math.PI;
+                if (u < 1.6f && ph < 0.35f) m = Math.max(m, 3.0f);
+            } else if (u > 0.2f && u < 0.5f) {
+                m = Math.max(m, 3.0f);
+            }
+        }
+        return m;
+    }
+
     private static void drawClaw(GuiGraphicsExtractor ctx, Font font, float t, float a, int sw, int sh, float settled, float burstAt) {
+        float m = yetiShake(t, settled);
+        Matrix3x2fStack ps = ctx.pose();
+        ps.pushMatrix();
+        if (m > 0) ps.translate(m * (RNG.nextFloat() * 2 - 1), m * (RNG.nextFloat() * 2 - 1));
+        try {
+            drawClawInner(ctx, font, t, a, sw, sh, settled, burstAt);
+        } finally {
+            ps.popMatrix();
+        }
+    }
+
+    private static void drawClawInner(GuiGraphicsExtractor ctx, Font font, float t, float a, int sw, int sh, float settled, float burstAt) {
         int ground = (int) (sh * 0.78f);
         // a snowy mountain evening: sky, pale moon, peaks, pines, snow
         ctx.fillGradient(0, 0, sw, ground, argb(a * 0.97f, 0x0B1A30), argb(a * 0.97f, 0x5A82AA));
@@ -1869,15 +1897,69 @@ public final class LavaScene {
             GambleArt.line(ctx, jx, jy, jx + vel * 9, jy - 18, 2, argb(ga, 0x2A2A2A));
             GambleArt.disc(ctx, (int) (jx + vel * 9), jy - 19, 4, argb(ga, 0xD03030), 1);
         }
+        // the Yeti's own show: drums its chest, slams the machine, roars while the claw goes down,
+        // jumps for joy on a win or kicks the machine on a miss
+        float dd = t - arrive;
+        boolean roaring = dd >= 0 && dd < 0.9f;
         if (t >= RISE_AT && t < burstAt && mob != null && MobView.available()) {
             float rise = ease((t - RISE_AT) / (GAMBLE_AT - RISE_AT));
             int cy = (int) (ground + ypx * 0.6f - (ground + ypx * 0.6f - yStand) * rise);
-            float shake = t >= settled ? 2 + 4 * clamp((t - settled) / Math.max(0.01f, burstAt - settled)) : 0;
-            mob.hurtTime = t >= settled && ((int) (t * 12) % 2 == 0) ? 8 : 0;
+            float yaw = -45.0f, bodyPitch = -4.0f, headPitch = 12.0f, walkPos = 0, walkSpeed = 0, attack = 0;
+            int lift = 0;
+            if (t >= GAMBLE_AT && t < GAMBLE_AT + 1.3f) {
+                walkPos = t * 14f;
+                walkSpeed = 1.0f;
+                bodyPitch = -8.0f;
+                headPitch = -15.0f;
+                if (((int) (t * 7)) % 2 == 0) sound(9, SoundEvents.POLAR_BEAR_WARNING, 0.7f, 0.35f);
+            } else if (stopAt >= 0 && t >= stopAt && t < stopAt + 0.6f) {
+                float u = (t - stopAt) / 0.6f;
+                bodyPitch = 18.0f * (float) Math.sin(u * Math.PI);
+                attack = clamp(u * 1.6f);
+                yaw = -60.0f;
+                if (u > 0.3f) sound(10, SoundEvents.ANVIL_LAND, 0.6f, 0.3f);
+            } else if (roaring) {
+                headPitch = -35.0f;
+                bodyPitch = -12.0f;
+                yaw = -30.0f;
+                sound(11, SoundEvents.RAVAGER_ROAR, 0.8f, 0.45f);
+            } else if (t >= settled) {
+                float u = t - settled;
+                if (win()) {
+                    lift = (int) (Math.abs(Math.sin(u * 7f)) * ypx * 0.12f * Math.max(0, 1 - u / 1.8f));
+                    walkPos = t * 10f;
+                    walkSpeed = 0.8f;
+                    headPitch = -20.0f;
+                } else {
+                    attack = clamp(u / 0.35f);
+                    bodyPitch = u < 0.4f ? -10.0f : -4.0f;
+                    yaw = -70.0f;
+                }
+            } else {
+                walkPos = t * 3f;
+                walkSpeed = 0.25f;
+            }
+            mob.hurtTime = 0;
             ctx.nextStratum();
-            MobView.drawPosed(ctx, mob, ycx + (int) (shake * (RNG.nextFloat() * 2 - 1)), cy, ypx, -45.0f, -4.0f, 12.0f);
+            MobView.drawPosed(ctx, mob, ycx, cy - lift, ypx, yaw, bodyPitch, headPitch, walkPos, walkSpeed, attack);
             ctx.nextStratum();
         }
+        // snow shaken off the machine's roof by the slam
+        if (on && stopAt >= 0 && t > stopAt + 0.25f && t < stopAt + 1.6f) {
+            float u = t - stopAt - 0.25f;
+            for (int i = 0; i < 26; i++) {
+                float sx = mx + (i * 37) % Math.max(1, mw);
+                float sy = my - 30 + u * (60 + (i % 5) * 25) + u * u * 90;
+                ctx.fill((int) sx, (int) sy, (int) sx + 3, (int) sy + 3, argb(a * clamp(1.4f - u), 0xFFFFFF));
+            }
+        }
+        // the roar: a short blizzard
+        if (roaring) {
+            ctx.fill(0, 0, sw, sh, argb(a * 0.12f * (float) Math.sin(dd / 0.9f * Math.PI), 0xEAF6FF));
+            snowfall(ctx, t * 3, a, sw, sh, 110, -90, 5);
+        }
+        // joy: snow drops from the top of the screen with every landing
+        if (t >= settled && win()) snowfall(ctx, t * 1.5f, a, sw, sh, 70, -10, 6);
         snowfall(ctx, t, a, sw, sh, 45, -18, 2);
         burstPieces(ctx, t, burstAt, a, ycx, yStand, sh, 0xEAF6FF);
         waiting(ctx, font, t, ga, mx + mw / 2, sh - 14);
@@ -2133,6 +2215,48 @@ public final class LavaScene {
         }
     }
 
+    /** Thunder: a prismarine lightning rod on each side of the roulette - charging sparks, a glowing top, strikes. */
+    private static void thunderPillars(GuiGraphicsExtractor ctx, float t, float a, int sw, int sh, int poolTop) {
+        int ph = (int) (sh * 0.40f);
+        int pw = Math.max(16, (int) (sh * 0.06f));
+        for (int k = 0; k < 2; k++) {
+            int x = (int) (sw * (k == 0 ? 0.12f : 0.88f));
+            int top = poolTop - ph;
+            // column of prismarine bricks
+            for (int y = top; y < poolTop + 8; y += 8) {
+                int row = (y - top) / 8;
+                int c = row % 2 == 0 ? 0x5E9C8C : 0x3F6F68;
+                ctx.fill(x - pw / 2, y, x + pw / 2, y + 8, argb(a, c));
+                ctx.fill(x - pw / 2 + (row % 2) * pw / 2, y, x - pw / 2 + (row % 2) * pw / 2 + 1, y + 8, argb(a * 0.6f, 0x24423E));
+                ctx.fill(x - pw / 2, y, x + pw / 2, y + 1, argb(a * 0.5f, 0x8FD0C0));
+            }
+            ctx.fill(x + pw / 2 - 3, top, x + pw / 2, poolTop + 8, argb(a * 0.5f, 0x1E3632));
+            // cap and glowing sea lantern on top
+            ctx.fill(x - pw / 2 - 3, top - 5, x + pw / 2 + 3, top, argb(a, 0x3F6F68));
+            float charge = (t * 0.45f + k * 0.5f) % 1.0f;
+            float pulse = 0.6f + 0.4f * (float) Math.sin(t * 6 + k);
+            int orb = pw / 2 + 2;
+            GambleArt.disc(ctx, x, top - 5 - orb, orb + 6 + (int) (charge * 8), argb(a * 0.12f * pulse, 0x6FD0FF), 2);
+            ctx.fill(x - orb, top - 5 - orb * 2, x + orb, top - 5, argb(a, 0xBFF4FF));
+            ctx.fill(x - orb + 2, top - 5 - orb * 2 + 2, x + orb - 2, top - 7, argb(a * pulse, 0xE8FBFF));
+            // sparks climbing up while it charges
+            for (int i = 0; i < 9; i++) {
+                float l = (t * 1.4f + i * 0.11f + k * 0.37f) % 1.0f;
+                if (l > charge + 0.15f) continue;
+                int sx = x - pw / 2 + (i * 7) % pw;
+                int sy = (int) (poolTop - l * ph);
+                ctx.fill(sx, sy, sx + 2, sy + 2, argb(a * (1 - l), 0xA0E6FF));
+            }
+            // a strike from the clouds into the lantern every few seconds
+            float st = (t + k * 1.15f) % 2.3f;
+            if (st < 0.18f) {
+                GambleArt.bolt(ctx, x + (k == 0 ? 30 : -30), 0, x, top - 5 - orb, a * (1 - st / 0.18f), (long) ((t + k * 1.15f) / 2.3f) * 31 + k, 0xE8F6FF);
+                GambleArt.disc(ctx, x, top - 5 - orb, orb + 14, argb(a * 0.25f * (1 - st / 0.18f), 0xE8F6FF), 2);
+                if (st < 0.03f) sound(-1, SoundEvents.TRIDENT_THUNDER.value(), 1.6f, 0.12f);
+            }
+        }
+    }
+
     /** Meteors (Ragnarok), blue flicker (Thunder), lava bursts when Jawbus pounds. */
     private static void drawWeather(GuiGraphicsExtractor ctx, Game g, float t, float a, int sw, int sh, int poolTop) {
         switch (g) {
@@ -2148,6 +2272,7 @@ public final class LavaScene {
             }
             case ROULETTE -> {
                 if (((int) (t * 5)) % 7 == 0) ctx.fill(0, 0, sw, sh, argb(0.12f * a, 0xBFE3FF));
+                thunderPillars(ctx, t, a, sw, sh, poolTop);
                 for (int i = 0; i < 7; i++) {
                     int cxl = (int) ((i * sw / 6.0) + Math.sin(t * 0.3 + i) * 20);
                     GambleArt.ellipse(ctx, cxl, 6, 60, 26, argb(a * 0.8f, 0x0E1A26), 3);
