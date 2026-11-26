@@ -48,6 +48,7 @@ public final class LavaPrices {
         TAGS.put("true ice", "HILT_OF_TRUE_ICE");
         TAGS.put("enchanted book (prosperity i)", "ENCHANTMENT_PROSPERITY_1");
         TAGS.put("enchanted book (flash i)", "ENCHANTMENT_FLASH_1");
+        TAGS.put("magma lord fragment", "MAGMA_LORD_FRAGMENT");
     }
 
     private LavaPrices() {
