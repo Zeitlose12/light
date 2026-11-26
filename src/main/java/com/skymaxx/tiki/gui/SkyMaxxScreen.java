@@ -190,7 +190,7 @@ extends Screen {
             this.addWidget(row.widget());
         }
         this.applyScroll();
-        this.addRenderableWidget(Button.builder((Component)Component.literal((String)"Done"), b -> this.onClose()).bounds(this.winLeft + 8, this.winBottom - 28, this.sideRight - this.winLeft - 16, 20).build());
+        this.addRenderableWidget(LightButton.create((Component)Component.literal((String)"Done"), b -> this.onClose()).bounds(this.winLeft + 8, this.winBottom - 28, this.sideRight - this.winLeft - 16, 20).build());
         this.addRenderableWidget(this.searchBox);
         if (!query.isEmpty()) {
             this.setFocused(this.searchBox);
@@ -203,25 +203,25 @@ extends Screen {
             this.cfg.sackHudEnabled = v;
         });
         int half = (w - 4) / 2;
-        this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal(SkyMaxxScreen.sackPriceLabel(this.cfg.sackPriceMode)), b -> {
+        this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal(SkyMaxxScreen.sackPriceLabel(this.cfg.sackPriceMode)), b -> {
             this.cfg.sackPriceMode = "INSTA_SELL".equals(this.cfg.sackPriceMode) ? "SELL_OFFER" : "INSTA_SELL";
             this.cfg.save();
             b.setMessage((Component)Component.literal(SkyMaxxScreen.sackPriceLabel(this.cfg.sackPriceMode)));
         }).bounds(x, y, half, 20).build(), y));
-        this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal(SkyMaxxScreen.sackStyleLabel(this.cfg.sackHudStyle)), b -> {
+        this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal(SkyMaxxScreen.sackStyleLabel(this.cfg.sackHudStyle)), b -> {
             this.cfg.sackHudStyle = "TEXT".equals(this.cfg.sackHudStyle) ? "BOX" : "TEXT";
             this.cfg.save();
             b.setMessage((Component)Component.literal(SkyMaxxScreen.sackStyleLabel(this.cfg.sackHudStyle)));
         }).bounds(x + half + 4, y, w - half - 4, 20).build(), y));
         y += 22;
-        this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal("\u00a7dMove and resize sack value HUD"), b -> {
+        this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal("\u00a7dMove and resize sack value HUD"), b -> {
             if (this.minecraft != null) this.minecraft.gui.setScreen((Screen)new com.skymaxx.tiki.light.SackEditScreen((Screen)this));
         }).bounds(x, y, w, 20).build(), y));
         y += 22;
         y = this.toggle(x, y, w, "Compact numbers (902,97M / 1,21B)", () -> this.cfg.sackCompact, v -> {
             this.cfg.sackCompact = v;
         });
-        this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal(SkyMaxxScreen.refreshLabel(this.cfg.sackRefreshMinutes)), b -> {
+        this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal(SkyMaxxScreen.refreshLabel(this.cfg.sackRefreshMinutes)), b -> {
             int m = this.cfg.sackRefreshMinutes;
             this.cfg.sackRefreshMinutes = m <= 5 ? 10 : (m <= 10 ? 15 : 5);
             this.cfg.save();
@@ -247,7 +247,7 @@ extends Screen {
                 String shortName = sack.replaceAll("(?i)\\s*Sack$", "");
                 int bx = x + 10 + (i % cols) * (bw + gap);
                 int by = y + (i / cols) * 22;
-                this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal(SkyMaxxScreen.sackChip(shortName, !com.skymaxx.tiki.light.SackValue.excluded(sack))), b -> {
+                this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal(SkyMaxxScreen.sackChip(shortName, !com.skymaxx.tiki.light.SackValue.excluded(sack))), b -> {
                     boolean on = com.skymaxx.tiki.light.SackValue.excluded(sack);
                     com.skymaxx.tiki.light.SackValue.setExcluded(sack, !on);
                     b.setMessage((Component)Component.literal(SkyMaxxScreen.sackChip(shortName, on)));
@@ -338,7 +338,7 @@ extends Screen {
 
     private int sectionHeader(int x, int y, int w, String title, Boolean enabled, boolean open, Runnable flip) {
         String text = (open ? "\u00a76\u25bc " : "\u00a76\u25b6 ") + "\u00a7f" + title + (String)(enabled == null ? "" : "  " + (enabled != false ? "\u00a7aON" : "\u00a77OFF"));
-        this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal((String)text), b -> {
+        this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal((String)text), b -> {
             flip.run();
             this.rebuildWidgets();
         }).bounds(x, y, w, 20).build(), y));
@@ -422,7 +422,7 @@ extends Screen {
         this.slider(x + tw + gap, y, sw, "Speed", 0.5f, 2.0f, () -> Float.valueOf(this.cfg.gambleSpeedOf(key)), v -> {
             this.cfg.gambleSpeed.put(key, Math.round(v.floatValue() * 20.0f) / 20.0f);
         }, ConfigSlider.Format.PERCENT, null);
-        Button play = Button.builder((Component)Component.literal("\u00a7b\u25b6"), b -> {
+        Button play = LightButton.create((Component)Component.literal("\u00a7b\u25b6"), b -> {
             if (debugOnly && !this.cfg.debug) {
                 com.skymaxx.tiki.TikiGambleClient.chat("\u00a7c[Light] Turn on \"Debug log\" (General) to test this one.");
                 return;
@@ -442,7 +442,7 @@ extends Screen {
         y = this.toggle(x, y, w, "Shark pop-up without a drop", () -> this.cfg.sharkPopupNoDrop, v -> {
             this.cfg.sharkPopupNoDrop = v;
         });
-        this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal((String)"\u00a7bMove and resize shark pop-up"), b -> {
+        this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal((String)"\u00a7bMove and resize shark pop-up"), b -> {
             if (this.minecraft != null) {
                 this.minecraft.gui.setScreen((Screen)new com.skymaxx.tiki.light.SharkEditScreen((Screen)this));
             }
@@ -461,12 +461,12 @@ extends Screen {
     private int buildSettings(int x, int y, int w) {
         y = this.heading(y, "Theme");
         int half = (w - 4) / 2;
-        this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal("Menu: \u00a7f" + T().title), b -> {
+        this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal("Menu: \u00a7f" + T().title), b -> {
             this.cfg.menuTheme = T().next().name();
             this.cfg.save();
             this.rebuildWidgets();
         }).bounds(x, y, half, 20).build(), y));
-        this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal("HUDs: \u00a7f" + com.skymaxx.tiki.light.Theme.hud().title), b -> {
+        this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal("HUDs: \u00a7f" + com.skymaxx.tiki.light.Theme.hud().title), b -> {
             this.cfg.hudTheme = com.skymaxx.tiki.light.Theme.hud().next().name();
             this.cfg.save();
             b.setMessage((Component)Component.literal("HUDs: \u00a7f" + com.skymaxx.tiki.light.Theme.hud().title));
@@ -478,20 +478,20 @@ extends Screen {
         y = this.toggle(x, y, w, "Show drop prices", () -> this.cfg.lavaGamblePrices, v -> {
             this.cfg.lavaGamblePrices = v;
         });
-        this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal(SkyMaxxScreen.bazaarLabel(this.cfg.priceBazaarMode)), b -> {
+        this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal(SkyMaxxScreen.bazaarLabel(this.cfg.priceBazaarMode)), b -> {
             this.cfg.priceBazaarMode = "SELL_OFFER".equals(this.cfg.priceBazaarMode) ? "INSTA_SELL" : "SELL_OFFER";
             this.cfg.save();
             b.setMessage((Component)Component.literal(SkyMaxxScreen.bazaarLabel(this.cfg.priceBazaarMode)));
         }).bounds(x, y, w, 20).build(), y));
         y += 22;
-        this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal(SkyMaxxScreen.auctionLabel(this.cfg.priceAuctionMode)), b -> {
+        this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal(SkyMaxxScreen.auctionLabel(this.cfg.priceAuctionMode)), b -> {
             this.cfg.priceAuctionMode = "MEDIAN_5".equals(this.cfg.priceAuctionMode) ? "LOWEST_BIN" : "MEDIAN_5";
             this.cfg.save();
             com.skymaxx.tiki.light.LavaPrices.clearCache();
             b.setMessage((Component)Component.literal(SkyMaxxScreen.auctionLabel(this.cfg.priceAuctionMode)));
         }).bounds(x, y, w, 20).build(), y));
         y += 22;
-        this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal("Refresh prices now"), b -> {
+        this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal("Refresh prices now"), b -> {
             com.skymaxx.tiki.light.LavaPrices.clearCache();
             b.setMessage((Component)Component.literal("\u00a7aPrices cleared - fetched again on the next drop"));
         }).bounds(x, y, w, 20).build(), y));
@@ -543,7 +543,7 @@ extends Screen {
         y = this.note(y, "This session  \u00a7a" + com.skymaxx.tiki.light.LavaPrices.format(com.skymaxx.tiki.light.GambleLog.perHour()) + " \u00a77/ h");
         y = this.note(y, "Results  \u00a7f" + list.size() + " \u00a77(" + com.skymaxx.tiki.light.GambleLog.drops(null, withTest) + " with a drop)");
         if (this.cfg.debug) {
-            this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal("\u00a76Open as Journal \u00a78(Debug)"), b -> {
+            this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal("\u00a76Open as Journal \u00a78(Debug)"), b -> {
                 if (this.minecraft != null) this.minecraft.gui.setScreen(new com.skymaxx.tiki.light.JournalScreen(this));
             }).bounds(x, y + 4, w, 20).build(), y + 4));
             y += 26;
@@ -568,7 +568,7 @@ extends Screen {
             y = this.note(y, (e.test ? "\u00a7e[Test] " : "") + "\u00a77" + when + "  \u00a7f" + e.mobName + (e.share ? " \u00a78(share)" : "") + (e.fanfare ? " \u00a76\u2605 RNG" : ""));
             y = this.note(y - 4, "   " + what) + 3;
         }
-        this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal("\u00a7cClear history"), b -> {
+        this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal("\u00a7cClear history"), b -> {
             if (this.minecraft == null) return;
             this.minecraft.gui.setScreen((Screen)new ConfirmScreen(yes -> {
                 if (yes) com.skymaxx.tiki.light.GambleLog.clearAll();
@@ -585,7 +585,7 @@ extends Screen {
         y = this.heading(y, "Dye HUD");
         y = this.hudRow(x, y, w, "Dye HUD", () -> this.cfg.dyeHudEnabled, v -> this.cfg.dyeHudEnabled = v,
             () -> new com.skymaxx.tiki.light.dye.DyeHudEditScreen((Screen)this));
-        this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal(SkyMaxxScreen.hudMode(this.cfg.dyeHudOnlyFishing)), btn -> {
+        this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal(SkyMaxxScreen.hudMode(this.cfg.dyeHudOnlyFishing)), btn -> {
             this.cfg.dyeHudOnlyFishing = !this.cfg.dyeHudOnlyFishing;
             this.cfg.save();
             btn.setMessage((Component)Component.literal(SkyMaxxScreen.hudMode(this.cfg.dyeHudOnlyFishing)));
@@ -616,7 +616,7 @@ extends Screen {
     private int hudRow(int x, int y, int w, String label, BooleanSupplier on, Consumer<Boolean> set, Supplier<Screen> mover) {
         int mw = Math.max(70, w / 3);
         this.toggle(x, y, w - mw - 4, label, on, set);
-        this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal("\u00a7e\u271c Move"), b -> {
+        this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal("\u00a7e\u271c Move"), b -> {
             if (this.minecraft != null) this.minecraft.gui.setScreen(mover.get());
         }).bounds(x + w - mw, y, mw, 20).build(), y));
         return y + 24;
@@ -733,7 +733,7 @@ extends Screen {
     }
 
     private int cornerButton(int x, int y, int w) {
-        this.rows.add(new Row((AbstractWidget)Button.builder((Component)this.cornerText(), b -> {
+        this.rows.add(new Row((AbstractWidget)LightButton.create((Component)this.cornerText(), b -> {
             GameplayCorner next = GameplayCorner.byName(this.cfg.boaGameplayCorner).next();
             this.cfg.boaGameplayCorner = next.name();
             this.cfg.save();
@@ -840,7 +840,7 @@ extends Screen {
         y = this.resetButton(x, y, w, "Reset Titanoboa statistics", "Titanoboa", this.stats::resetTitanoboa);
         this.luckTop = y + 14;
         y = this.luckTop + 13 * 15 + 6;
-        this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal((String)"\u00a7dSave stat card (PNG)"), b -> {
+        this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal((String)"\u00a7dSave stat card (PNG)"), b -> {
             try {
                 java.io.File file = com.skymaxx.tiki.light.StatCard.save();
                 TikiGambleClient.chat("\u00a7d[Light] \u00a7fStat card saved: \u00a77screenshots/" + file.getName());
@@ -869,7 +869,7 @@ extends Screen {
         int i = 0;
         for (com.skymaxx.tiki.light.dye.Dye dye : com.skymaxx.tiki.light.dye.Dye.values()) {
             final com.skymaxx.tiki.light.dye.Dye fd = dye;
-            this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal(DyeHudAgo.vincentLabel(fd)), b -> {
+            this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal(DyeHudAgo.vincentLabel(fd)), b -> {
                 int next = com.skymaxx.tiki.light.dye.DyeTracker.vincent(fd) % 3 + 1;
                 com.skymaxx.tiki.light.dye.DyeTracker.setVincent(fd, next);
                 this.cfg.save();
@@ -883,13 +883,13 @@ extends Screen {
         y = this.toggle(x, y, w, "Dye HUD", () -> this.cfg.dyeHudEnabled, v -> {
             this.cfg.dyeHudEnabled = v;
         });
-        this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal(SkyMaxxScreen.hudMode(this.cfg.dyeHudOnlyFishing)), btn -> {
+        this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal(SkyMaxxScreen.hudMode(this.cfg.dyeHudOnlyFishing)), btn -> {
             this.cfg.dyeHudOnlyFishing = !this.cfg.dyeHudOnlyFishing;
             this.cfg.save();
             btn.setMessage((Component)Component.literal(SkyMaxxScreen.hudMode(this.cfg.dyeHudOnlyFishing)));
         }).bounds(x, y, w, 20).build(), y));
         y += 22;
-        this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal((String)"§dMove and resize HUD"), b -> {
+        this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal((String)"§dMove and resize HUD"), b -> {
             if (this.minecraft != null) {
                 this.minecraft.gui.setScreen((Screen)new com.skymaxx.tiki.light.dye.DyeHudEditScreen((Screen)this));
             }
@@ -1061,7 +1061,7 @@ extends Screen {
     }
 
     private int resetButton(int x, int y, int w, String label, String creature, Runnable reset) {
-        this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal((String)label), b -> {
+        this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal((String)label), b -> {
             if (this.minecraft == null) {
                 return;
             }
@@ -1096,7 +1096,7 @@ extends Screen {
     }
 
     private int toggle(int x, int y, int w, String label, BooleanSupplier getter, Consumer<Boolean> setter) {
-        this.rows.add(new Row((AbstractWidget)Button.builder((Component)SkyMaxxScreen.toggleText(label, getter.getAsBoolean()), b -> {
+        this.rows.add(new Row((AbstractWidget)LightButton.create((Component)SkyMaxxScreen.toggleText(label, getter.getAsBoolean()), b -> {
             boolean next = !getter.getAsBoolean();
             setter.accept(next);
             this.cfg.save();

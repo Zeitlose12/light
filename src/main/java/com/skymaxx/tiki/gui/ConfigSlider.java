@@ -27,6 +27,41 @@ extends AbstractSliderButton {
         this.updateMessage();
     }
 
+    /** Light: a slim track with a round knob in the menu theme's colour; label left, value right. */
+    @Override
+    public void extractWidgetRenderState(net.minecraft.client.gui.GuiGraphicsExtractor ctx, int mouseX, int mouseY, float partial) {
+        com.skymaxx.tiki.light.Theme th = com.skymaxx.tiki.light.Theme.menu();
+        net.minecraft.client.gui.Font font = net.minecraft.client.Minecraft.getInstance().font;
+        int x0 = this.getX(), y0 = this.getY(), x1 = x0 + this.getWidth(), y1 = y0 + this.getHeight();
+        int acc = th.accent & 0xFFFFFF;
+        boolean hover = this.isHoveredOrFocused();
+        com.skymaxx.tiki.light.Theme.round(ctx, x0, y0, x1, y1, LightButton.alpha(hover ? 0x22 : 0x12, hover ? acc : 0xFFFFFF));
+        String msg = LightButton.strip(this.getMessage().getString());
+        int cut = msg.lastIndexOf(": ");
+        String label = cut > 0 ? msg.substring(0, cut) : msg;
+        String val = cut > 0 ? msg.substring(cut + 2) : "";
+        int ty = y0 + (this.getHeight() - 8) / 2;
+        int lw = font.width(label), vw = font.width(val);
+        int tx0 = x0 + 7 + lw + 8, tx1 = x1 - 7 - vw - 8;
+        double v = Math.max(0.0, Math.min(1.0, this.value));
+        if (tx1 - tx0 >= 30) {
+            ctx.text(font, Component.literal(label), x0 + 7, ty, th.dim);
+            ctx.text(font, Component.literal(val), x1 - 7 - vw, ty, th.text);
+            int my = y0 + this.getHeight() / 2;
+            ctx.fill(tx0, my - 1, tx1, my + 1, LightButton.alpha(0x30, 0xFFFFFF));
+            int kx = tx0 + (int) Math.round((tx1 - tx0) * v);
+            ctx.fill(tx0, my - 1, kx, my + 1, LightButton.alpha(0xFF, acc));
+            com.skymaxx.tiki.light.Theme.round(ctx, kx - 4, my - 4, kx + 4, my + 4, 0xFFFFFFFF);
+        } else {
+            // narrow: text centred, the track as a thin line along the bottom
+            ctx.centeredText(font, Component.literal(label + ": " + val), (x0 + x1) / 2, ty - 1, th.text);
+            int kx = x0 + 3 + (int) Math.round((this.getWidth() - 6) * v);
+            ctx.fill(x0 + 3, y1 - 3, x1 - 3, y1 - 2, LightButton.alpha(0x30, 0xFFFFFF));
+            ctx.fill(x0 + 3, y1 - 3, kx, y1 - 2, LightButton.alpha(0xFF, acc));
+            ctx.fill(kx - 1, y1 - 5, kx + 2, y1, 0xFFFFFFFF);
+        }
+    }
+
     public float currentValue() {
         float raw = this.min + (float)this.value * (this.max - this.min);
         return this.format == Format.HEALTH ? (float)Math.round(raw / 250000.0f) * 250000.0f : raw;

@@ -1,6 +1,8 @@
 # 📜 Changelog
 
 ## 1.2.0 – Fishing Dye Tracker
+- **Custom buttons:** every button, switch and slider in the menu now follows the menu theme (rounded buttons with hover glow, sliding ON/OFF pills, category bars, slim sliders with a round knob).
+- Frost and Lava themes: a bit more snow, bubbles and embers.
 
 ### ✨ New
 - **🎨 Fishing Dye Tracker** for Aquamarine, Iceberg, Carmine and Midnight Dye
