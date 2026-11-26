@@ -95,6 +95,7 @@ final class GambleArt {
                 case "GGIFT" -> head(SKIN_GREEN_GIFT, "5fa813c0-5519-30c4-a53c-955945e93e10");
                 case "WGIFT" -> head(SKIN_WHITE_GIFT, "3047a516-415b-3bf4-b597-b78fd2a9ccf4");
                 case "PUMPKIN" -> new ItemStack(Items.JACK_O_LANTERN);
+                case "JSHARD" -> new ItemStack(Items.PRISMARINE_SHARD);
                 case "YETIHEAD" -> head(SKIN_YETI, "120ce1cf-04b3-383d-a10f-a478ae4e2692");
                 case "GRIMHEAD" -> head(SKIN_GRIM_REAPER, "69e73584-c3f5-38b6-9622-3d0b4a95fb92");
                 case "x" -> new ItemStack(Items.BARRIER);
