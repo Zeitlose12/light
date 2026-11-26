@@ -33,11 +33,11 @@ public final class SackEditScreen extends Screen {
     }
 
     private int boxW() {
-        return Math.round(SackValue.W * this.cfg().sackHudScale);
+        return Math.round(SackValue.size(this.font)[0] * this.cfg().sackHudScale);
     }
 
     private int boxH() {
-        return Math.round(SackValue.H * this.cfg().sackHudScale);
+        return Math.round(SackValue.size(this.font)[1] * this.cfg().sackHudScale);
     }
 
     @Override

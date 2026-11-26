@@ -374,6 +374,21 @@ public final class SackValue {
         }
     }
 
+    /** The real size of the HUD right now (unscaled), so the move screen frames exactly what is drawn. */
+    public static int[] size(Font font) {
+        TikiConfig c = cfg();
+        boolean textOnly = c != null && "TEXT".equals(c.sackHudStyle);
+        boolean offer = c == null || !"INSTA_SELL".equals(c.sackPriceMode);
+        double v = total();
+        if (v < 0) v = 128450300;
+        if (textOnly) {
+            int w = Math.max(font.width(textOnlyLabel(offer)), font.width(num(v)));
+            return new int[]{w + 1, 20};
+        }
+        String label = "Sacks \u00b7 " + (offer ? "Sell Offer" : "Insta-Sell");
+        return new int[]{Math.max(font.width(label), font.width(num(v) + " Coins")) + 12, H};
+    }
+
     /** Style A (box) or B (text only). value < 0: not loaded yet. */
     public static void draw(GuiGraphicsExtractor ctx, Font font, int x, int y, float scale, double value, double plus, boolean textOnly, boolean offer) {
         Matrix3x2fStack ps = ctx.pose();
