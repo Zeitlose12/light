@@ -52,7 +52,11 @@ public final class LightInit implements ClientModInitializer {
                 .then(ClientCommands.literal("remove").then(ClientCommands.argument("name", StringArgumentType.word()).suggests((c, b) -> {
                     for (Achievements a : Achievements.values()) b.suggest(a.name().toLowerCase(Locale.ROOT));
                     return b.buildFuture();
-                }).executes(c -> LightInit.removeAchievement(StringArgumentType.getString(c, "name"))))))
+                }).executes(c -> LightInit.removeAchievement(StringArgumentType.getString(c, "name")))))
+                .then(ClientCommands.literal("restore").then(ClientCommands.argument("name", StringArgumentType.word()).suggests((c, b) -> {
+                    for (String n : Achievements.revoked(TikiGambleClient.config)) b.suggest(n.toLowerCase(Locale.ROOT));
+                    return b.buildFuture();
+                }).executes(c -> LightInit.restoreAchievement(StringArgumentType.getString(c, "name"))))))
             .then(ClientCommands.literal("dragonfix").then(ClientCommands.argument("yaw", com.mojang.brigadier.arguments.FloatArgumentType.floatArg()).then(ClientCommands.argument("pitch", com.mojang.brigadier.arguments.FloatArgumentType.floatArg()).then(ClientCommands.argument("y", com.mojang.brigadier.arguments.FloatArgumentType.floatArg()).executes(c -> {
                 com.skymaxx.tiki.light.MobView.dragonYawFix = com.mojang.brigadier.arguments.FloatArgumentType.getFloat(c, "yaw");
                 com.skymaxx.tiki.light.MobView.dragonPitchFix = com.mojang.brigadier.arguments.FloatArgumentType.getFloat(c, "pitch");
@@ -189,11 +193,20 @@ public final class LightInit implements ClientModInitializer {
             TikiGambleClient.chat("\u00a7c[Light] Unknown achievement: " + name + " - see /light achievement list");
             return 0;
         }
-        if (!Achievements.remove(TikiGambleClient.config, a)) {
-            TikiGambleClient.chat("\u00a77[Light] " + a.title + " was not unlocked.");
+        boolean had = Achievements.remove(TikiGambleClient.config, a);
+        TikiGambleClient.chat("\u00a7d[Light] \u00a7f" + (had ? "Removed: " : "Locked: ") + "\u00a7d" + a.title
+            + " \u00a77- stays locked until \u00a7f/light achievement restore " + a.name().toLowerCase(Locale.ROOT));
+        return 1;
+    }
+
+    private static int restoreAchievement(String name) {
+        if (!needDebug("restore achievements")) return 0;
+        Achievements a = Achievements.byName(name);
+        if (a == null || !Achievements.restore(TikiGambleClient.config, a)) {
+            TikiGambleClient.chat("\u00a7c[Light] Not removed: " + name);
             return 0;
         }
-        TikiGambleClient.chat("\u00a7d[Light] \u00a7fRemoved: \u00a7d" + a.title + (a.reached(TikiGambleClient.stats) ? " \u00a7e(its rule is still met - it will come back)" : ""));
+        TikiGambleClient.chat("\u00a7d[Light] \u00a7f" + a.title + " can be unlocked again.");
         return 1;
     }
 

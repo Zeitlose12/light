@@ -89,6 +89,8 @@ public class TikiConfig {
     public boolean debug = false;
     public boolean lockBazaarSellSacks = true;
     public String lightAchievements = null;
+    /** Achievements taken away with /light achievement remove: they stay locked until /light achievement restore. */
+    public String lightAchievementsRevoked = "";
     public boolean lightAchievementFx = true;
     public float lightAchievementVolume = 0.5f;
     public String lightSellSacksSlots = "";
@@ -122,6 +124,9 @@ public class TikiConfig {
     public float sackHudX = -1f;
     public float sackHudY = -1f;
     public float sackHudScale = 1.0f;
+    /** Compact numbers (902,97M / 1,21B) and sacks that do not count (comma separated, e.g. "Bait Sack"). */
+    public boolean sackCompact = false;
+    public String sackExcluded = "";
     /** How dark the game gets behind the Light menu (0 - 0.9). */
     public float menuDim = 0.55f;
     /** Achievement pop-up position (-1 = top right) and size. */

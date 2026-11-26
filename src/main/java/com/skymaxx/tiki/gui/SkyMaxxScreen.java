@@ -75,6 +75,7 @@ extends Screen {
     private static boolean winterOpen;
     /** Gambling tab: only one category is open at a time. */
     private static String openGamble = "";
+    private static boolean sacksOpen;
     private static boolean searchAll;
     private static boolean stampsOpen;
     private static final int SCROLLBAR_GRAB = 5;
@@ -224,6 +225,20 @@ extends Screen {
             if (this.minecraft != null) this.minecraft.gui.setScreen((Screen)new com.skymaxx.tiki.light.SackEditScreen((Screen)this));
         }).bounds(x, y, w, 20).build(), y));
         y += 22;
+        y = this.toggle(x, y, w, "Compact numbers (902,97M / 1,21B)", () -> this.cfg.sackCompact, v -> {
+            this.cfg.sackCompact = v;
+        });
+        y = this.sectionHeader(x, y + 2, w, "Counted sacks", null, sacksOpen, () -> {
+            sacksOpen = !sacksOpen;
+        });
+        if (sacksOpen) {
+            java.util.List<String> known = com.skymaxx.tiki.light.SackValue.knownSacks();
+            if (known.isEmpty()) y = this.note(y, "\u00a77No sacks read yet - open them once in game.");
+            for (String sack : known) {
+                y = this.toggle(x + 10, y, w - 10, sack, () -> !com.skymaxx.tiki.light.SackValue.excluded(sack), v -> com.skymaxx.tiki.light.SackValue.setExcluded(sack, !v));
+            }
+            y += 4;
+        }
         y = this.note(y, "\u00a77Open each of your sacks once - after that the [Sacks]");
         y = this.note(y, "\u00a77messages keep it up to date. Prices: Hypixel bazaar API.");
         y = this.heading(y, "Bazaar");
@@ -520,40 +535,27 @@ extends Screen {
     }
 
     private int buildHuds(int x, int y, int w) {
+        y = this.note(y, "\u00a77Every HUD: switch it on or off, then \u00a7e\u271c Move\u00a77 to drag it");
+        y = this.note(y, "\u00a77and scroll to resize. Right-click resets.");
         y = this.heading(y, "Dye HUD");
-        y = this.toggle(x, y, w, "Dye HUD", () -> this.cfg.dyeHudEnabled, v -> {
-            this.cfg.dyeHudEnabled = v;
-        });
+        y = this.hudRow(x, y, w, "Dye HUD", () -> this.cfg.dyeHudEnabled, v -> this.cfg.dyeHudEnabled = v,
+            () -> new com.skymaxx.tiki.light.dye.DyeHudEditScreen((Screen)this));
         this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal(SkyMaxxScreen.hudMode(this.cfg.dyeHudOnlyFishing)), btn -> {
             this.cfg.dyeHudOnlyFishing = !this.cfg.dyeHudOnlyFishing;
             this.cfg.save();
             btn.setMessage((Component)Component.literal(SkyMaxxScreen.hudMode(this.cfg.dyeHudOnlyFishing)));
         }).bounds(x, y, w, 20).build(), y));
         y += 22;
-        this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal((String)"\u00a7dMove and resize dye HUD"), b -> {
-            if (this.minecraft != null) {
-                this.minecraft.gui.setScreen((Screen)new com.skymaxx.tiki.light.dye.DyeHudEditScreen((Screen)this));
-            }
-        }).bounds(x, y, w, 20).build(), y));
-        y += 22;
         y = this.heading(y, "Sack value");
-        y = this.toggle(x, y, w, "Sack value HUD", () -> this.cfg.sackHudEnabled, v -> {
-            this.cfg.sackHudEnabled = v;
-        });
-        this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal("\u00a7dMove and resize sack value HUD"), b -> {
-            if (this.minecraft != null) this.minecraft.gui.setScreen((Screen)new com.skymaxx.tiki.light.SackEditScreen((Screen)this));
-        }).bounds(x, y, w, 20).build(), y));
-        y += 22;
+        y = this.hudRow(x, y, w, "Sack value HUD", () -> this.cfg.sackHudEnabled, v -> this.cfg.sackHudEnabled = v,
+            () -> new com.skymaxx.tiki.light.SackEditScreen((Screen)this));
         y = this.heading(y, "Achievement pop-up");
-        this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal("\u00a7dMove and resize achievement pop-up"), b -> {
-            if (this.minecraft != null) {
-                this.minecraft.gui.setScreen((Screen)new com.skymaxx.tiki.light.AchievementPopupEditScreen((Screen)this));
-            }
-        }).bounds(x, y, w, 20).build(), y));
-        y += 22;
-        y = this.heading(y, "Shark pop-up (test, needs Debug log)");
-        y = this.buildSharkControls(x, y, w);
-        y = this.heading(y, "Titanoboa");
+        y = this.hudRow(x, y, w, "Achievement pop-up", () -> this.cfg.lightAchievementFx, v -> this.cfg.lightAchievementFx = v,
+            () -> new com.skymaxx.tiki.light.AchievementPopupEditScreen((Screen)this));
+        y = this.heading(y, "Shark pop-up \u00a78(Debug)");
+        y = this.hudRow(x, y, w, "Also without a drop", () -> this.cfg.sharkPopupNoDrop, v -> this.cfg.sharkPopupNoDrop = v,
+            () -> new com.skymaxx.tiki.light.SharkEditScreen((Screen)this));
+        y = this.heading(y, "Titanoboa corner");
         y = this.toggle(x, y, w, "Gameplay during Animation", () -> this.cfg.boaGameplayView, v -> {
             this.cfg.boaGameplayView = v;
         });
@@ -563,6 +565,16 @@ extends Screen {
             this.cfg.hotspotTextOnWater = v;
         });
         return y;
+    }
+
+    /** One HUD: on/off on the left, a clear yellow Move button on the right. */
+    private int hudRow(int x, int y, int w, String label, BooleanSupplier on, Consumer<Boolean> set, Supplier<Screen> mover) {
+        int mw = Math.max(70, w / 3);
+        this.toggle(x, y, w - mw - 4, label, on, set);
+        this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal("\u00a7e\u271c Move"), b -> {
+            if (this.minecraft != null) this.minecraft.gui.setScreen(mover.get());
+        }).bounds(x + w - mw, y, mw, 20).build(), y));
+        return y + 24;
     }
 
     private int buildTiki(int x, int y, int w) {

@@ -75,10 +75,30 @@ public enum Achievements {
     /** Debug: takes an achievement away again (e.g. one unlocked by a bug). It comes back if its rule is still met. */
     public static boolean remove(TikiConfig cfg, Achievements a) {
         Set<String> have = Achievements.unlocked(cfg);
-        if (!have.remove(a.name())) return false;
+        boolean had = have.remove(a.name());
+        Set<String> rev = Achievements.revoked(cfg);
+        rev.add(a.name());
         cfg.lightAchievements = String.join(",", have);
+        cfg.lightAchievementsRevoked = String.join(",", rev);
+        cfg.save();
+        return had;
+    }
+
+    /** Undoes remove: the achievement may unlock again (at once, if its rule is met). */
+    public static boolean restore(TikiConfig cfg, Achievements a) {
+        Set<String> rev = Achievements.revoked(cfg);
+        if (!rev.remove(a.name())) return false;
+        cfg.lightAchievementsRevoked = String.join(",", rev);
         cfg.save();
         return true;
+    }
+
+    public static Set<String> revoked(TikiConfig cfg) {
+        LinkedHashSet<String> out = new LinkedHashSet<String>();
+        if (cfg != null && cfg.lightAchievementsRevoked != null && !cfg.lightAchievementsRevoked.isBlank()) {
+            out.addAll(Arrays.asList(cfg.lightAchievementsRevoked.split(",")));
+        }
+        return out;
     }
 
     private static int dye(com.skymaxx.tiki.light.dye.Dye dye) {
@@ -149,9 +169,10 @@ public enum Achievements {
         }
         boolean firstRun = cfg.lightAchievements == null;
         Set<String> have = Achievements.unlocked(cfg);
+        Set<String> revoked = Achievements.revoked(cfg);
         boolean changed = firstRun;
         for (Achievements a : Achievements.values()) {
-            if (have.contains(a.name()) || !a.reached(stats)) continue;
+            if (have.contains(a.name()) || revoked.contains(a.name()) || !a.reached(stats)) continue;
             have.add(a.name());
             changed = true;
             if (!firstRun) {

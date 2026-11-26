@@ -14,279 +14,352 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import org.joml.Matrix3x2fStack;
 
 /**
- * Light (Debug, test): "My Fishing Journey" - the drop history as a book. Opens closed, the cover swings open,
- * then page by page: contents + totals, one drop per page, and a tally of the kills without a drop.
+ * Light (Debug, test): "My Fishing Journey" - the drop history as a book. It lies closed, the cover swings open
+ * on its spine, then you page through: contents + totals, one drop per page, a tally of the kills without a drop.
+ * Everything on a page is laid out on a fixed 180 x 240 page and scaled up to the window, so text stays readable.
  * Arrow keys, mouse wheel or a click on the left/right half turn the pages. ESC closes.
  */
 public final class JournalScreen extends Screen {
-    private static final long OPEN_MS = 1300L;
-    private static final long FLIP_MS = 420L;
+    private static final int PW = 180;
+    private static final int PH = 240;
+    private static final long HOLD_MS = 500L;
+    private static final long OPEN_MS = 700L;
+    private static final long FLIP_MS = 380L;
+    private static final int PAPER = 0xFFF2E4C2;
+    private static final int PAPER_EDGE = 0xFFE2CFA4;
+    private static final int INK = 0xFF2E1C0C;
+    private static final int INK_SOFT = 0xFF6A4E30;
+    private static final int GOLD = 0xFFD8A84A;
+    private static final int LEATHER = 0xFF6E3518;
+    private static final int LEATHER_DARK = 0xFF4A2210;
     private final Screen parent;
     private final long opened = System.currentTimeMillis();
     private final List<Object> pages = new ArrayList<>();
     private int spread;
     private int flipTo = -1;
     private long flipStart;
+    private boolean openSound;
+    private boolean landSound;
 
     public JournalScreen(Screen parent) {
         super(Component.literal("My Fishing Journey"));
         this.parent = parent;
-        List<GambleLog.Entry> all = GambleLog.entries();
+        Map<String, Integer> none = new LinkedHashMap<>();
         pages.add("toc");
         pages.add("sum");
-        Map<String, Integer> none = new LinkedHashMap<>();
-        for (GambleLog.Entry e : all) {
-            if (e.drop != null) pages.add(e);
-            else none.merge(e.mobName, 1, Integer::sum);
+        int drops = 0;
+        for (GambleLog.Entry e : GambleLog.entries()) {
+            if (e.drop != null) {
+                pages.add(e);
+                ++drops;
+            } else {
+                none.merge(e.mobName, 1, Integer::sum);
+            }
         }
-        if (pages.size() == 2) pages.add("empty");
+        if (drops == 0) pages.add("empty");
         pages.add(none);
-        if (pages.size() % 2 == 1) pages.add(null);
+        if (pages.size() % 2 == 1) pages.add("end");
     }
 
     private int spreads() {
         return pages.size() / 2;
     }
 
-    // ------------------------------------------------------------------ layout
-
-    private int bookW() {
-        return Math.min(this.width - 40, 380);
+    /** Scale from page units to screen pixels: as big as fits, at least 1. */
+    private float k() {
+        return Math.max(1f, Math.min(1.8f, Math.min((this.width - 40) / (2f * PW + 16), (this.height - 56) / (PH + 16f))));
     }
 
-    private int bookH() {
-        return Math.min(this.height - 50, 240);
+    private void play(SoundEvent ev, float pitch, float vol) {
+        if (this.minecraft != null) this.minecraft.getSoundManager().play(SimpleSoundInstance.forUI(ev, pitch, vol));
     }
 
-    private int bookX() {
-        return (this.width - bookW()) / 2;
-    }
-
-    private int bookY() {
-        return (this.height - bookH()) / 2 - 6;
-    }
+    // ------------------------------------------------------------------ frame
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor ctx, int mouseX, int mouseY, float partial) {
-        ctx.fill(0, 0, this.width, this.height, 0xB0100810);
+        ctx.fill(0, 0, this.width, this.height, 0xC0080408);
         long t = System.currentTimeMillis() - opened;
-        int bx = bookX(), by = bookY(), bw = bookW(), bh = bookH();
-        int half = bw / 2;
-        if (t < OPEN_MS) {
-            drawOpening(ctx, t, bx, by, bw, bh);
-            return;
+        float k = k();
+        float cx = this.width / 2f;
+        float cy = this.height / 2f - 8;
+        Matrix3x2fStack ps = ctx.pose();
+        ps.pushMatrix();
+        ps.translate(cx, cy);
+        ps.scale(k, k);
+        // book space: spine at x = 0, pages from -PW..PW, y -PH/2..PH/2
+        if (t < HOLD_MS + OPEN_MS) {
+            drawOpening(ctx, t);
+        } else {
+            if (!landSound) {
+                landSound = true;
+                play(SoundEvents.BOOK_PUT, 1.0f, 0.7f);
+            }
+            drawOpenBook(ctx);
         }
-        // leather back
-        ctx.fill(bx - 6, by - 6, bx + bw + 6, by + bh + 6, 0xFF5A2E14);
-        ctx.fill(bx - 3, by - 3, bx + bw + 3, by + bh + 3, 0xFF7A4220);
-        int shown = spread;
-        page(ctx, bx, by, half, bh, pages.get(shown * 2), -1);
-        page(ctx, bx + half, by, half, bh, pages.get(shown * 2 + 1), 1);
-        // the page turning
+        ps.popMatrix();
+        if (t >= HOLD_MS + OPEN_MS) {
+            int bottom = (int) (cy + (PH / 2f + 10) * k);
+            String nav = "Page " + (spread * 2 + 1) + " - " + (spread * 2 + 2) + " of " + pages.size();
+            ctx.centeredText(this.font, Component.literal((spread > 0 ? "§f◀  " : "§8◀  ") + "§7" + nav + (spread < spreads() - 1 ? "  §f▶" : "  §8▶")), this.width / 2, bottom + 4, -1);
+            ctx.centeredText(this.font, Component.literal("§e(Debug test) §8Arrow keys / wheel / click to turn · ESC to close"), this.width / 2, bottom + 16, -1);
+        }
+        super.extractRenderState(ctx, mouseX, mouseY, partial);
+    }
+
+    /** Closed book in the middle; the cover turns over the spine (scaled flat, like a real hinge). */
+    private void drawOpening(GuiGraphicsExtractor ctx, long t) {
+        float u = t < HOLD_MS ? 0f : Math.min(1f, (t - HOLD_MS) / (float) OPEN_MS);
+        float e = u < 0.5f ? 2 * u * u : 1 - (float) Math.pow(-2 * u + 2, 2) / 2;
+        if (u > 0 && !openSound) {
+            openSound = true;
+            play(SoundEvents.BOOK_PAGE_TURN, 0.8f, 0.9f);
+        }
+        // closed: the cover is centred (spine at -PW/2); open: the spine is in the middle
+        Matrix3x2fStack ps = ctx.pose();
+        ps.pushMatrix();
+        ps.translate(-PW / 2f * (1 - e), 0);
+        shadow(ctx, e);
+        ctx.fill(-3, -PH / 2 - 5, PW + 5, PH / 2 + 5, LEATHER_DARK);
+        page(ctx, 0, pages.get(1), 1);
+        if (e > 0.5f) ctx.fill(-PW - 5, -PH / 2 - 5, 3, PH / 2 + 5, LEATHER_DARK);
+        // the cover on its hinge: cos goes 1 -> -1, a negative scale lays it over to the left
+        float sx = (float) Math.cos(e * Math.PI);
+        ps.pushMatrix();
+        ps.scale(Math.abs(sx) < 0.001f ? 0.001f : sx, 1);
+        if (sx >= 0) {
+            cover(ctx);
+        } else {
+            ps.pushMatrix();
+            ps.scale(-1, 1);
+            ctx.fill(-PW - 5, -PH / 2 - 5, 3, PH / 2 + 5, LEATHER);
+            page(ctx, -PW, pages.get(0), -1);
+            ps.popMatrix();
+        }
+        int shade = (int) ((1 - Math.abs(sx)) * 90);
+        ctx.fill(-3, -PH / 2 - 5, PW + 5, PH / 2 + 5, shade << 24);
+        ps.popMatrix();
+        ps.popMatrix();
+    }
+
+    private void drawOpenBook(GuiGraphicsExtractor ctx) {
+        shadow(ctx, 1f);
+        ctx.fill(-PW - 6, -PH / 2 - 6, PW + 6, PH / 2 + 6, LEATHER_DARK);
+        ctx.fill(-PW - 4, -PH / 2 - 4, PW + 4, PH / 2 + 4, LEATHER);
+        page(ctx, -PW, pages.get(spread * 2), -1);
+        page(ctx, 0, pages.get(spread * 2 + 1), 1);
         if (flipTo >= 0) {
             float u = Math.min(1f, (System.currentTimeMillis() - flipStart) / (float) FLIP_MS);
-            int w = (int) (half * Math.abs(Math.cos(u * Math.PI)));
+            float sx = (float) Math.cos(u * Math.PI);
             boolean fwd = flipTo > spread;
+            Matrix3x2fStack ps = ctx.pose();
             if (fwd) {
-                if (u < 0.5f) {
-                    ctx.fill(bx + half, by, bx + half + w, by + bh, 0xFFF3E6C4);
-                    ctx.fill(bx + half, by, bx + half + w, by + bh, argb(0.3f * u * 2, 0x000000));
-                } else {
-                    page(ctx, bx + half, by, half, bh, pages.get(flipTo * 2 + 1), 1);
-                    ctx.enableScissor(bx + half - w, by, bx + half, by + bh);
-                    page(ctx, bx, by, half, bh, pages.get(flipTo * 2), -1);
-                    ctx.disableScissor();
+                // the right page lifts and lands on the left; underneath the next right page shows
+                page(ctx, 0, pages.get(flipTo * 2 + 1), 1);
+                ps.pushMatrix();
+                ps.scale(Math.abs(sx) < 0.001f ? 0.001f : sx, 1);
+                if (sx >= 0) page(ctx, 0, pages.get(spread * 2 + 1), 1);
+                else {
+                    ps.pushMatrix();
+                    ps.scale(-1, 1);
+                    page(ctx, -PW, pages.get(flipTo * 2), -1);
+                    ps.popMatrix();
                 }
+                ctx.fill(0, -PH / 2, PW, PH / 2, ((int) ((1 - Math.abs(sx)) * 80) << 24));
+                ps.popMatrix();
             } else {
-                if (u < 0.5f) {
-                    ctx.fill(bx + half - w, by, bx + half, by + bh, 0xFFF3E6C4);
-                    ctx.fill(bx + half - w, by, bx + half, by + bh, argb(0.3f * u * 2, 0x000000));
-                } else {
-                    page(ctx, bx, by, half, bh, pages.get(flipTo * 2), -1);
-                    ctx.enableScissor(bx + half, by, bx + half + w, by + bh);
-                    page(ctx, bx + half, by, half, bh, pages.get(flipTo * 2 + 1), 1);
-                    ctx.disableScissor();
+                page(ctx, -PW, pages.get(flipTo * 2), -1);
+                ps.pushMatrix();
+                ps.scale(Math.abs(sx) < 0.001f ? 0.001f : sx, 1);
+                if (sx >= 0) page(ctx, -PW, pages.get(spread * 2), -1);
+                else {
+                    ps.pushMatrix();
+                    ps.scale(-1, 1);
+                    page(ctx, 0, pages.get(flipTo * 2 + 1), 1);
+                    ps.popMatrix();
                 }
+                ctx.fill(-PW, -PH / 2, 0, PH / 2, ((int) ((1 - Math.abs(sx)) * 80) << 24));
+                ps.popMatrix();
             }
             if (u >= 1f) {
                 spread = flipTo;
                 flipTo = -1;
             }
         }
-        ctx.fill(bx + half - 2, by, bx + half + 2, by + bh, 0x803C1E0A);
-        String nav = "Page " + (spread * 2 + 1) + "-" + (spread * 2 + 2) + " of " + pages.size();
-        ctx.centeredText(this.font, Component.literal("§8◀  §7" + nav + "  §8▶"), this.width / 2, by + bh + 12, -1);
-        ctx.centeredText(this.font, Component.literal("§e(Debug test) §8Arrow keys / wheel / click to turn · ESC to close"), this.width / 2, by + bh + 24, -1);
-        super.extractRenderState(ctx, mouseX, mouseY, partial);
+        // spine and ribbon
+        ctx.fill(-1, -PH / 2, 1, PH / 2, 0x50402010);
+        ctx.fill(-14, -PH / 2 - 4, -9, PH / 2 + 16, 0xFFA02020);
+        ctx.fill(-14, PH / 2 + 12, -9, PH / 2 + 16, 0xFF701414);
     }
 
-    /** The closed book, then the cover swings open from the spine. */
-    private void drawOpening(GuiGraphicsExtractor ctx, long t, int bx, int by, int bw, int bh) {
-        int half = bw / 2;
-        float open = t < 650 ? 0f : Math.min(1f, (t - 650) / 650f);
-        open = 1f - (1f - open) * (1f - open);
-        // pages underneath (right half) once it opens
-        if (open > 0) {
-            ctx.fill(bx + half - 3, by - 3, bx + bw + 6, by + bh + 6, 0xFF5A2E14);
-            page(ctx, bx + half, by, half, bh, pages.get(1), 1);
-            int lw = (int) (half * open);
-            ctx.fill(bx + half - lw - 6, by - 6, bx + half, by + bh + 6, 0xFF5A2E14);
-            if (open > 0.5f) {
-                ctx.enableScissor(bx + half - lw, by, bx + half, by + bh);
-                page(ctx, bx, by, half, bh, pages.get(0), -1);
-                ctx.disableScissor();
-            }
-        }
-        // the cover (right half, folding over to the left)
-        float cw = half * (float) Math.abs(Math.cos(open * Math.PI));
-        boolean front = open < 0.5f;
-        int x0 = front ? bx + half : (int) (bx + half - cw);
-        int x1 = front ? (int) (bx + half + cw) : bx + half;
-        if (cw > 1) {
-            ctx.fill(x0 - (front ? 3 : 0), by - 6, x1 + (front ? 6 : 0), by + bh + 6, 0xFF6A3418);
-            ctx.fill(x0, by - 2, x1, by + bh + 2, front ? 0xFF8A4A22 : 0xFF5A2E14);
-            if (front && cw > half * 0.6f) {
-                int cx = (x0 + x1) / 2;
-                ctx.outline(x0 + 8, by + 6, x1 - x0 - 16, bh - 12, 0xFFD8A84A);
-                ctx.outline(x0 + 11, by + 9, x1 - x0 - 22, bh - 18, 0x80D8A84A);
-                Matrix3x2fStack ps = ctx.pose();
-                ps.pushMatrix();
-                ps.translate(cx, by + bh * 0.30f);
-                ps.scale(1.6f, 1.6f);
-                ctx.centeredText(this.font, Component.literal("My Fishing").withStyle(ChatFormatting.BOLD), 0, -10, 0xFFF0C860);
-                ctx.centeredText(this.font, Component.literal("Journey").withStyle(ChatFormatting.BOLD), 0, 2, 0xFFF0C860);
-                ps.popMatrix();
-                drawFish(ctx, cx, (int) (by + bh * 0.58f), 0xFFD8A84A);
-                ctx.centeredText(this.font, Component.literal("§6Light"), cx, by + bh - 26, -1);
-            }
-        }
-        if (t < 80) playPage(0.7f);
+    private void shadow(GuiGraphicsExtractor ctx, float open) {
+        int w = (int) (PW * (0.5f + 0.5f * open)) + 14;
+        for (int i = 0; i < 6; i++) ctx.fill(-w - i * 2, PH / 2 + 4 + i, w + i * 2, PH / 2 + 6 + i, 0x14000000);
     }
 
-    /** A small golden fish emblem for the cover. */
-    private void drawFish(GuiGraphicsExtractor ctx, int cx, int cy, int c) {
-        for (int i = -12; i <= 12; i++) {
-            int hh = (int) Math.round(Math.sqrt(Math.max(0, 144 - i * i)) * 0.55);
+    /** The closed front cover (drawn from the spine to the right). */
+    private void cover(GuiGraphicsExtractor ctx) {
+        ctx.fill(-3, -PH / 2 - 5, PW + 5, PH / 2 + 5, LEATHER);
+        ctx.fill(-3, -PH / 2 - 5, 9, PH / 2 + 5, LEATHER_DARK);
+        for (int yy : new int[]{-PH / 2 + 18, -PH / 2 + 24, PH / 2 - 26, PH / 2 - 20}) ctx.fill(-3, yy, 9, yy + 2, GOLD);
+        ctx.outline(16, -PH / 2 + 8, PW - 26, PH - 16, GOLD);
+        ctx.outline(20, -PH / 2 + 12, PW - 34, PH - 24, 0x80D8A84A);
+        for (int[] c : new int[][]{{16, -PH / 2 + 8}, {PW - 16, -PH / 2 + 8}, {16, PH / 2 - 14}, {PW - 16, PH / 2 - 14}}) {
+            ctx.fill(c[0] - 3, c[1] - 3, c[0] + 4, c[1] + 4, GOLD);
+        }
+        int mid = (PW + 6) / 2 + 3;
+        Matrix3x2fStack ps = ctx.pose();
+        ps.pushMatrix();
+        ps.translate(mid, -PH / 2 + 62);
+        ps.scale(1.6f, 1.6f);
+        ctx.centeredText(this.font, Component.literal("My Fishing").withStyle(ChatFormatting.BOLD), 0, -10, 0xFFF0C860);
+        ctx.centeredText(this.font, Component.literal("Journey").withStyle(ChatFormatting.BOLD), 0, 2, 0xFFF0C860);
+        ps.popMatrix();
+        fish(ctx, mid, 14, GOLD);
+        ctx.centeredText(this.font, Component.literal("Light"), mid, PH / 2 - 40, GOLD);
+    }
+
+    private void fish(GuiGraphicsExtractor ctx, int cx, int cy, int c) {
+        for (int i = -16; i <= 16; i++) {
+            int hh = (int) Math.round(Math.sqrt(Math.max(0, 256 - i * i)) * 0.55);
             ctx.fill(cx + i, cy - hh, cx + i + 1, cy + hh + 1, c);
         }
-        for (int i = 0; i < 8; i++) ctx.fill(cx + 12 + i, cy - i, cx + 13 + i, cy + i + 1, c);
-        ctx.fill(cx - 7, cy - 2, cx - 5, cy, 0xFF6A3418);
+        for (int i = 0; i < 10; i++) ctx.fill(cx + 16 + i, cy - i, cx + 17 + i, cy + i + 1, c);
+        ctx.fill(cx - 10, cy - 3, cx - 7, cy, LEATHER);
+        for (int i = 0; i < 3; i++) ctx.fill(cx - 4 + i * 6, cy - 6 + i, cx - 3 + i * 6, cy + 6 - i, LEATHER);
     }
 
-    // ------------------------------------------------------------------ pages
+    // ------------------------------------------------------------------ one page at (x0 .. x0+PW, -PH/2 .. PH/2)
 
-    private void page(GuiGraphicsExtractor ctx, int x, int y, int w, int h, Object what, int side) {
-        ctx.fill(x, y, x + w, y + h, 0xFFF3E6C4);
-        if (side < 0) ctx.fillGradient(x + w - 18, y, x + w, y + h, 0x00785020, 0x00785020);
-        for (int i = 0; i < 18; i++) ctx.fill(x + (i * 53) % (w - 4), y + (i * 37) % (h - 4), x + (i * 53) % (w - 4) + 3, y + (i * 37) % (h - 4) + 2, 0x10966E3C);
-        int shade = side < 0 ? x + w - 10 : x;
-        for (int i = 0; i < 10; i++) ctx.fill(shade + i, y, shade + i + 1, y + h, argb(0.03f * (side < 0 ? i : 10 - i), 0x784C1E));
-        int cx = x + w / 2;
-        if (what == null) return;
+    private void page(GuiGraphicsExtractor ctx, int x0, Object what, int side) {
+        int top = -PH / 2;
+        ctx.fill(x0, top, x0 + PW, top + PH, PAPER);
+        // page edges and a soft curve towards the spine
+        ctx.fill(x0, top, x0 + PW, top + 1, PAPER_EDGE);
+        ctx.fill(x0, top + PH - 1, x0 + PW, top + PH, PAPER_EDGE);
+        int sp = side < 0 ? x0 + PW - 12 : x0;
+        for (int i = 0; i < 12; i++) ctx.fill(sp + i, top, sp + i + 1, top + PH, ((side < 0 ? i : 11 - i) * 3) << 24 | 0x5A3A12);
+        ctx.outline(x0 + 8, top + 8, PW - 16, PH - 16, 0x406A4E30);
+        int cx = x0 + PW / 2;
+        int index = pages.indexOf(what);
+        if (index >= 0) ctx.centeredText(this.font, Component.literal(String.valueOf(index + 1)), cx, top + PH - 18, 0x906A4E30);
+        if (what == null || "end".equals(what)) return;
         if ("toc".equals(what)) {
-            title(ctx, "Contents", cx, y + 14);
-            String[] mobs = GambleLog.MOBS;
+            heading(ctx, "Contents", cx, top + 22);
             String[] names = {"Lord Jawbus", "Thunder", "Ragnarok", "Plhlegblast", "Grim Reaper", "Yeti", "Reindrake"};
             boolean withTest = GambleLog.hasTest();
-            for (int i = 0; i < mobs.length; i++) {
-                int ly = y + 38 + i * 15;
-                ctx.text(this.font, Component.literal(names[i]), x + 14, ly, 0xFF3A2410);
-                String n = GambleLog.drops(mobs[i], withTest) + " drops";
-                ctx.text(this.font, Component.literal(n), x + w - 12 - this.font.width(n), ly, 0xFF7A5A3A);
+            for (int i = 0; i < names.length; i++) {
+                int ly = top + 46 + i * 20;
+                ctx.text(this.font, Component.literal(names[i]), x0 + 16, ly, INK);
+                String n = String.valueOf(GambleLog.drops(GambleLog.MOBS[i], withTest));
+                ctx.text(this.font, Component.literal(n), x0 + PW - 16 - this.font.width(n), ly, INK_SOFT);
+                int dotsFrom = x0 + 20 + this.font.width(names[i]);
+                for (int d = dotsFrom; d < x0 + PW - 22 - this.font.width(n); d += 4) ctx.fill(d, ly + 7, d + 1, ly + 8, 0x806A4E30);
             }
+            ctx.centeredText(this.font, Component.literal("drops per mob"), cx, top + 196, INK_SOFT);
             return;
         }
         if ("sum".equals(what)) {
             boolean withTest = GambleLog.hasTest();
-            title(ctx, "Totals", cx, y + 14);
+            heading(ctx, "Totals", cx, top + 22);
             GambleLog.Entry best = GambleLog.best(withTest);
-            line(ctx, x, y + 38, "Total", LavaPrices.format(GambleLog.total(withTest)), 0xFF8A6A00);
-            line(ctx, x, y + 68, "Best hit", best == null ? "-" : best.drop, 0xFFA04000);
-            line(ctx, x, y + 98, "Drops", GambleLog.drops(null, withTest) + " of " + GambleLog.count(withTest) + " kills", 0xFF3A2410);
-            line(ctx, x, y + 128, "RNG fanfares", GambleLog.fanfares(withTest) + " ★", 0xFF8A6A00);
+            stat(ctx, x0, top + 46, "Total", LavaPrices.format(GambleLog.total(withTest)), 0xFF8A6400);
+            stat(ctx, x0, top + 80, "Best hit", best == null ? "-" : best.drop, 0xFF9A3A00);
+            stat(ctx, x0, top + 114, "Drops", GambleLog.drops(null, withTest) + " of " + GambleLog.count(withTest) + " kills", INK);
+            stat(ctx, x0, top + 148, "RNG fanfares", GambleLog.fanfares(withTest) + " ★", 0xFF8A6400);
             return;
         }
         if ("empty".equals(what)) {
-            title(ctx, "No drops yet", cx, y + 14);
-            ctx.centeredText(this.font, Component.literal("Your first gambling drop"), cx, y + 50, 0xFF7A5A3A);
-            ctx.centeredText(this.font, Component.literal("gets its own page here."), cx, y + 62, 0xFF7A5A3A);
+            heading(ctx, "No drops yet", cx, top + 22);
+            ctx.centeredText(this.font, Component.literal("Your first gambling"), cx, top + 70, INK_SOFT);
+            ctx.centeredText(this.font, Component.literal("drop gets its own"), cx, top + 82, INK_SOFT);
+            ctx.centeredText(this.font, Component.literal("page right here."), cx, top + 94, INK_SOFT);
             return;
         }
         if (what instanceof Map<?, ?> none) {
-            title(ctx, "Without a drop", cx, y + 14);
+            heading(ctx, "Without a drop", cx, top + 22);
             int i = 0;
             for (Map.Entry<?, ?> me : none.entrySet()) {
-                int ly = y + 40 + i * 32;
-                if (ly > y + h - 24) break;
-                ctx.text(this.font, Component.literal(String.valueOf(me.getKey())).withStyle(ChatFormatting.BOLD), x + 14, ly, 0xFF3A2410);
+                int ly = top + 44 + i * 30;
+                if (ly > top + PH - 50) break;
                 int n = (Integer) me.getValue();
-                for (int k = 0; k < Math.min(n, 40); k++) {
-                    int gx = x + 14 + (k / 5) * 22 + (k % 5) * 4;
-                    if (k % 5 == 4) {
-                        for (int s = 0; s < 18; s++) ctx.fill(gx - 16 + s, ly + 22 - s / 3, gx - 15 + s, ly + 23 - s / 3, 0xFF5A3A1A);
+                ctx.text(this.font, Component.literal(String.valueOf(me.getKey())), x0 + 16, ly, INK);
+                ctx.text(this.font, Component.literal(String.valueOf(n)), x0 + PW - 16 - this.font.width(String.valueOf(n)), ly, INK_SOFT);
+                for (int q = 0; q < Math.min(n, 25); q++) {
+                    int gx = x0 + 16 + (q / 5) * 24 + (q % 5) * 4;
+                    if (q % 5 == 4) {
+                        for (int s = 0; s < 20; s++) ctx.fill(gx - 18 + s, ly + 21 - s / 3, gx - 17 + s, ly + 22 - s / 3, 0xFF4A2E10);
                     } else {
-                        ctx.fill(gx, ly + 12, gx + 1, ly + 24, 0xFF5A3A1A);
+                        ctx.fill(gx, ly + 11, gx + 1, ly + 23, 0xFF4A2E10);
                     }
                 }
-                if (n > 40) ctx.text(this.font, Component.literal("+" + (n - 40)), x + w - 30, ly + 14, 0xFF7A5A3A);
                 i++;
             }
-            if (none.isEmpty()) ctx.centeredText(this.font, Component.literal("Every kill dropped something!"), cx, y + 50, 0xFF7A5A3A);
+            if (none.isEmpty()) ctx.centeredText(this.font, Component.literal("Every kill dropped!"), cx, top + 70, INK_SOFT);
             return;
         }
         if (what instanceof GambleLog.Entry e) {
-            int col = 0xFF000000 | LavaScene.colorOf(e.mob);
-            title(ctx, e.mobName, cx, y + 12, col);
-            ctx.fill(x + 24, y + 26, x + w - 24, y + 27, col);
+            int col = 0xFF000000 | darker(LavaScene.colorOf(e.mob));
+            heading(ctx, e.mobName, cx, top + 22, col);
+            ctx.fill(x0 + 30, top + 34, x0 + PW - 30, top + 35, col);
+            ctx.fill(cx - 2, top + 33, cx + 2, top + 36, col);
             String date = new SimpleDateFormat("dd.MM.yyyy · HH:mm", Locale.GERMANY).format(new Date(e.ms));
-            ctx.centeredText(this.font, Component.literal(date + (e.test ? " · test" : "")), cx, y + 32, 0xFF7A5A3A);
-            int iy = y + 48;
-            ctx.fill(cx - 26, iy, cx + 26, iy + 52, 0x203A2410);
-            GambleArt.item(ctx, this.font, LavaScene.iconForDrop(e.drop), cx, iy + 26, 40, 1f);
-            if (e.fanfare) ctx.text(this.font, Component.literal("★ RNG").withStyle(ChatFormatting.BOLD), x + w - 12 - this.font.width("★ RNG") - 4, iy + 2, 0xFFA07A00);
-            ctx.centeredText(this.font, Component.literal(e.drop).withStyle(ChatFormatting.BOLD), cx, iy + 62, 0xFF5A1A7A);
-            if (e.price > 0) ctx.centeredText(this.font, Component.literal(LavaPrices.format(e.price)).withStyle(ChatFormatting.BOLD), cx, iy + 76, 0xFF8A6A00);
-            if (e.dry > 0) ctx.centeredText(this.font, Component.literal("after " + String.format(Locale.GERMANY, "%,d", e.dry) + " " + e.mobName), cx, iy + 92, 0xFF5A3A1A);
-            ctx.fill(x + 30, y + h - 26, x + w - 30, y + h - 25, 0x403A2410);
-            ctx.centeredText(this.font, Component.literal(e.share ? "\"A shared catch.\"" : "\"The roll held.\""), cx, y + h - 18, 0xFF7A5A3A);
+            ctx.centeredText(this.font, Component.literal(date), cx, top + 42, INK_SOFT);
+            if (e.test) ctx.centeredText(this.font, Component.literal("test entry"), cx, top + 52, 0xFFB08000);
+            ctx.fill(cx - 30, top + 64, cx + 30, top + 124, 0x18402010);
+            ctx.outline(cx - 30, top + 64, 60, 60, 0x506A4E30);
+            GambleArt.item(ctx, this.font, LavaScene.iconForDrop(e.drop), cx, top + 94, 44, 1f);
+            if (e.fanfare) {
+                ctx.text(this.font, Component.literal("★ RNG").withStyle(ChatFormatting.BOLD), cx + 36, top + 66, 0xFFA07400);
+            }
+            ctx.centeredText(this.font, Component.literal(e.drop).withStyle(ChatFormatting.BOLD), cx, top + 134, 0xFF4A1468);
+            if (e.price > 0) ctx.centeredText(this.font, Component.literal(LavaPrices.format(e.price)), cx, top + 148, 0xFF8A6400);
+            if (e.dry > 0) ctx.centeredText(this.font, Component.literal("after " + String.format(Locale.GERMANY, "%,d", e.dry) + " " + e.mobName), cx, top + 162, INK);
+            if (e.share) ctx.centeredText(this.font, Component.literal("(loot share)"), cx, top + 174, INK_SOFT);
+            ctx.fill(x0 + 40, top + PH - 32, x0 + PW - 40, top + PH - 31, 0x406A4E30);
         }
     }
 
-    private void title(GuiGraphicsExtractor ctx, String text, int cx, int y) {
-        title(ctx, text, cx, y, 0xFF3A2410);
+    private static int darker(int rgb) {
+        int r = (rgb >> 16) & 255, g = (rgb >> 8) & 255, b = rgb & 255;
+        return ((int) (r * 0.6) << 16) | ((int) (g * 0.6) << 8) | (int) (b * 0.6);
     }
 
-    private void title(GuiGraphicsExtractor ctx, String text, int cx, int y, int color) {
+    private void heading(GuiGraphicsExtractor ctx, String text, int cx, int y) {
+        heading(ctx, text, cx, y, INK);
+    }
+
+    private void heading(GuiGraphicsExtractor ctx, String text, int cx, int y, int color) {
         Matrix3x2fStack ps = ctx.pose();
         ps.pushMatrix();
         ps.translate(cx, y);
-        ps.scale(1.3f, 1.3f);
+        float s = Math.min(1.4f, (PW - 24f) / Math.max(1, this.font.width(text)));
+        ps.scale(s, s);
         ctx.centeredText(this.font, Component.literal(text).withStyle(ChatFormatting.BOLD), 0, -4, color);
         ps.popMatrix();
     }
 
-    private void line(GuiGraphicsExtractor ctx, int x, int y, String label, String value, int color) {
-        ctx.text(this.font, Component.literal(label), x + 14, y, 0xFF7A5A3A);
-        ctx.text(this.font, Component.literal(value).withStyle(ChatFormatting.BOLD), x + 14, y + 11, color);
+    private void stat(GuiGraphicsExtractor ctx, int x0, int y, String label, String value, int color) {
+        ctx.text(this.font, Component.literal(label), x0 + 16, y, INK_SOFT);
+        String v = value;
+        while (v.length() > 3 && this.font.width(v) > PW - 34) v = v.substring(0, v.length() - 1);
+        ctx.text(this.font, Component.literal(v).withStyle(ChatFormatting.BOLD), x0 + 16, y + 12, color);
     }
 
     // ------------------------------------------------------------------ input
 
     private void turn(int dir) {
-        if (flipTo >= 0 || System.currentTimeMillis() - opened < OPEN_MS) return;
+        if (flipTo >= 0 || System.currentTimeMillis() - opened < HOLD_MS + OPEN_MS) return;
         int to = spread + dir;
         if (to < 0 || to >= spreads()) return;
         flipTo = to;
         flipStart = System.currentTimeMillis();
-        playPage(1.0f);
-    }
-
-    private void playPage(float pitch) {
-        if (this.minecraft != null) this.minecraft.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.BOOK_PAGE_TURN, pitch, 0.8f));
+        play(SoundEvents.BOOK_PAGE_TURN, 1.0f, 0.8f);
     }
 
     @Override
@@ -325,10 +398,5 @@ public final class JournalScreen extends Screen {
     @Override
     public boolean isPauseScreen() {
         return false;
-    }
-
-    private static int argb(float a, int rgb) {
-        int al = Math.max(0, Math.min(255, Math.round(a * 255f)));
-        return (al << 24) | (rgb & 0xFFFFFF);
     }
 }

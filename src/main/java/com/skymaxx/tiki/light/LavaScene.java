@@ -55,6 +55,7 @@ public final class LavaScene {
     private static final Sym OTHER = new Sym("???", 0xFFCC33, "");
     private static final Sym VIAL = new Sym("VIAL", 0x5FD35F, "radioactive vial");
     private static final Sym DYE = new Sym("DYE", 0xB0102A, "carmine dye");
+    private static final Sym FLASH = new Sym("PROSP", 0xC9A0FF, "flash");
     private static final Sym TEXTS = new Sym("TEXTS", 0xE07A2A, "burnt texts");
     private static final Sym CHAIN = new Sym("CHAIN", 0x9A8A80, "chain of the end times");
     private static final Sym HANDLE = new Sym("HANDLE", 0xFFB347, "brimstone handle");
@@ -75,7 +76,7 @@ public final class LavaScene {
         new Look("Lord Jawbus", "jawbus", "lava", 0xFF5A2A, Game.SLOTS, EntityTypes.IRON_GOLEM,
             new int[]{0xD8D3CC, 0x9E9890, 0x6E6A64, 0xFF7A1A}, new Sym[]{VIAL, DYE, OTHER, NONE}),
         new Look("Thunder", "thunder", "lava", 0x4AA3FF, Game.ROULETTE, EntityTypes.ELDER_GUARDIAN,
-            new int[]{0x5E9C8C, 0x3F6F68, 0xE8D9B8, 0x6FD0FF}, new Sym[]{DYE, NONE, OTHER, NONE, NONE}),
+            new int[]{0x5E9C8C, 0x3F6F68, 0xE8D9B8, 0x6FD0FF}, new Sym[]{DYE, NONE, FLASH, NONE, OTHER, NONE}),
         new Look("Ragnarok", "ragnarok", "lava", 0xD0202E, Game.SHOOT, EntityTypes.WITHER_SKELETON,
             new int[]{0x3A0C10, 0x7A1A20, 0x2A2A2A, 0xFF3B3B}, new Sym[]{TEXTS, CHAIN, HANDLE, BOOK, DYE, OTHER, NONE}),
         new Look("Plhlegblast", "plhlegblast", "lava", 0x5FD35F, Game.BUBBLES, EntityTypes.SQUID,
@@ -729,7 +730,7 @@ public final class LavaScene {
         }
         if (fanfareAt >= 0 && beta()) {
             try {
-                drawFanfare(ctx, font, t - fanfareAt, a, sw, sh, cy);
+                drawFanfare(ctx, font, t - fanfareAt, a, sw, sh, cy, scale, cy + 4.0f * scale + 22.0f + (10 + lines.size() * 12) * 1.5f);
             } catch (Throwable e) {
                 betaFailed(e);
             }
@@ -757,22 +758,33 @@ public final class LavaScene {
         return price != null && price >= (long) (c.fanfareMillions * 1_000_000.0);
     }
 
-    /** Golden rays, falling coins, a flash and a short shake, "RNG!" above the result; optional screenshot. */
-    private static void drawFanfare(GuiGraphicsExtractor ctx, Font font, float ft, float a, int sw, int sh, float cy) {
+    /** A golden glow and a short ray burst behind the result, falling coins, "RNG!" clear of the mob name. */
+    private static void drawFanfare(GuiGraphicsExtractor ctx, Font font, float ft, float a, int sw, int sh, float cy, float nameScale, float cardBottom) {
         float in = clamp(ft / 0.3f) * a;
-        if (ft < 0.12f) ctx.fill(0, 0, sw, sh, argb((1 - ft / 0.12f) * 0.55f * a, 0xFFF0B4));
+        if (ft < 0.12f) ctx.fill(0, 0, sw, sh, argb((1 - ft / 0.12f) * 0.45f * a, 0xFFF0B4));
         Matrix3x2fStack pose = ctx.pose();
-        float cx = sw / 2.0f, ry = cy + 30;
-        // rays
-        pose.pushMatrix();
-        pose.translate(cx, ry);
-        for (int i = 0; i < 14; i++) {
+        float cx = sw / 2.0f;
+        float my = (cy + cardBottom) / 2.0f;
+        // soft pulsing glow around the result
+        float pulse = 0.75f + 0.25f * (float) Math.sin(ft * 4);
+        for (int g = 6; g >= 1; g--) {
+            int rw = (int) (sw * 0.18f + g * 22), rh = (int) ((cardBottom - cy) * 0.6f + g * 14);
+            ctx.fill((int) cx - rw, (int) my - rh, (int) cx + rw, (int) my + rh, argb(in * 0.05f * pulse, 0xFFD24A));
+        }
+        // one short burst of rays that shoots out and fades (no spinning)
+        if (ft < 0.9f) {
+            float u = ft / 0.9f;
+            float len = Math.max(sw, sh) * (0.25f + 0.6f * u);
             pose.pushMatrix();
-            pose.rotate(i * (float) (Math.PI * 2 / 14) + ft * 0.35f);
-            ctx.fillGradient(-6, 0, 6, (int) (Math.max(sw, sh) * 0.9f), argb(in * 0.22f, 0xFFD24A), argb(0, 0xFFD24A));
+            pose.translate(cx, my);
+            for (int i = 0; i < 16; i++) {
+                pose.pushMatrix();
+                pose.rotate(i * (float) (Math.PI * 2 / 16));
+                ctx.fillGradient(-2, (int) (len * 0.35f), 2, (int) len, argb(a * 0.5f * (1 - u), 0xFFF3B0), argb(0, 0xFFD24A));
+                pose.popMatrix();
+            }
             pose.popMatrix();
         }
-        pose.popMatrix();
         // coins
         for (int i = 0; i < 70; i++) {
             float l = (ft * 0.45f + i * 0.137f) % 1.0f;
@@ -782,10 +794,14 @@ public final class LavaScene {
             ctx.fill((int) x, (int) y, (int) x + s, (int) y + s, argb(in * 0.9f, i % 3 == 0 ? 0xFFF3B0 : 0xFFD24A));
             ctx.fill((int) x, (int) y, (int) x + s, (int) y + 1, argb(in, 0xFFFFFF));
         }
-        float sc = ft < 0.2f ? 6.0f - 2.5f * (ft / 0.2f) : 3.5f + 0.2f * (float) Math.sin(ft * 6);
-        float shake = ft < 0.5f ? (1 - ft / 0.5f) * 5 : 0;
+        // "RNG!" above the mob name, or below the result card when there is no room above
+        float sc = ft < 0.2f ? 5.0f - 2.0f * (ft / 0.2f) : 3.0f + 0.15f * (float) Math.sin(ft * 6);
+        float nameTop = cy - 6.0f * nameScale;
+        float ry = nameTop - 6 - 5 * sc;
+        if (ry - 5 * sc < 4) ry = cardBottom + 8 + 5 * sc;
+        float shake = ft < 0.5f ? (1 - ft / 0.5f) * 4 : 0;
         pose.pushMatrix();
-        pose.translate(cx + shake * (RNG.nextFloat() * 2 - 1), Math.max(16, cy - 26) + shake * (RNG.nextFloat() * 2 - 1));
+        pose.translate(cx + shake * (RNG.nextFloat() * 2 - 1), ry + shake * (RNG.nextFloat() * 2 - 1));
         pose.scale(sc, sc);
         ctx.centeredText(font, Component.literal("RNG!").withStyle(ChatFormatting.BOLD), 0, -4, argb(in, 0xFFD24A));
         pose.popMatrix();

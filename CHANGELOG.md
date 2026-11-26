@@ -32,6 +32,11 @@
 - Debug commands: `/light test fanfare|dry|history|clear`, `/light achievement list|remove`
 - **🎒 Sack value HUD** (Bazaar tab): value of all your sacks, sell offer or insta-sell, box or text only, movable
 - Menu background gets darker (adjustable in General)
+- Sack value: compact numbers (902,97M / 1,21B) and a list to choose which sacks count (e.g. leave out the Bait Sack)
+- HUDs tab: every HUD has its own on/off and a clear yellow **Move** button
+- Thunder: **Flash I** book is now on the board
+- RNG fanfare: calmer glow and one short ray burst instead of spinning rays; "RNG!" no longer covers the mob name
+- `/light achievement remove` now really keeps it locked (`/light achievement restore` undoes it)
 - Credits: Wiki Tiki & Titanoboa from SkyMaxx by Rachie, dye chances based on DyeAddons, everything else by Grundsteuer (built with the help of AI)
 
 ### 🔧 Changed
