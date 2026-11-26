@@ -84,7 +84,6 @@ public final class LightInit implements ClientModInitializer {
             DyeTracker.tick(client);
             SackValue.tick(client);
             GambleLog.tick();
-            LavaScene.tick(client);
             if (openRequested) {
                 openRequested = false;
                 client.gui.setScreen(SkyMaxxScreen.create());

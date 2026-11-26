@@ -19,6 +19,8 @@ import org.joml.Matrix3x2fStack;
  * wheels, thick glowing lines and lightning. Everything is plain GUI drawing, nothing bundled.
  */
 final class GambleArt {
+    /** Ragnarok's head (NEU repo bestiary, ragnarok_666). */
+    private static final String SKIN_RAGNAROK = "ewogICJ0aW1lc3RhbXAiIDogMTc0MTA5ODExNTMwMCwKICAicHJvZmlsZUlkIiA6ICJhNzdkNmQ2YmFjOWE0NzY3YTFhNzU1NjYxOTllYmY5MiIsCiAgInByb2ZpbGVOYW1lIiA6ICIwOEJFRDUiLAogICJzaWduYXR1cmVSZXF1aXJlZCIgOiB0cnVlLAogICJ0ZXh0dXJlcyIgOiB7CiAgICAiU0tJTiIgOiB7CiAgICAgICJ1cmwiIDogImh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYThlMWZlMjE0YjcxZjZlYTY5YzU0MWE4NjFjNjRiYWZkYTdiZjliODVkZTVkZDE3YWIyYjZjY2QxZDMyYjAzOSIKICAgIH0KICB9Cn0=";
     private static final String SKIN_RADIOACTIVE_VIAL = "ewogICJ0aW1lc3RhbXAiIDogMTYxMDA0OTczMzc3OSwKICAicHJvZmlsZUlkIiA6ICIxOTI1MjFiNGVmZGI0MjVjODkzMWYwMmE4NDk2ZTExYiIsCiAgInByb2ZpbGVOYW1lIiA6ICJTZXJpYWxpemFibGUiLAogICJzaWduYXR1cmVSZXF1aXJlZCIgOiB0cnVlLAogICJ0ZXh0dXJlcyIgOiB7CiAgICAiU0tJTiIgOiB7CiAgICAgICJ1cmwiIDogImh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOWI1NzRjMDNiMWM4ZjUyNTM1Zjk2YTIwYTQxNzYwMjBiYjI4MGUwYWY1MmZjMTI4NWQzZWNiZDM1MTcyODBjNCIKICAgIH0KICB9Cn0=";
     private static final String UUID_RADIOACTIVE_VIAL = "402a4bac-f180-39c1-afda-c3ebacd70e91";
     private static final String SKIN_DYE_CARMINE = "ewogICJ0aW1lc3RhbXAiIDogMTc0MTE2MDk2ODI0MiwKICAicHJvZmlsZUlkIiA6ICJiMzMwZWE4OWE3MTY0OWZjYTMwZmI5ZjU5MTQ5ZjNjMCIsCiAgInByb2ZpbGVOYW1lIiA6ICJUQUxLX0FMT1RfIiwKICAic2lnbmF0dXJlUmVxdWlyZWQiIDogdHJ1ZSwKICAidGV4dHVyZXMiIDogewogICAgIlNLSU4iIDogewogICAgICAidXJsIiA6ICJodHRwOi8vdGV4dHVyZXMubWluZWNyYWZ0Lm5ldC90ZXh0dXJlLzgxNTBiNDJlNjQ5NzEzNzIxN2Q1ZDhmNTY1MDNmOThkOGY1NDljYjAzNGZiZWFlNmZkZDU0MzE1NzA1MThlMzgiLAogICAgICAibWV0YWRhdGEiIDogewogICAgICAgICJtb2RlbCIgOiAic2xpbSIKICAgICAgfQogICAgfQogIH0KfQ==";
@@ -98,6 +100,7 @@ final class GambleArt {
                 case "PUMPKIN" -> new ItemStack(Items.JACK_O_LANTERN);
                 case "ADYE" -> head(SKIN_DYE_AQUAMARINE, "90e7dd71-25a0-310f-9b1d-47d7a2367bcd");
                 case "TFRAG" -> model("hypixel_skyblock:item/uncategorized/thunder_fragment", Items.PRISMARINE_CRYSTALS);
+                case "RAGHEAD" -> head(SKIN_RAGNAROK, "feaa91b5-9a47-37bc-8974-13e7aa71fcd6");
                 case "FRAG" -> model("hypixel_skyblock:item/uncategorized/magma_lord_fragment", Items.MAGMA_CREAM);
                 case "JSHARD" -> new ItemStack(Items.PRISMARINE_SHARD);
                 case "YETIHEAD" -> head(SKIN_YETI, "120ce1cf-04b3-383d-a10f-a478ae4e2692");

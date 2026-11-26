@@ -51,7 +51,8 @@
 - Gambling: book drops ("Enchanted Book (Flash 1)") get their price; prices that fail to load are fetched again and filled into the History later
 - Gambling: drops that are not on the mob's board (e.g. Rampart Leggings) count as nothing
 - Gambling: a board drop that only shows up later in the [Sacks] message is added to the History afterwards
-- Ragnarok: Light remembers the rider while Ragnarok is alive, so the real red rider is shown; his head looks where the horse runs
+- Ragnarok: his own model – his real head (NEU repo), red armour, on a saddled skeleton horse; the rider looks where the horse runs
+- Ragnarok: on every miss he dodges just before the bullet arrives (leap, swerve, duck or brake – like the Titanoboa) and the bullet sparks on the ground; which shot hits is random
 - Frost snow is spread over the whole screen (it fell in two stripes before); HUD particles stay inside the HUD frame
 - Gambling: drop lines that arrive a moment before the kill is counted are no longer lost (e.g. Thunder showed the Thunder Fragment although Flash I dropped)
 - Gambling: "Enchanted Book (Flash I)" style drop lines are read correctly

@@ -260,36 +260,22 @@ public final class LavaScene {
         finalShot = -1;
         hitShot = -1;
         if (l.game == Game.SHOOT) {
-            // Ragnarok rides a skeleton horse: find rider and horse from whichever body was found
-            LivingEntity riderBody = body, horseBody = null;
+            // Ragnarok: Light's own model (the real rider cannot be found reliably) - his real head from the NEU repo,
+            // red armour, on a saddled skeleton horse
+            mob = MobView.snapshot(null, l.standIn);
+            if (mob != null) dressStandIn(l.game);
+            horse = MobView.snapshot(null, EntityTypes.SKELETON_HORSE);
             try {
-                if (body != null && body.getVehicle() instanceof LivingEntity v) horseBody = v;
-                else if (body != null && body.getFirstPassenger() instanceof LivingEntity r) {
-                    horseBody = body;
-                    riderBody = r;
-                } else if (isHorse(body)) {
-                    // only the horse was found (Hypixel does not always link the rider): look for the rider on top
-                    horseBody = body;
-                    riderBody = riderNear(body);
+                if (horse instanceof net.minecraft.world.entity.animal.equine.AbstractHorse h) {
+                    h.setItemSlot(net.minecraft.world.entity.EquipmentSlot.SADDLE, new ItemStack(net.minecraft.world.item.Items.SADDLE));
                 }
             } catch (Throwable ignored) {
             }
-            if (isHorse(riderBody)) riderBody = null; // never a second horse as the rider
-            if (riderBody == null && seenRider != null && System.currentTimeMillis() - seenRiderAt < 90_000L) riderBody = seenRider;
-            mob = MobView.snapshot(riderBody, l.standIn);
-            if (mob == null || isHorse(mob)) mob = MobView.snapshot(null, l.standIn);
-            if (mob != null && (riderBody == null || mob.isInvisible() || mob instanceof net.minecraft.world.entity.decoration.ArmorStand)) {
-                if (riderBody != null) mob = MobView.snapshot(null, l.standIn);
-                if (mob != null) {
-                    mob.setInvisible(false);
-                    dressStandIn(l.game);
-                }
-            }
-            horse = MobView.snapshot(horseBody, EntityTypes.SKELETON_HORSE);
             try {
                 if (mob != null && horse != null) mob.startRiding(horse, true, false);
             } catch (Throwable ignored) {
             }
+            dodgeSeed = RNG.nextInt(100000);
         } else if (l.game == Game.GIFTS) {
             // the Reindrake is a normal Minecraft Ender Dragon
             mob = MobView.snapshot(null, EntityTypes.ENDER_DRAGON);
@@ -399,13 +385,15 @@ public final class LavaScene {
         try {
             var head = net.minecraft.world.entity.EquipmentSlot.HEAD;
             if (g == Game.SHOOT) {
-                var red = new net.minecraft.world.item.component.DyedItemColor(0xC0141E);
-                ItemStack helm = new ItemStack(net.minecraft.world.item.Items.LEATHER_HELMET);
+                var red = new net.minecraft.world.item.component.DyedItemColor(0xB8141E);
+                var dark = new net.minecraft.world.item.component.DyedItemColor(0x2A1010);
                 ItemStack chest = new ItemStack(net.minecraft.world.item.Items.LEATHER_CHESTPLATE);
                 ItemStack legs = new ItemStack(net.minecraft.world.item.Items.LEATHER_LEGGINGS);
                 ItemStack boots = new ItemStack(net.minecraft.world.item.Items.LEATHER_BOOTS);
-                for (ItemStack st : new ItemStack[]{helm, chest, legs, boots}) st.set(net.minecraft.core.component.DataComponents.DYED_COLOR, red);
-                mob.setItemSlot(head, helm);
+                chest.set(net.minecraft.core.component.DataComponents.DYED_COLOR, red);
+                legs.set(net.minecraft.core.component.DataComponents.DYED_COLOR, dark);
+                boots.set(net.minecraft.core.component.DataComponents.DYED_COLOR, dark);
+                mob.setItemSlot(head, GambleArt.icon("RAGHEAD").copy());
                 mob.setItemSlot(net.minecraft.world.entity.EquipmentSlot.CHEST, chest);
                 mob.setItemSlot(net.minecraft.world.entity.EquipmentSlot.LEGS, legs);
                 mob.setItemSlot(net.minecraft.world.entity.EquipmentSlot.FEET, boots);
@@ -1550,10 +1538,28 @@ public final class LavaScene {
         boolean hit = decided && win();
         boolean escaped = decided && !win();
         float drift = (float) Math.sin(t * 1.3f) * (inScope ? lr * 0.25f : sw * 0.05f);
-        float jump = missing && t - shotT < 0.45f ? (float) Math.sin((t - shotT) / 0.45f * Math.PI) * 26 * zoom : 0;
+        // like the Titanoboa: on every miss he dodges just BEFORE the bullet arrives (hop, swerve, duck or brake),
+        // holds a moment and glides back - so the cross hairs are never on him when a shot misses
+        float jump = 0, dodgeX = 0, duck = 0;
+        for (int k = 0; k < BULLETS; k++) {
+            float at = finalShot >= 0 ? SHOT_AT[k] : (k < BULLETS - 1 ? preShot(k, scopeAt) : Float.MAX_VALUE);
+            if (at == Float.MAX_VALUE || !inScope) continue;
+            if (finalShot >= 0 && hitShot >= 0 && k >= hitShot) break; // the hit itself (and nothing after it)
+            float d = t - at, lead = 0.16f, hold = 0.14f, back = 0.7f;
+            if (d < -lead || d > hold + back) continue;
+            float kk = d < 0 ? 0.9f * easeOut((d + lead) / lead) : d < hold ? 1f : 1f - easeInOut((d - hold) / back);
+            int style = (int) (hash01(dodgeSeed + k * 31) * 4);
+            float side = hash01(dodgeSeed + k * 17) < 0.5f ? -1f : 1f;
+            switch (style) {
+                case 0 -> jump += 46 * zoom * kk;                       // the horse leaps
+                case 1 -> dodgeX += side * lr * 0.6f * kk;              // swerves aside
+                case 2 -> duck += kk;                                   // rider ducks flat
+                default -> { dodgeX -= lr * 0.45f * kk; jump += 12 * zoom * kk; } // brakes hard
+            }
+        }
         int horsePx = (int) (sh * 0.28f * zoom);
         float gallop = (float) Math.abs(Math.sin(t * 9)) * 4 * zoom;
-        float baseX = (inScope ? lx : sw * 0.45f) + drift;
+        float baseX = (inScope ? lx : sw * 0.45f) + drift + dodgeX;
         float hx = baseX;
         float hy = ground - horsePx / 2f - gallop - jump;
         float ft = decided ? t - finalShot : 0;
@@ -1566,7 +1572,7 @@ public final class LavaScene {
                 float rh = MobView.height(mob) / Math.max(0.5f, horse != null ? MobView.height(horse) : 1.6f);
                 int riderPx = (int) (horsePx * rh);
                 float rx = hit ? baseX : hx;
-                float ry = hy - horsePx * 0.45f + (hit ? ft * ft * 520 - ft * 60 : 0);
+                float ry = hy - horsePx * 0.45f + duck * riderPx * 0.32f + (hit ? ft * ft * 520 - ft * 60 : 0);
                 if (!hit || ry < ground + riderPx) {
                     MobView.headStraight = true; // the rider looks where the horse runs
                     try {
@@ -1577,6 +1583,16 @@ public final class LavaScene {
                 }
             }
             ctx.nextStratum();
+        }
+
+        // a miss: sparks where the bullet hits the ground behind him
+        if (inScope && missing && since < 0.35f) {
+            for (int i = 0; i < 8; i++) {
+                float ang = (float) (i * Math.PI / 4 + 0.3f);
+                float r = since * 90 * zoom;
+                int px = (int) (lx + Math.cos(ang) * r), py = (int) (ly + lr * 0.35f + Math.sin(ang) * r * 0.5f);
+                ctx.fill(px - 1, py - 1, px + 2, py + 2, argb(a * (1 - since / 0.35f), i % 2 == 0 ? 0xFFD080 : 0xFF8030));
+            }
         }
 
         // muzzle flash + sound
@@ -2479,6 +2495,23 @@ public final class LavaScene {
     }
 
     /** When the k-th shot falls while the result is not known yet. */
+    private static int dodgeSeed;
+
+    private static float hash01(int i) {
+        double v = Math.sin(i * 12.9898 + 4.1414) * 43758.5453;
+        return (float) (v - Math.floor(v));
+    }
+
+    private static float easeOut(float u) {
+        u = clamp(u);
+        return 1 - (1 - u) * (1 - u) * (1 - u);
+    }
+
+    private static float easeInOut(float u) {
+        u = clamp(u);
+        return u < 0.5f ? 4 * u * u * u : 1 - (float) Math.pow(-2 * u + 2, 3) / 2;
+    }
+
     private static float preShot(int k, float scopeAt) {
         return scopeAt + 0.5f + k * 1.4f;
     }
