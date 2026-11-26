@@ -122,7 +122,12 @@ public class LightButton extends Button {
             boolean on = plain.startsWith("✔");
             Theme.round(ctx, x0, y0, x1, y1, on ? alpha(hover ? 0x40 : 0x26, acc) : alpha(hover ? 0x18 : 0x0A, 0xFFFFFF));
             Theme.roundOutline(ctx, x0, y0, x1, y1, on ? alpha(0xA0, acc) : alpha(0x30, 0xFFFFFF));
-            ctx.centeredText(font, Component.literal(plain), (x0 + x1) / 2, ty, on ? th.text : th.dim);
+            String chip = plain;
+            if (font.width(chip) > this.getWidth() - 8) {
+                while (chip.length() > 3 && font.width(chip + "\u2026") > this.getWidth() - 8) chip = chip.substring(0, chip.length() - 1);
+                chip = chip.trim() + "\u2026";
+            }
+            ctx.centeredText(font, Component.literal(chip), (x0 + x1) / 2, ty, on ? th.text : th.dim);
             return;
         }
         boolean danger = raw.contains("§c") || plain.startsWith("Clear") || plain.startsWith("Reset");

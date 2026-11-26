@@ -55,6 +55,7 @@
 - Ragnarok: on every miss he swerves left or right just before the bullet arrives (like the Titanoboa), the bullet sparks on the ground; which shot hits is random
 - Prices: Flash I uses its real id (ultimate enchantment); bazaar items always ask the bazaar, auction items always the auction house
 - Journal: always today's price – sell offer for bazaar items, lowest BIN for auction items
+- Sack value: items that fit several sacks ("Combat Sack, Nether Sack, Lava Fishing Sack") no longer create their own entry – they go to the existing sack and count once; old entries are merged automatically; long sack names are shortened in the list
 - Yeti: Yeti Rod removed from the board (no longer in the game), Hilt of True Ice is now True Ice
 - Frost snow is spread over the whole screen (it fell in two stripes before); HUD particles stay inside the HUD frame
 - Gambling: drop lines that arrive a moment before the kill is counted are no longer lost (e.g. Thunder showed the Thunder Fragment although Flash I dropped)

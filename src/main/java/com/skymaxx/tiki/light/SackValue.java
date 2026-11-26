@@ -99,6 +99,7 @@ public final class SackValue {
         }
         if (d == null) d = new Data();
         if (d.sacks == null) d.sacks = new HashMap<>();
+        if (tidy(d)) dirty = true;
         data = d;
         return d;
     }
@@ -116,14 +117,63 @@ public final class SackValue {
         return DropLines.stripFormatting(name).trim().toLowerCase(Locale.ROOT);
     }
 
-    /** "Large Enchanted Fishing Sack" -> "Enchanted Fishing Sack" (one entry per sack type). */
+    /**
+     * Every sack a name stands for, in one spelling: "Large Combat Sack" -> [Combat];
+     * "Combat Sack, Nether Sack, Lava Fishing Sack" (an item that fits several sacks) -> [Combat, Nether, Lava Fishing].
+     */
+    public static java.util.List<String> sackNames(String raw) {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        for (String part : DropLines.stripFormatting(raw).split(",")) {
+            String n = part.trim().replaceAll("^(?i)(Small|Medium|Large)\\s+", "").replaceAll("(?i)\\s*sack$", "").trim();
+            if (!n.isEmpty() && !out.contains(n)) out.add(n);
+        }
+        if (out.isEmpty()) out.add("Sack");
+        // an item that also fits the Bait Sack is bait - it belongs there (and stays off the value by default)
+        out.sort(java.util.Comparator.comparingInt(n -> n.toLowerCase(Locale.ROOT).contains("bait") ? 0 : 1));
+        return out;
+    }
+
     public static String sackName(String raw) {
-        String n = DropLines.stripFormatting(raw).trim().replaceAll("^(?i)(Small|Medium|Large)\\s+", "");
-        return n.isEmpty() ? "Sack" : n;
+        return sackNames(raw).get(0);
     }
 
     private static Map<String, Long> sack(String name) {
         return data().sacks.computeIfAbsent(sackName(name), k -> new HashMap<>());
+    }
+
+    /** For an item that fits several sacks: the one that already holds it (else the first) - counted only once. */
+    private static Map<String, Long> sackFor(String names, String item) {
+        java.util.List<String> all = sackNames(names);
+        for (String n : all) {
+            Map<String, Long> m = data().sacks.get(n);
+            if (m != null && m.containsKey(item)) return m;
+        }
+        return data().sacks.computeIfAbsent(all.get(0), k -> new HashMap<>());
+    }
+
+    /** Old saves: "Combat Sack, Nether Sack, ..." entries and "Combat Sack" / "Combat" twins are merged once. */
+    private static boolean tidy(Data d) {
+        boolean changed = false;
+        for (String key : new java.util.ArrayList<>(d.sacks.keySet())) {
+            java.util.List<String> names = sackNames(key);
+            if (names.size() == 1 && names.get(0).equals(key)) continue;
+            Map<String, Long> items = d.sacks.remove(key);
+            changed = true;
+            if (items == null) continue;
+            for (Map.Entry<String, Long> e : items.entrySet()) {
+                Map<String, Long> into = null;
+                for (String n : names) {
+                    Map<String, Long> m = d.sacks.get(n);
+                    if (m != null && m.containsKey(e.getKey())) {
+                        into = m;
+                        break;
+                    }
+                }
+                if (into == null) into = d.sacks.computeIfAbsent(names.get(0), k -> new HashMap<>());
+                into.merge(e.getKey(), e.getValue(), (x, y) -> Math.max(0L, x + y));
+            }
+        }
+        return changed;
     }
 
     /** Known sacks, sorted by name (Bazaar tab: which ones count). */
@@ -138,7 +188,7 @@ public final class SackValue {
         if (c == null) return false;
         if (sack.toLowerCase(Locale.ROOT).contains("bait")) return !c.sackBaitCounted;
         if (c.sackExcluded == null || c.sackExcluded.isBlank()) return false;
-        for (String s : c.sackExcluded.split(",")) if (s.equalsIgnoreCase(sack)) return true;
+        for (String s : c.sackExcluded.split(",")) if (s.equalsIgnoreCase(sack) || sackName(s).equalsIgnoreCase(sackName(sack))) return true;
         return false;
     }
 
@@ -150,7 +200,7 @@ public final class SackValue {
             return;
         }
         java.util.LinkedHashSet<String> set = new java.util.LinkedHashSet<>();
-        if (c.sackExcluded != null && !c.sackExcluded.isBlank()) for (String s : c.sackExcluded.split(",")) if (!s.equalsIgnoreCase(sack)) set.add(s);
+        if (c.sackExcluded != null && !c.sackExcluded.isBlank()) for (String s : c.sackExcluded.split(",")) if (!s.equalsIgnoreCase(sack) && !sackName(s).equalsIgnoreCase(sackName(sack))) set.add(s);
         if (ex) set.add(sack);
         c.sackExcluded = String.join(",", set);
         c.save();
@@ -253,8 +303,8 @@ public final class SackValue {
                 Matcher a = ADDED.matcher(l);
                 Matcher r = REMOVED.matcher(l);
                 try {
-                    if (a.matches()) sack(a.group(3)).merge(key(a.group(2)), Long.parseLong(a.group(1).replace(",", "")), Long::sum);
-                    else if (r.matches()) sack(r.group(3)).merge(key(r.group(2)), -Long.parseLong(r.group(1).replace(",", "")), (x, y) -> Math.max(0L, x + y));
+                    if (a.matches()) sackFor(a.group(3), key(a.group(2))).merge(key(a.group(2)), Long.parseLong(a.group(1).replace(",", "")), Long::sum);
+                    else if (r.matches()) sackFor(r.group(3), key(r.group(2))).merge(key(r.group(2)), -Long.parseLong(r.group(1).replace(",", "")), (x, y) -> Math.max(0L, x + y));
                     else continue;
                     dirty = true;
                 } catch (NumberFormatException ignored) {
