@@ -68,10 +68,14 @@ public final class AchievementPopup {
         ps.pushMatrix();
         ps.translate(x, y + slide);
         ps.scale(scale, scale);
-        ctx.fill(0, 0, W, H, argb(a * 0.92f, 0x140A14));
-        ctx.outline(0, 0, W, H, argb(a, 0xFFD24A));
+        Theme th = Theme.hud();
+        if (!th.noBox()) {
+            Theme.round(ctx, 0, 0, W, H, argb(a * ((th.hudBg >>> 24) / 255f), th.hudBg & 0xFFFFFF));
+            Theme.roundOutline(ctx, 0, 0, W, H, argb(a, 0xFFD24A));
+        }
+        th.hudFx(ctx, 0, 0, W, H);
         float glow = 0.5f + 0.5f * (float) Math.sin(t / 120.0);
-        ctx.fill(1, 1, W - 1, 2, argb(a * glow, 0xFFF3B0));
+        if (!th.noBox()) ctx.fill(3, 1, W - 3, 2, argb(a * glow, 0xFFF3B0));
         ctx.text(font, Component.literal("Achievement unlocked!"), 8, 6, argb(a, 0xFFD24A));
         String line = "★ " + title;
         while (line.length() > 3 && font.width(line) > W - 14) line = line.substring(0, line.length() - 1);

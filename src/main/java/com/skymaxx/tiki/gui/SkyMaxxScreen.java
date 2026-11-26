@@ -114,13 +114,6 @@ extends Screen {
     private int sideRight;
     private static String query = "";
     private EditBox searchBox;
-    private static final int GLASS = 0xD01A0F1C;
-    private static final int GLASS_HEADER = 0xE02A1428;
-    private static final int GLASS_SIDE = 0x50000000;
-    private static final int PINK = 0xFFFF8CC8;
-    private static final int PINK_SOFT = 0x99FF8CC8;
-    private static final int PINK_LINE = 0x55FF8CC8;
-    private static final int PINK_ACTIVE = 0x55FF6FB0;
     private static final int SIDE_TAB_TOP = 8;
     private static final int SIDE_TAB_STEP = 24;
     private static final int SIDE_TAB_HEIGHT = 20;
@@ -319,6 +312,10 @@ extends Screen {
         return y;
     }
 
+    private static com.skymaxx.tiki.light.Theme T() {
+        return com.skymaxx.tiki.light.Theme.menu();
+    }
+
     private int buildGambling(int x, int y, int w) {
         y = this.category(x, y, w, "tiki", "Wiki Tiki", this.cfg.tikiEnabled, () -> this.buildTiki(x + 10, 0, w - 10));
         y = this.category(x, y, w, "boa", "Titanoboa", this.cfg.titanoboaEnabled, () -> this.buildTitanoboa(x + 10, 0, w - 10));
@@ -462,6 +459,21 @@ extends Screen {
     }
 
     private int buildSettings(int x, int y, int w) {
+        y = this.heading(y, "Theme");
+        int half = (w - 4) / 2;
+        this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal("Menu: \u00a7f" + T().title), b -> {
+            this.cfg.menuTheme = T().next().name();
+            this.cfg.save();
+            this.rebuildWidgets();
+        }).bounds(x, y, half, 20).build(), y));
+        this.rows.add(new Row((AbstractWidget)Button.builder((Component)Component.literal("HUDs: \u00a7f" + com.skymaxx.tiki.light.Theme.hud().title), b -> {
+            this.cfg.hudTheme = com.skymaxx.tiki.light.Theme.hud().next().name();
+            this.cfg.save();
+            b.setMessage((Component)Component.literal("HUDs: \u00a7f" + com.skymaxx.tiki.light.Theme.hud().title));
+        }).bounds(x + half + 4, y, w - half - 4, 20).build(), y));
+        y += 22;
+        y = this.note(y, "\u00a77Pink Glass, Midnight, Ocean, Clean, Lava, Frost, Royal Gold.");
+        y = this.note(y, "\u00a77Menu and HUDs separately. Gambling scenes keep their own look.");
         y = this.heading(y, "Prices (SkyCofl)");
         y = this.toggle(x, y, w, "Show drop prices", () -> this.cfg.lavaGamblePrices, v -> {
             this.cfg.lavaGamblePrices = v;
@@ -932,8 +944,8 @@ extends Screen {
         com.skymaxx.tiki.light.dye.DyeTracker.Data d = com.skymaxx.tiki.light.dye.DyeTracker.data();
 
         // ---- data sources ----
-        this.card(ctx, x, right, y, DYE_STATUS_H, PINK);
-        ctx.text(this.font, (Component)Component.literal("§lData"), inner, y + 7, PINK);
+        this.card(ctx, x, right, y, DYE_STATUS_H, T().accent);
+        ctx.text(this.font, (Component)Component.literal("§lData"), inner, y + 7, T().accent);
         String kills;
         if (d.pvReadMs > 0L) {
             kills = "§a✔ §fProfile Viewer §8· " + d.pvProfile + " · " + DyeHudAgo.ago(d.pvReadMs);
@@ -1009,7 +1021,7 @@ extends Screen {
         int top = this.viewTop - this.scroll;
         int got = com.skymaxx.tiki.light.Achievements.count(this.cfg);
         int total = com.skymaxx.tiki.light.Achievements.values().length;
-        ctx.text(this.font, (Component)Component.literal((String)("Achievements  \u00a7f" + got + " / " + total)), x, top + 3, PINK);
+        ctx.text(this.font, (Component)Component.literal((String)("Achievements  \u00a7f" + got + " / " + total)), x, top + 3, T().accent);
         int y = this.viewTop + this.achievementsTop - this.scroll;
         int colW = (right - x + 8 - 8) / 2;
         for (com.skymaxx.tiki.light.Achievements.Category cat : com.skymaxx.tiki.light.Achievements.Category.values()) {
@@ -1021,9 +1033,9 @@ extends Screen {
                 if (a.isUnlocked(this.cfg)) ++doneInCat;
             }
             if (y > this.viewTop - 30 && y < this.viewBottom + 4) {
-                ctx.text(this.font, (Component)Component.literal((String)(cat.title + "  \u00a77" + doneInCat + " / " + inCat)), x, y + 8, PINK);
+                ctx.text(this.font, (Component)Component.literal((String)(cat.title + "  \u00a77" + doneInCat + " / " + inCat)), x, y + 8, T().accent);
                 int from = x + this.font.width(cat.title + "  " + doneInCat + " / " + inCat) + 8;
-                if (from < right) ctx.fill(from, y + 12, right, y + 13, PINK_LINE);
+                if (from < right) ctx.fill(from, y + 12, right, y + 13, T().line());
             }
             y += 26;
             int i = 0;
@@ -1243,6 +1255,7 @@ extends Screen {
         ctx.disableScissor();
         this.drawScrollbar(ctx, mouseX, mouseY);
         super.extractRenderState(ctx, mouseX, mouseY, partial);
+        T().screenSnow(ctx, this.width, this.height);
     }
 
     private void drawTitle(GuiGraphicsExtractor ctx) {
@@ -1250,7 +1263,7 @@ extends Screen {
         pose.pushMatrix();
         pose.translate((float)(this.winLeft + 12), (float)(this.winTop + 8));
         pose.scale(2.0f, 2.0f);
-        ctx.text(this.font, (Component)Component.literal((String)"\u00a7lLight"), 0, 0, PINK);
+        ctx.text(this.font, (Component)Component.literal((String)"\u00a7lLight"), 0, 0, T().accent);
         pose.popMatrix();
         int titleWidth = this.font.width((net.minecraft.network.chat.FormattedText)Component.literal("Light").withStyle(net.minecraft.ChatFormatting.BOLD));
         int after = this.winLeft + 12 + titleWidth * 2 + 14;
@@ -1286,8 +1299,8 @@ extends Screen {
             int y0 = this.headerBottom + 8 + i * step;
             int y1 = y0 + step - 2;
             if (i == live) {
-                ctx.fill(x0, y0, x1, y1, PINK_ACTIVE);
-                ctx.fill(x0, y0, x0 + 2, y1, PINK);
+                ctx.fill(x0, y0, x1, y1, T().active());
+                ctx.fill(x0, y0, x0 + 2, y1, T().accent);
             } else if (i == hovered) {
                 ctx.fill(x0, y0, x1, y1, 0x22FFFFFF);
             }
@@ -1296,13 +1309,15 @@ extends Screen {
     }
 
     private void drawCard(GuiGraphicsExtractor ctx) {
-        ctx.fill(this.winLeft + 3, this.winTop + 3, this.winRight + 3, this.winBottom + 3, 0x40000000);
-        ctx.fill(this.winLeft, this.winTop, this.winRight, this.winBottom, GLASS);
-        ctx.fill(this.winLeft, this.winTop, this.winRight, this.headerBottom, GLASS_HEADER);
-        ctx.fill(this.winLeft, this.headerBottom, this.sideRight, this.winBottom, GLASS_SIDE);
-        ctx.fill(this.winLeft, this.headerBottom - 1, this.winRight, this.headerBottom, PINK_LINE);
-        ctx.fill(this.sideRight - 1, this.headerBottom, this.sideRight, this.winBottom, PINK_LINE);
-        ctx.outline(this.winLeft, this.winTop, this.winRight - this.winLeft, this.winBottom - this.winTop, PINK_SOFT);
+        com.skymaxx.tiki.light.Theme th = T();
+        com.skymaxx.tiki.light.Theme.round(ctx, this.winLeft + 3, this.winTop + 3, this.winRight + 3, this.winBottom + 3, 0x40000000);
+        com.skymaxx.tiki.light.Theme.round(ctx, this.winLeft, this.winTop, this.winRight, this.winBottom, th.glass);
+        com.skymaxx.tiki.light.Theme.round(ctx, this.winLeft, this.winTop, this.winRight, this.headerBottom + 3, th.header);
+        ctx.fill(this.winLeft + 1, this.headerBottom, this.sideRight, this.winBottom - 3, th.side);
+        ctx.fill(this.winLeft + 1, this.headerBottom - 1, this.winRight - 1, this.headerBottom, th.line());
+        ctx.fill(this.sideRight - 1, this.headerBottom, this.sideRight, this.winBottom - 1, th.line());
+        com.skymaxx.tiki.light.Theme.roundOutline(ctx, this.winLeft, this.winTop, this.winRight, this.winBottom, th.soft());
+        th.menuFx(ctx, this.winLeft, this.winTop, this.winRight, this.winBottom);
     }
 
     private void drawLabels(GuiGraphicsExtractor ctx) {
@@ -1312,14 +1327,14 @@ extends Screen {
             int bottom = this.viewTop + panel.bottom() - this.scroll;
             if (bottom <= this.viewTop - 4 || top >= this.viewBottom + 4) continue;
             ctx.fill(this.cardLeft + 14 - 4, top, right + 4, bottom, 0x14FFFFFF);
-            ctx.fill(this.cardLeft + 14 - 4, top, this.cardLeft + 14 - 3, bottom, PINK_SOFT);
+            ctx.fill(this.cardLeft + 14 - 4, top, this.cardLeft + 14 - 3, bottom, T().soft());
         }
         for (Label label : this.labels) {
             int x = this.cardLeft + 14 + label.indent();
             int y = this.viewTop + label.baseY() - this.scroll;
             if (y < this.viewTop - 20 || y > this.viewBottom + 4) continue;
             if (label.heading()) {
-                ctx.text(this.font, (Component)Component.literal((String)label.text()), x, y + 3, PINK);
+                ctx.text(this.font, (Component)Component.literal((String)label.text()), x, y + 3, T().accent);
                 int from = x + this.font.width(label.text()) + 6;
                 if (from >= right) continue;
                 ctx.fill(from, y + 7, right, y + 8, 1143881779);

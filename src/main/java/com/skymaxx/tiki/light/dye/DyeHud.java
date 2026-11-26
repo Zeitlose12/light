@@ -71,14 +71,14 @@ public final class DyeHud {
         pose.translate((float)x, (float)y);
         pose.scale(scale, scale);
         int h = DyeHud.height(cfg);
-        ctx.fill(0, 0, WIDTH, h, GLASS);
-        ctx.outline(0, 0, WIDTH, h, 0x99FF8CC8);
-        ctx.text(font, (Component)Component.literal("§lLight §r· Dyes"), 6, 5, PINK);
+        com.skymaxx.tiki.light.Theme th = com.skymaxx.tiki.light.Theme.hud();
+        th.hudBox(ctx, 0, 0, WIDTH, h);
+        ctx.text(font, (Component)Component.literal("§lLight §r· Dyes"), 6, 5, th.accent);
         int ry = 18;
         List<Dye> dyes = DyeHud.shown(cfg);
         if (!DyeTracker.hasData()) {
-            ctx.text(font, (Component)Component.literal("Open /pv once"), 6, ry + 2, DIM);
-            ctx.text(font, (Component)Component.literal("to load your kills"), 6, ry + 12, DIM);
+            ctx.text(font, (Component)Component.literal("Open /pv once"), 6, ry + 2, th.dim);
+            ctx.text(font, (Component)Component.literal("to load your kills"), 6, ry + 12, th.dim);
             pose.popMatrix();
             return;
         }
@@ -87,7 +87,7 @@ public final class DyeHud {
             double pc = p.chance() * 100.0;
             String pct = pc < 10.0 ? String.format("%.1f%%", pc) : Math.round(pc) + "%";
             ctx.text(font, (Component)Component.literal(dye.shortName), 6, ry, dye.color);
-            ctx.text(font, (Component)Component.literal(pct), WIDTH - 6 - font.width(pct), ry, TEXT);
+            ctx.text(font, (Component)Component.literal(pct), WIDTH - 6 - font.width(pct), ry, th.text);
             int barW = WIDTH - 12;
             ctx.fill(6, ry + 10, 6 + barW, ry + 13, 0x30FFFFFF);
             int filled = (int)Math.round(barW * Math.max(0.0, Math.min(1.0, p.chance())));
@@ -95,7 +95,7 @@ public final class DyeHud {
                 ctx.fill(6, ry + 10, 6 + filled, ry + 13, dye.color);
             }
             String sub = String.format("%,d kills · %d found", p.kills(), p.found());
-            ctx.text(font, (Component)Component.literal(sub), 6, ry + 15, DIM);
+            ctx.text(font, (Component)Component.literal(sub), 6, ry + 15, th.dim);
             ry += ROW;
         }
         pose.popMatrix();

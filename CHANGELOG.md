@@ -37,6 +37,7 @@
 - Sack value is remembered across restarts ("Last read" in the Bazaar tab), bait sacks are left out by default
 - Journal: text without drop shadow (like real books) in darker ink, bigger again, silk bookmark in the gutter
 - Reindrake scene runs smoother
+- **🎨 Themes** (Settings): Pink Glass, Midnight, Ocean, Clean, Lava, Frost, Royal Gold – for the menu and the HUDs separately. Rounded corners everywhere; Frost snows over the screen, Clean snows in December, Lava has a glowing lava pool and embers
 - Yeti: his own show - drums his chest, slams the machine (snow falls off the roof), roars with a blizzard while the claw goes down, jumps for joy on a win or kicks the machine on a miss
 - Thunder: prismarine lightning rods left and right of the roulette, charging up and struck by lightning
 - Drop boards checked against the wiki: Thunder now has the **Flash I** book and the **Thunder Fragment**, Lord Jawbus now has **Bobbin' Scriptures** and the **Magma Lord Fragment** (several drops at once: the best one is shown); Grim Reaper, Yeti and Reindrake have the **Aquamarine Dye**, Reindrake has **Bobbin' Scriptures**; shards and guaranteed drops (Prosperity I) never count as a gambling drop

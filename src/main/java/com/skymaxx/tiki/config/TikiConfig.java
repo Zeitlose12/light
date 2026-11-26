@@ -131,6 +131,9 @@ public class TikiConfig {
     public String sackExcluded = "";
     /** Bait sacks hold fishing bait, not loot: left out unless switched on. */
     public boolean sackBaitCounted = false;
+    /** Light themes: menu and HUDs separately (PINK, MIDNIGHT, OCEAN, CLEAN, LAVA, FROST, GOLD). */
+    public String menuTheme = "PINK";
+    public String hudTheme = "PINK";
     /** How dark the game gets behind the Light menu (0 - 0.9). */
     public float menuDim = 0.55f;
     /** Achievement pop-up position (-1 = top right) and size. */

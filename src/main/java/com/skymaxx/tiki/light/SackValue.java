@@ -402,7 +402,7 @@ public final class SackValue {
     /** The real size of the HUD right now (unscaled), so the move screen frames exactly what is drawn. */
     public static int[] size(Font font) {
         TikiConfig c = cfg();
-        boolean textOnly = c != null && "TEXT".equals(c.sackHudStyle);
+        boolean textOnly = (c != null && "TEXT".equals(c.sackHudStyle)) || Theme.hud().noBox();
         boolean offer = c == null || !"INSTA_SELL".equals(c.sackPriceMode);
         double v = total();
         if (v < 0) v = 128450300;
@@ -423,14 +423,16 @@ public final class SackValue {
         String label = "Sacks · " + (offer ? "Sell Offer" : "Insta-Sell");
         String num = value < 0 ? (hasCounts() ? "loading prices..." : "open your sacks once") : num(value) + " Coins";
         int w = Math.max(font.width(label), font.width(num)) + 12;
+        Theme th = Theme.hud();
+        if (th.noBox()) textOnly = true;
         if (textOnly) {
-            ctx.text(font, Component.literal(textOnlyLabel(offer)), 0, 0, 0xFFFF7AC0);
+            th.hudFx(ctx, -2, -2, Math.max(font.width(label), font.width(num)) + 4, 32);
+            ctx.text(font, Component.literal(textOnlyLabel(offer)), 0, 0, th.accent);
             ctx.text(font, Component.literal(value < 0 ? num : num(value)), 0, 11, value < 0 ? 0xFF9E9890 : 0xFFFFD24A);
             if (plus > 0) ctx.text(font, Component.literal("+" + num(plus)), 0, 22, 0xFF55FF55);
         } else {
-            ctx.fill(0, 0, w, H, 0xB8140812);
-            ctx.outline(0, 0, w, H, 0xCCFF7AC0);
-            ctx.text(font, Component.literal(label), 6, 5, 0xFFFF7AC0);
+            th.hudBox(ctx, 0, 0, w, H);
+            ctx.text(font, Component.literal(label), 6, 5, th.accent);
             ctx.text(font, Component.literal(num), 6, 17, value < 0 ? 0xFF9E9890 : 0xFFFFD24A);
             if (plus > 0) ctx.text(font, Component.literal("+" + num(plus)), w + 4, 17, 0xFF55FF55);
         }
