@@ -265,6 +265,22 @@ public final class SackValue {
 
     // ------------------------------------------------------------------ prices
 
+    private static volatile long lastAsk;
+
+    /** Hypixel bazaar price for an item id (sell offer or insta-sell), -1 if unknown; loads prices if none yet. */
+    public static double bazaarPrice(String id, boolean sellOffer) {
+        double[] p = PRICES.get(id);
+        if (p == null) {
+            if (PRICES.isEmpty() && System.currentTimeMillis() - lastAsk > 60_000L) {
+                lastAsk = System.currentTimeMillis();
+                refresh();
+            }
+            return -1;
+        }
+        double v = sellOffer ? p[1] : p[0];
+        return v > 0 ? v : -1;
+    }
+
     public static void refresh() {
         if (busy) return;
         busy = true;

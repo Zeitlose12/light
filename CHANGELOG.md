@@ -43,6 +43,10 @@
 - Ragnarok stops shooting as soon as a shot hits
 
 ### 🐛 Fixed
+- Gambling: items that land in your inventory a moment before a loot share kill is counted (e.g. Magma Lord Fragment) are part of the result
+- Gambling: a drop that arrives after the result shows a small "Late drop" banner and is added to the History and Journal
+- Enchanted books get their bazaar price (also from Hypixel's own bazaar list); missing prices are filled in later
+- Thunder: the Thunder Fragment is no longer a gambling result (almost worthless)
 - Gambling: when several drops come at once the **most valuable** one wins (a dye always first); the price below is always the price of the shown drop
 - Gambling: book drops ("Enchanted Book (Flash 1)") get their price; prices that fail to load are fetched again and filled into the History later
 - Gambling: drops that are not on the mob's board (e.g. Rampart Leggings) count as nothing

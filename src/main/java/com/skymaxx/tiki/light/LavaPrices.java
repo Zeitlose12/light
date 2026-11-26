@@ -112,8 +112,12 @@ public final class LavaPrices {
         if (c == null || System.currentTimeMillis() - c.atMs > CACHE_MS) {
             request(tag);
         }
-        if (c == null) return null;
-        long v = c.bin >= 0 ? c.bin : ("SELL_OFFER".equals(cfgBazaar()) ? c.sellOffer : c.instaSell);
+        long v = c == null ? -1 : (c.bin >= 0 ? c.bin : ("SELL_OFFER".equals(cfgBazaar()) ? c.sellOffer : c.instaSell));
+        if (v < 0) {
+            // fallback: Hypixel's own bazaar list (books are only sold there)
+            double hp = SackValue.bazaarPrice(tag, "SELL_OFFER".equals(cfgBazaar()));
+            if (hp > 0) v = Math.round(hp);
+        }
         return v < 0 ? null : v;
     }
 
@@ -128,7 +132,8 @@ public final class LavaPrices {
                     if (SENT.size() >= 20) return;
                     SENT.addLast(now);
                 }
-                long p = lowestBin(tag);
+                // enchanted books are only on the bazaar - no auction lookup
+                long p = tag.startsWith("ENCHANTMENT_") ? -1 : lowestBin(tag);
                 long[] bz = p < 0 ? bazaar(tag) : new long[]{-1, -1};
                 boolean none = p < 0 && bz[0] < 0 && bz[1] < 0;
                 CACHE.put(tag, new Cached(p, bz[0], bz[1], System.currentTimeMillis() - (none ? CACHE_MS - 30_000L : 0L)));

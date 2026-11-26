@@ -39,6 +39,8 @@ public final class LavaScene {
     /** Drop lines Hypixel sends a moment before the kill is counted - kept for a short while so none get lost. */
     private static final java.util.List<Object[]> RECENT = new java.util.ArrayList<>();
     private static final long RECENT_MS = 2500L;
+    /** Loot share kills are counted 1 - 2 s later, so their drops wait a little longer. */
+    private static final long RECENT_SHARE_MS = 5000L;
     private static float firstDropAt = -1f;
     private static final int PARTICLES = 50;
     private static final int CHUNKS = 30;
@@ -82,7 +84,7 @@ public final class LavaScene {
         new Look("Lord Jawbus", "jawbus", "lava", 0xFF5A2A, Game.SLOTS, EntityTypes.IRON_GOLEM,
             new int[]{0xD8D3CC, 0x9E9890, 0x6E6A64, 0xFF7A1A}, new Sym[]{VIAL, DYE, FRAG, BOOK, OTHER, NONE}),
         new Look("Thunder", "thunder", "lava", 0x4AA3FF, Game.ROULETTE, EntityTypes.ELDER_GUARDIAN,
-            new int[]{0x5E9C8C, 0x3F6F68, 0xE8D9B8, 0x6FD0FF}, new Sym[]{DYE, FLASH, TFRAG, NONE, OTHER, NONE}),
+            new int[]{0x5E9C8C, 0x3F6F68, 0xE8D9B8, 0x6FD0FF}, new Sym[]{DYE, FLASH, NONE, OTHER, NONE, NONE}),
         new Look("Ragnarok", "ragnarok", "lava", 0xD0202E, Game.SHOOT, EntityTypes.WITHER_SKELETON,
             new int[]{0x3A0C10, 0x7A1A20, 0x2A2A2A, 0xFF3B3B}, new Sym[]{TEXTS, CHAIN, HANDLE, BOOK, DYE, OTHER, NONE}),
         new Look("Plhlegblast", "plhlegblast", "lava", 0x5FD35F, Game.BUBBLES, EntityTypes.SQUID,
@@ -317,7 +319,7 @@ public final class LavaScene {
         if (!isTest) {
             long now = System.currentTimeMillis();
             synchronized (RECENT) {
-                for (Object[] o : RECENT) if (now - (Long) o[0] <= RECENT_MS) addDrop((String) o[1]);
+                for (Object[] o : RECENT) if (now - (Long) o[0] <= (share ? RECENT_SHARE_MS : RECENT_MS)) addDrop((String) o[1]);
                 RECENT.clear();
             }
         }
@@ -450,7 +452,7 @@ public final class LavaScene {
             if (!active) {
                 synchronized (RECENT) {
                     long now = System.currentTimeMillis();
-                    RECENT.removeIf(o -> now - (Long) o[0] > RECENT_MS);
+                    RECENT.removeIf(o -> now - (Long) o[0] > RECENT_SHARE_MS);
                     RECENT.add(new Object[]{now, item});
                 }
                 return;
@@ -473,8 +475,18 @@ public final class LavaScene {
                 || low.contains("vampire fang") || low.contains("deep sea orb") || low.contains("baby yeti")
                 || low.contains("yeti rod") || low.contains("true ice") || low.contains("magma lord fragment") || low.contains("thunder fragment");
             if (!rare) return;
-            if (active && stopAt < 0) addDrop(l);
-            else lateDrop(l);
+            if (active && stopAt < 0) {
+                addDrop(l);
+            } else if (viaSack || active) {
+                lateDrop(l); // sack messages come up to 30 s late; or the result was already locked
+            } else {
+                // straight into the inventory a moment BEFORE the kill is counted (loot share): keep it briefly
+                synchronized (RECENT) {
+                    long now = System.currentTimeMillis();
+                    RECENT.removeIf(o -> now - (Long) o[0] > RECENT_SHARE_MS);
+                    RECENT.add(new Object[]{now, l});
+                }
+            }
         } catch (Throwable t) {
             TikiGambleClient.LOGGER.warn("[Light] lava gambling item failed", t);
         }
@@ -574,6 +586,30 @@ public final class LavaScene {
         GambleLog.setDrop(lastEntry, item);
         Long p = LavaPrices.price(item);
         if (p != null) GambleLog.setPrice(lastEntry, p);
+        lateName = item;
+        lateAt = System.currentTimeMillis();
+    }
+
+    private static String lateName;
+    private static long lateAt;
+
+    /** Small banner at the top when a drop showed up after the result ("Late drop: ..."). */
+    private static void drawLate(GuiGraphicsExtractor ctx) {
+        if (lateName == null) return;
+        long age = System.currentTimeMillis() - lateAt;
+        if (age > 6000L) {
+            lateName = null;
+            return;
+        }
+        float a = clamp(age / 250f) * clamp((6000L - age) / 600f);
+        Minecraft mc = Minecraft.getInstance();
+        Long p = LavaPrices.price(lateName);
+        String text = "Late drop: " + lateName + (p != null ? "  \u00a76" + LavaPrices.format(p) : "");
+        int w = mc.font.width(text) + 16;
+        int x0 = ctx.guiWidth() / 2 - w / 2, y0 = 8;
+        Theme.round(ctx, x0, y0, x0 + w, y0 + 18, argb(0.85f * a, 0x15101C));
+        Theme.roundOutline(ctx, x0, y0, x0 + w, y0 + 18, argb(a, lastLook != null ? lastLook.color : 0xFFCC33));
+        if (a > 0.1f) ctx.centeredText(mc.font, Component.literal(text), ctx.guiWidth() / 2, y0 + 5, argb(a, 0xFFFFFF));
     }
 
     private static int indexOf(Sym s) {
@@ -617,7 +653,13 @@ public final class LavaScene {
     }
 
     public static void render(GuiGraphicsExtractor ctx, DeltaTracker delta) {
-        if (!active) return;
+        if (!active) {
+            try {
+                drawLate(ctx);
+            } catch (Throwable ignored) {
+            }
+            return;
+        }
         TikiConfig c = cfg();
         boolean small = c != null && corner(c);
         var pose = ctx.pose();
