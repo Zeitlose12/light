@@ -95,6 +95,7 @@ final class GambleArt {
                 case "GGIFT" -> head(SKIN_GREEN_GIFT, "5fa813c0-5519-30c4-a53c-955945e93e10");
                 case "WGIFT" -> head(SKIN_WHITE_GIFT, "3047a516-415b-3bf4-b597-b78fd2a9ccf4");
                 case "PUMPKIN" -> new ItemStack(Items.JACK_O_LANTERN);
+                case "TFRAG" -> model("hypixel_skyblock:item/uncategorized/thunder_fragment", Items.PRISMARINE_CRYSTALS);
                 case "FRAG" -> model("hypixel_skyblock:item/uncategorized/magma_lord_fragment", Items.MAGMA_CREAM);
                 case "JSHARD" -> new ItemStack(Items.PRISMARINE_SHARD);
                 case "YETIHEAD" -> head(SKIN_YETI, "120ce1cf-04b3-383d-a10f-a478ae4e2692");

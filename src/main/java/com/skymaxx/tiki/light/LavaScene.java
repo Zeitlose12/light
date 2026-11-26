@@ -57,6 +57,7 @@ public final class LavaScene {
     private static final Sym DYE = new Sym("DYE", 0xB0102A, "carmine dye");
     private static final Sym FLASH = new Sym("PROSP", 0xC9A0FF, "flash");
     private static final Sym FRAG = new Sym("FRAG", 0xFFAA00, "magma lord fragment");
+    private static final Sym TFRAG = new Sym("TFRAG", 0xAA55FF, "thunder fragment");
     private static final Sym TEXTS = new Sym("TEXTS", 0xE07A2A, "burnt texts");
     private static final Sym CHAIN = new Sym("CHAIN", 0x9A8A80, "chain of the end times");
     private static final Sym HANDLE = new Sym("HANDLE", 0xFFB347, "brimstone handle");
@@ -77,7 +78,7 @@ public final class LavaScene {
         new Look("Lord Jawbus", "jawbus", "lava", 0xFF5A2A, Game.SLOTS, EntityTypes.IRON_GOLEM,
             new int[]{0xD8D3CC, 0x9E9890, 0x6E6A64, 0xFF7A1A}, new Sym[]{VIAL, DYE, FRAG, BOOK, OTHER, NONE}),
         new Look("Thunder", "thunder", "lava", 0x4AA3FF, Game.ROULETTE, EntityTypes.ELDER_GUARDIAN,
-            new int[]{0x5E9C8C, 0x3F6F68, 0xE8D9B8, 0x6FD0FF}, new Sym[]{DYE, NONE, FLASH, NONE, OTHER, NONE}),
+            new int[]{0x5E9C8C, 0x3F6F68, 0xE8D9B8, 0x6FD0FF}, new Sym[]{DYE, FLASH, TFRAG, NONE, OTHER, NONE}),
         new Look("Ragnarok", "ragnarok", "lava", 0xD0202E, Game.SHOOT, EntityTypes.WITHER_SKELETON,
             new int[]{0x3A0C10, 0x7A1A20, 0x2A2A2A, 0xFF3B3B}, new Sym[]{TEXTS, CHAIN, HANDLE, BOOK, DYE, OTHER, NONE}),
         new Look("Plhlegblast", "plhlegblast", "lava", 0x5FD35F, Game.BUBBLES, EntityTypes.SQUID,
@@ -361,7 +362,7 @@ public final class LavaScene {
                 || low.contains("chain of the end times") || low.contains("brimstone handle") || low.contains("bobbin")
                 || low.contains("flaming heart") || low.contains("enrager") || low.contains("flash")
                 || low.contains("vampire fang") || low.contains("deep sea orb") || low.contains("baby yeti")
-                || low.contains("yeti rod") || low.contains("true ice") || low.contains("prosperity") || low.contains("magma lord fragment");
+                || low.contains("yeti rod") || low.contains("true ice") || low.contains("prosperity") || low.contains("magma lord fragment") || low.contains("thunder fragment");
             if (rare) addDrop(l);
         } catch (Throwable t) {
             TikiGambleClient.LOGGER.warn("[Light] lava gambling item failed", t);
