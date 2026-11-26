@@ -78,6 +78,7 @@ public final class LightInit implements ClientModInitializer {
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("light", "shark_popup"), SharkPopup::render);
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("light", "achievement_popup"), AchievementPopup::render);
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("light", "sack_value"), SackValue::render);
+        net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents.CLIENT_STOPPING.register(client -> SackValue.saveNow());
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             Achievements.tick();
             DyeTracker.tick(client);

@@ -32,8 +32,8 @@ public final class JournalScreen extends Screen {
     private static final long FLIP_MS = 380L;
     private static final int PAPER = 0xFFF2E4C2;
     private static final int PAPER_EDGE = 0xFFE2CFA4;
-    private static final int INK = 0xFF2E1C0C;
-    private static final int INK_SOFT = 0xFF6A4E30;
+    private static final int INK = 0xFF1A0E04;
+    private static final int INK_SOFT = 0xFF4A3018;
     private static final int GOLD = 0xFFD8A84A;
     private static final int LEATHER = 0xFF6E3518;
     private static final int LEATHER_DARK = 0xFF4A2210;
@@ -70,9 +70,10 @@ public final class JournalScreen extends Screen {
         return pages.size() / 2;
     }
 
-    /** Scale from page units to screen pixels: as big as fits, at least 1. */
+    /** Scale from page units to GUI pixels: whole numbers only (1x, 2x), so the pixel font stays sharp. */
     private float k() {
-        return Math.max(1f, Math.min(1.8f, Math.min((this.width - 40) / (2f * PW + 16), (this.height - 56) / (PH + 16f))));
+        float fit = Math.min((this.width - 40) / (2f * PW + 16), (this.height - 56) / (PH + 16f));
+        return Math.max(1f, (float) Math.floor(fit));
     }
 
     private void play(SoundEvent ev, float pitch, float vol) {
@@ -193,8 +194,27 @@ public final class JournalScreen extends Screen {
         }
         // spine and ribbon
         ctx.fill(-1, -PH / 2, 1, PH / 2, 0x50402010);
-        ctx.fill(-14, -PH / 2 - 4, -9, PH / 2 + 16, 0xFFA02020);
-        ctx.fill(-14, PH / 2 + 12, -9, PH / 2 + 16, 0xFF701414);
+        ribbon(ctx);
+    }
+
+    /** A silk bookmark: comes out of the spine at the top, lies on the right page, hangs out below with a V cut. */
+    private void ribbon(GuiGraphicsExtractor ctx) {
+        int x = 10;
+        int top = -PH / 2 - 3;
+        int bottom = PH / 2 + 18;
+        for (int y = top; y < bottom; y += 3) {
+            int dx = y < PH / 2 ? (int) ((y - top) * 0.04f) : (int) ((PH / 2 - top) * 0.04f) + (int) ((y - PH / 2) * 0.15f);
+            int xx = x + dx;
+            ctx.fill(xx + 5, y, xx + 7, y + 3, 0x30000000);          // shadow on the page
+            ctx.fill(xx, y, xx + 1, y + 3, 0xFF5A0E10);                  // dark edge
+            ctx.fill(xx + 1, y, xx + 3, y + 3, 0xFFA8202A);              // silk
+            ctx.fill(xx + 3, y, xx + 4, y + 3, 0xFFD24A54);              // sheen
+            ctx.fill(xx + 4, y, xx + 5, y + 3, 0xFF7A1418);              // dark edge
+        }
+        // V cut at the end
+        int endX = x + (int) ((PH / 2 - top) * 0.04f) + (int) ((bottom - PH / 2) * 0.15f);
+        ctx.fill(endX + 2, bottom - 3, endX + 3, bottom, 0xFF1A0E10);
+        ctx.fill(endX + 1, bottom - 2, endX + 4, bottom, 0xFF1A0E10);
     }
 
     private void shadow(GuiGraphicsExtractor ctx, float open) {
@@ -338,7 +358,7 @@ public final class JournalScreen extends Screen {
         Matrix3x2fStack ps = ctx.pose();
         ps.pushMatrix();
         ps.translate(cx, y);
-        float s = Math.min(1.4f, (PW - 24f) / Math.max(1, this.font.width(text)));
+        float s = this.font.width(text) * 2 <= PW - 24 ? 2f : 1f;
         ps.scale(s, s);
         ctx.centeredText(this.font, Component.literal(text).withStyle(ChatFormatting.BOLD), 0, -4, color);
         ps.popMatrix();

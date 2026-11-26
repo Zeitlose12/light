@@ -135,13 +135,20 @@ public final class SackValue {
 
     public static boolean excluded(String sack) {
         TikiConfig c = cfg();
-        if (c == null || c.sackExcluded == null || c.sackExcluded.isBlank()) return false;
+        if (c == null) return false;
+        if (sack.toLowerCase(Locale.ROOT).contains("bait")) return !c.sackBaitCounted;
+        if (c.sackExcluded == null || c.sackExcluded.isBlank()) return false;
         for (String s : c.sackExcluded.split(",")) if (s.equalsIgnoreCase(sack)) return true;
         return false;
     }
 
     public static void setExcluded(String sack, boolean ex) {
         TikiConfig c = cfg();
+        if (sack.toLowerCase(Locale.ROOT).contains("bait")) {
+            c.sackBaitCounted = !ex;
+            c.save();
+            return;
+        }
         java.util.LinkedHashSet<String> set = new java.util.LinkedHashSet<>();
         if (c.sackExcluded != null && !c.sackExcluded.isBlank()) for (String s : c.sackExcluded.split(",")) if (!s.equalsIgnoreCase(sack)) set.add(s);
         if (ex) set.add(sack);
@@ -174,7 +181,7 @@ public final class SackValue {
             Screen screen = mc.gui == null ? null : mc.gui.screen();
             if (screen instanceof AbstractContainerScreen<?> container) scan(container);
         }
-        if (dirty && tick % 100 == 0) {
+        if (dirty && tick % 40 == 0) {
             dirty = false;
             save();
         }
@@ -208,6 +215,25 @@ public final class SackValue {
             }
         }
         if (found > 0) data().readMs = System.currentTimeMillis();
+    }
+
+    /** Saves right away (game closing). */
+    public static void saveNow() {
+        if (data != null && dirty) {
+            dirty = false;
+            save();
+        }
+    }
+
+    /** "3 h ago" for the last time a sack was opened, or null. */
+    public static String lastRead() {
+        long ms = data().readMs;
+        if (ms <= 0) return null;
+        long min = (System.currentTimeMillis() - ms) / 60_000L;
+        if (min < 1) return "just now";
+        if (min < 60) return min + " min ago";
+        if (min < 48 * 60) return (min / 60) + " h ago";
+        return (min / 1440) + " days ago";
     }
 
     /** [Sacks] chat message: its hover lists "+12 Item (Sack)" and "-5 Item (Sack)". */

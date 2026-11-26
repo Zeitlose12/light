@@ -1427,10 +1427,10 @@ public final class LavaScene {
             int top = base - h + l * h / (layers + 1);
             int bot = top + h / 3 + 4;
             int lw = (h / 2) * (l + 2) / (layers + 1);
-            for (int yy = top; yy < bot; yy += 2) {
+            for (int yy = top; yy < bot; yy += 3) {
                 int half = (int) (lw * (float) (yy - top) / Math.max(1, bot - top));
                 boolean cap = (yy - top) < (bot - top) * 0.35f;
-                ctx.fill(x - half, yy, x + half + 1, yy + 2, argb(a, cap ? snow : color));
+                ctx.fill(x - half, yy, x + half + 1, yy + 3, argb(a, cap ? snow : color));
             }
         }
         ctx.fill(x - 2, base - h / 6, x + 2, base, argb(a, 0x3A2616));
@@ -1932,17 +1932,17 @@ public final class LavaScene {
         int ground = (int) (sh * 0.78f);
         // winter night: stars, aurora, moon, snowy hills with pines, falling snow
         ctx.fillGradient(0, 0, sw, ground, argb(a * 0.97f, 0x020612), argb(a * 0.97f, 0x10264A));
-        for (int i = 0; i < 80; i++) {
+        for (int i = 0; i < 50; i++) {
             int x = (i * 137) % Math.max(1, sw), y = (i * 59) % Math.max(1, (int) (ground * 0.7f));
             float tw = 0.3f + 0.35f * (float) Math.sin(t * 3 + i * 1.7f);
             ctx.fill(x, y, x + 1, y + 1, argb(a * tw, 0xFFFFFF));
         }
-        for (int x = 0; x < sw; x += 3) {
+        for (int x = 0; x < sw; x += 6) {
             float y0 = sh * 0.08f + (float) Math.sin(x * 0.008 + t * 0.3) * sh * 0.05f;
             float h = sh * 0.12f + (float) (Math.sin(x * 0.012 + t * 0.6) * sh * 0.05f + Math.sin(x * 0.031 - t * 0.9) * sh * 0.02f);
             float pulse = 0.6f + 0.4f * (float) Math.sin(x * 0.02 + t * 1.2);
-            ctx.fillGradient(x, (int) y0, x + 3, (int) (y0 + h), argb(a * 0.04f, 0x9A6AFF), argb(a * 0.30f * pulse, 0x3AFFB0));
-            ctx.fillGradient(x, (int) (y0 + h), x + 3, (int) (y0 + h + 14), argb(a * 0.30f * pulse, 0x3AFFB0), argb(0, 0x3AFFB0));
+            ctx.fillGradient(x, (int) y0, x + 6, (int) (y0 + h), argb(a * 0.04f, 0x9A6AFF), argb(a * 0.30f * pulse, 0x3AFFB0));
+            ctx.fillGradient(x, (int) (y0 + h), x + 6, (int) (y0 + h + 14), argb(a * 0.30f * pulse, 0x3AFFB0), argb(0, 0x3AFFB0));
         }
         GambleArt.disc(ctx, (int) (sw * 0.86f), (int) (sh * 0.14f), (int) (sh * 0.04f), argb(a * 0.9f, 0xF4F8FF), 1);
         hills(ctx, 0, ground - (int) (sh * 0.09f), (int) (sh * 0.07f), 0x8AA6C2, 0.007f, a, sw, ground);
@@ -1966,9 +1966,9 @@ public final class LavaScene {
             pine(ctx, bx - bw / 5, bb - bh / 2, (int) (sh * 0.10f), 0x0E2E24, 0xF4FAFF, a);
             pine(ctx, bx + bw / 6, bb - bh / 3, (int) (sh * 0.08f), 0x0E2E24, 0xF4FAFF, a);
         }
-        for (int x = 0; x < sw; x += 4) {
+        for (int x = 0; x < sw; x += 8) {
             int d = (int) (Math.sin(x * 0.025) * 4 + Math.sin(x * 0.09) * 2);
-            ctx.fill(x, ground + 12 + d, x + 4, ground + 15 + d, argb(a, 0xC4D6E8));
+            ctx.fill(x, ground + 12 + d, x + 8, ground + 15 + d, argb(a, 0xC4D6E8));
         }
         snowfall(ctx, t, a * 0.7f, sw, sh, 60, -10, 3);
 

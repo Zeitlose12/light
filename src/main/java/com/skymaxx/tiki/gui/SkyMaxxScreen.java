@@ -235,18 +235,22 @@ extends Screen {
             b.setMessage((Component)Component.literal(SkyMaxxScreen.refreshLabel(this.cfg.sackRefreshMinutes)));
         }).bounds(x, y, w, 20).build(), y));
         y += 22;
-        y = this.sectionHeader(x, y + 2, w, "Counted sacks", null, sacksOpen, () -> {
+        String last = com.skymaxx.tiki.light.SackValue.lastRead();
+        y = this.note(y, "\u00a77Last read: \u00a7f" + (last == null ? "never - open your sacks once" : last) + " \u00a78(kept after restarts)");
+        y = this.sectionHeader(x, y + 2, w, "Sacks Light has seen", null, sacksOpen, () -> {
             sacksOpen = !sacksOpen;
         });
         if (sacksOpen) {
             java.util.List<String> known = com.skymaxx.tiki.light.SackValue.knownSacks();
+            y = this.note(y, "\u00a77All of them count - switch one off to leave it out.");
+            y = this.note(y, "\u00a77Bait sacks are off by default (bait, not loot).");
             if (known.isEmpty()) y = this.note(y, "\u00a77No sacks read yet - open them once in game.");
             for (String sack : known) {
                 y = this.toggle(x + 10, y, w - 10, sack, () -> !com.skymaxx.tiki.light.SackValue.excluded(sack), v -> com.skymaxx.tiki.light.SackValue.setExcluded(sack, !v));
             }
             y += 4;
         }
-        y = this.note(y, "\u00a77Open each of your sacks once - after that the [Sacks]");
+        y = this.note(y, "\u00a77Open each sack once - Light remembers it and the [Sacks]");
         y = this.note(y, "\u00a77messages keep it up to date. Prices: Hypixel bazaar API,");
         y = this.note(y, "\u00a77one request for all items at the interval above.");
         y = this.heading(y, "Bazaar");

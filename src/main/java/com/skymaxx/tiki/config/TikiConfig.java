@@ -33,7 +33,7 @@ public class TikiConfig {
     public static final double TIKI_MAX_HEALTH = 7.5E7;
     public static final double TITANOBOA_MAX_HEALTH = 4.5E7;
     public static final int CURRENT_VERSION = 8;
-    public int configVersion = 9;
+    public int configVersion = 10;
     public boolean tikiEnabled = true;
     public boolean requireSkyblock = true;
     public String creatureName = "Wiki Tiki";
@@ -129,6 +129,8 @@ public class TikiConfig {
     /** How often the bazaar prices for the sack value are fetched (minutes: 5, 10 or 15). */
     public int sackRefreshMinutes = 10;
     public String sackExcluded = "";
+    /** Bait sacks hold fishing bait, not loot: left out unless switched on. */
+    public boolean sackBaitCounted = false;
     /** How dark the game gets behind the Light menu (0 - 0.9). */
     public float menuDim = 0.55f;
     /** Achievement pop-up position (-1 = top right) and size. */
@@ -191,7 +193,7 @@ public class TikiConfig {
         catch (Exception exception) {
             // empty catch block
         }
-        this.configVersion = 9;
+        this.configVersion = 10;
         this.clamp();
         this.save();
     }
