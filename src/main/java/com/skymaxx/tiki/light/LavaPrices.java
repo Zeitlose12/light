@@ -43,6 +43,7 @@ public final class LavaPrices {
         TAGS.put("deep sea orb", "DEEP_SEA_ORB");
         TAGS.put("midnight dye", "DYE_MIDNIGHT");
         TAGS.put("iceberg dye", "DYE_ICEBERG");
+        TAGS.put("aquamarine dye", "DYE_AQUAMARINE");
         TAGS.put("yeti rod", "YETI_ROD");
         TAGS.put("hilt of true ice", "HILT_OF_TRUE_ICE");
         TAGS.put("true ice", "HILT_OF_TRUE_ICE");

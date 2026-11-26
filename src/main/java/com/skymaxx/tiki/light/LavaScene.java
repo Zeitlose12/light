@@ -58,6 +58,7 @@ public final class LavaScene {
     private static final Sym FLASH = new Sym("PROSP", 0xC9A0FF, "flash");
     private static final Sym FRAG = new Sym("FRAG", 0xFFAA00, "magma lord fragment");
     private static final Sym TFRAG = new Sym("TFRAG", 0xAA55FF, "thunder fragment");
+    private static final Sym ADYE = new Sym("ADYE", 0x2AB0B0, "aquamarine dye");
     private static final Sym TEXTS = new Sym("TEXTS", 0xE07A2A, "burnt texts");
     private static final Sym CHAIN = new Sym("CHAIN", 0x9A8A80, "chain of the end times");
     private static final Sym HANDLE = new Sym("HANDLE", 0xFFB347, "brimstone handle");
@@ -69,7 +70,6 @@ public final class LavaScene {
     private static final Sym ROD = new Sym("ROD", 0x7AD0FF, "yeti rod");
     private static final Sym HILT = new Sym("HILT", 0xBFE9FF, "true ice");
     private static final Sym IDYE = new Sym("IDYE", 0x4AB0D0, "iceberg dye");
-    private static final Sym PROSP = new Sym("PROSP", 0xC9A0FF, "prosperity");
 
     private record Look(String creature, String key, String cat, int color, Game game, EntityType<?> standIn, int[] palette, Sym[] pool) {
     }
@@ -84,11 +84,11 @@ public final class LavaScene {
         new Look("Plhlegblast", "plhlegblast", "lava", 0x5FD35F, Game.BUBBLES, EntityTypes.SQUID,
             new int[]{0x2F6E9A, 0x1F4A6A, 0x9CFF6B, 0x5FD35F}, new Sym[]{DYE, NONE, OTHER, NONE, NONE}),
         new Look("Grim Reaper", "grim", "spooky", 0x78FFC8, Game.GRAVES, EntityTypes.WITHER_SKELETON,
-            new int[]{0x1A1A22, 0x2E2A3A, 0x78FFC8, 0x3AD08A}, new Sym[]{FANG, ORB, NONE, BOOK, MDYE, OTHER, NONE}),
+            new int[]{0x1A1A22, 0x2E2A3A, 0x78FFC8, 0x3AD08A}, new Sym[]{FANG, ORB, NONE, BOOK, MDYE, ADYE, OTHER, NONE}),
         new Look("Yeti", "yeti", "winter", 0xBFE9FF, Game.CLAW, EntityTypes.ZOMBIE,
-            new int[]{0xF0F6FC, 0xBFE9FF, 0x8AB8D8, 0xFFFFFF}, new Sym[]{BYETI, ROD, NONE, HILT, BOOK, IDYE, OTHER, NONE}),
+            new int[]{0xF0F6FC, 0xBFE9FF, 0x8AB8D8, 0xFFFFFF}, new Sym[]{BYETI, ROD, NONE, HILT, BOOK, IDYE, ADYE, OTHER, NONE}),
         new Look("Reindrake", "reindrake", "winter", 0xD03030, Game.GIFTS, EntityTypes.ENDER_DRAGON,
-            new int[]{0xD03030, 0x30A050, 0xF0F0F0, 0xFFD24A}, new Sym[]{IDYE, PROSP, OTHER, NONE}),
+            new int[]{0xD03030, 0x30A050, 0xF0F0F0, 0xFFD24A}, new Sym[]{IDYE, ADYE, BOOK, OTHER, NONE}),
     };
 
     /** The animation speed for a mob (Gambling tab, 50 - 200 %). */
@@ -362,7 +362,7 @@ public final class LavaScene {
                 || low.contains("chain of the end times") || low.contains("brimstone handle") || low.contains("bobbin")
                 || low.contains("flaming heart") || low.contains("enrager") || low.contains("flash")
                 || low.contains("vampire fang") || low.contains("deep sea orb") || low.contains("baby yeti")
-                || low.contains("yeti rod") || low.contains("true ice") || low.contains("prosperity") || low.contains("magma lord fragment") || low.contains("thunder fragment");
+                || low.contains("yeti rod") || low.contains("true ice") || low.contains("magma lord fragment") || low.contains("thunder fragment");
             if (rare) addDrop(l);
         } catch (Throwable t) {
             TikiGambleClient.LOGGER.warn("[Light] lava gambling item failed", t);
@@ -373,6 +373,8 @@ public final class LavaScene {
         if (DROPS.size() >= 6 || item == null) return;
         // no shards of any kind (attribute / hunting shards) - they are never a gambling result
         if (item.toLowerCase(Locale.ROOT).contains("shard")) return;
+        // guaranteed drops are never a gambling result (Reindrake: Prosperity I for the spawner)
+        if (item.toLowerCase(Locale.ROOT).contains("prosperity")) return;
         for (String d : DROPS) if (d.equalsIgnoreCase(item)) return;
         DROPS.add(item);
         LavaPrices.price(item); // fetch early so the price is there when the result shows
