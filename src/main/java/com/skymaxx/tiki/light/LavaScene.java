@@ -687,6 +687,67 @@ public final class LavaScene {
             MobView.vy = 0f;
             MobView.vs = 1f;
         }
+        try {
+            drawBobber(ctx);
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private static String bobberText;
+    private static long bobberSeenAt;
+    private static int bobberTick;
+
+    /** Hypixel writes the countdown ("2.4") and "!!!" as a floating name just above your hook: read it (display only). */
+    private static String bobberLine() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null || mc.level == null) return null;
+        var hook = mc.player.fishing;
+        if (hook == null || hook.isRemoved()) return null;
+        if (++bobberTick % 2 == 0 && bobberText != null && System.currentTimeMillis() - bobberSeenAt < 200L) return bobberText;
+        var box = hook.getBoundingBox().inflate(1.0, 3.0, 1.0);
+        String best = null;
+        double bestD = Double.MAX_VALUE;
+        for (net.minecraft.world.entity.decoration.ArmorStand st : mc.level.getEntitiesOfClass(net.minecraft.world.entity.decoration.ArmorStand.class, box)) {
+            if (!st.hasCustomName() || st.getCustomName() == null) continue;
+            String n = com.skymaxx.tiki.detect.DropLines.stripFormatting(st.getCustomName().getString()).trim();
+            if (!n.matches("\\d{1,2}(\\.\\d)?") && !n.contains("!!!")) continue;
+            double d = st.distanceToSqr(hook);
+            if (d < bestD) {
+                bestD = d;
+                best = n.contains("!!!") ? "!!!" : n;
+            }
+        }
+        bobberText = best;
+        bobberSeenAt = System.currentTimeMillis();
+        return best;
+    }
+
+    /** Small box over the scene: the bobber countdown, blinking yellow on "!!!" - reeling in stays your job. */
+    private static void drawBobber(GuiGraphicsExtractor ctx) {
+        TikiConfig c = cfg();
+        if (!active || c == null || !c.gambleBobberTimer) return;
+        String txt = bobberLine();
+        if (txt == null) return;
+        Minecraft mc = Minecraft.getInstance();
+        boolean bite = "!!!".equals(txt);
+        boolean blink = bite && (System.currentTimeMillis() / 160L) % 2L == 0L;
+        String sub = bite ? "reel in!" : "bobber";
+        int bw = 26 + mc.font.width(txt) + 8 + mc.font.width(sub) + 10, bh = 18;
+        int sw = ctx.guiWidth(), sh = ctx.guiHeight();
+        int bx = sw / 2 - bw / 2, by = sh - bh - 34;
+        if ("TOP_LEFT".equals(c.gambleBobberPos)) {
+            bx = 8;
+            by = 8;
+        } else if ("TOP_RIGHT".equals(c.gambleBobberPos)) {
+            bx = sw - bw - 8;
+            by = 8;
+        }
+        Theme.round(ctx, bx, by, bx + bw, by + bh, 0xE0140E1A);
+        Theme.roundOutline(ctx, bx, by, bx + bw, by + bh, bite ? 0xFFFFD23C : 0xFF7A6A90);
+        ctx.fill(bx + 7, by + 5, bx + 15, by + 13, 0xFFE04848);
+        ctx.fill(bx + 7, by + 8, bx + 15, by + 10, 0xFFFFFFFF);
+        ctx.text(mc.font, Component.literal(txt), bx + 20, by + 5, bite ? (blink ? 0xFFFFE066 : 0xFFFF9A2A) : 0xFFE8E2F0, false);
+        ctx.text(mc.font, Component.literal(sub), bx + 20 + mc.font.width(txt) + 8, by + 5, 0xFF9A8FA8, false);
     }
 
     /** Fade of the whole scene (in at the start, out at the end) for the full-screen cover. */

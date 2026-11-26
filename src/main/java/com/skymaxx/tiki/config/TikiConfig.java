@@ -113,6 +113,10 @@ public class TikiConfig {
     public String gambleView = "FULL";
     /** Hide chat, titles and the other HUDs while a gambling scene runs (no spoiler from drop messages). */
     public boolean gambleHideHud = true;
+    /** Show Hypixel's bobber countdown / "!!!" in a small box while a gambling scene runs (display only). */
+    public boolean gambleBobberTimer = true;
+    /** BOTTOM, TOP_LEFT or TOP_RIGHT. */
+    public String gambleBobberPos = "BOTTOM";
     public float lavaGambleVolume = 0.6f;
     public boolean lavaGamblePrices = true;
     /** Light 1.2 beta: dry streak + RNG fanfare in the gambling result (off = everything exactly as before). */

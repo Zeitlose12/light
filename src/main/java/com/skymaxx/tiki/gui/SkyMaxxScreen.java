@@ -376,6 +376,14 @@ extends Screen {
         return y;
     }
 
+    private static String bobberPosLabel(String v) {
+        return "Bobber timer: " + switch (v == null ? "BOTTOM" : v) {
+            case "TOP_LEFT" -> "Top left";
+            case "TOP_RIGHT" -> "Top right";
+            default -> "Bottom middle";
+        };
+    }
+
     private static String gambleViewLabel(String v) {
         return "Position: " + switch (v == null ? "FULL" : v) {
             case "TOP_LEFT" -> "Top left";
@@ -399,6 +407,17 @@ extends Screen {
         y = this.toggle(x, y, w, "Hide chat & titles while it runs", () -> this.cfg.gambleHideHud, v -> {
             this.cfg.gambleHideHud = v;
         });
+        y = this.toggle(x, y, w, "Bobber timer while it runs", () -> this.cfg.gambleBobberTimer, v -> {
+            this.cfg.gambleBobberTimer = v;
+        });
+        this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal(SkyMaxxScreen.bobberPosLabel(this.cfg.gambleBobberPos)), b -> {
+            String[] order = {"BOTTOM", "TOP_LEFT", "TOP_RIGHT"};
+            int i = java.util.Arrays.asList(order).indexOf(this.cfg.gambleBobberPos);
+            this.cfg.gambleBobberPos = order[(i + 1) % order.length];
+            this.cfg.save();
+            b.setMessage((Component)Component.literal(SkyMaxxScreen.bobberPosLabel(this.cfg.gambleBobberPos)));
+        }).bounds(x, y, w, 20).build(), y));
+        y += 24;
         return y;
     }
 
