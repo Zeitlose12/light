@@ -724,8 +724,13 @@ public final class LavaScene {
 
     /** Small box over the scene: the bobber countdown, blinking yellow on "!!!" - reeling in stays your job. */
     private static void drawBobber(GuiGraphicsExtractor ctx) {
+        if (active) drawBobberBox(ctx);
+    }
+
+    /** Also used over the Wiki Tiki / Titanoboa animations (drawn on top - their animations are untouched). */
+    public static void drawBobberBox(GuiGraphicsExtractor ctx) {
         TikiConfig c = cfg();
-        if (!active || c == null || !c.gambleBobberTimer) return;
+        if (c == null || !c.gambleBobberTimer) return;
         String txt = bobberLine();
         if (txt == null) return;
         Minecraft mc = Minecraft.getInstance();

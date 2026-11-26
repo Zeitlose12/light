@@ -29,15 +29,19 @@ public class GuiHudMixin {
             return;
         }
         float hud = TikiGambleClient.hudAlphaWhileOwned();
-        if (hud <= 0.004f) {
-            return;
+        if (hud > 0.004f) {
+            HudFilter.begin(hud);
+            try {
+                original.call(new Object[]{ctx, delta});
+            }
+            finally {
+                HudFilter.end();
+            }
         }
-        HudFilter.begin(hud);
+        // Light: the bobber timer on top of the Wiki Tiki / Titanoboa animation (nothing in them changes)
         try {
-            original.call(new Object[]{ctx, delta});
-        }
-        finally {
-            HudFilter.end();
+            com.skymaxx.tiki.light.LavaScene.drawBobberBox(ctx);
+        } catch (Throwable ignored) {
         }
     }
 }
