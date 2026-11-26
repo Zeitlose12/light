@@ -41,10 +41,11 @@ extends AbstractSliderButton {
         String label = cut > 0 ? msg.substring(0, cut) : msg;
         String val = cut > 0 ? msg.substring(cut + 2) : "";
         int ty = y0 + (this.getHeight() - 8) / 2;
-        int lw = font.width(label), vw = font.width(val);
-        int tx0 = x0 + 7 + lw + 8, tx1 = x1 - 7 - vw - 8;
+        int[] tr = this.track();
+        int tx0 = tr[0], tx1 = tr[1];
+        int vw = font.width(val);
         double v = Math.max(0.0, Math.min(1.0, this.value));
-        if (tx1 - tx0 >= 30) {
+        if (tr[2] == 0) {
             ctx.text(font, Component.literal(label), x0 + 7, ty, th.dim);
             ctx.text(font, Component.literal(val), x1 - 7 - vw, ty, th.text);
             int my = y0 + this.getHeight() / 2;
@@ -55,11 +56,45 @@ extends AbstractSliderButton {
         } else {
             // narrow: text centred, the track as a thin line along the bottom
             ctx.centeredText(font, Component.literal(label + ": " + val), (x0 + x1) / 2, ty - 1, th.text);
-            int kx = x0 + 3 + (int) Math.round((this.getWidth() - 6) * v);
+            int kx = tx0 + (int) Math.round((tx1 - tx0) * v);
             ctx.fill(x0 + 3, y1 - 3, x1 - 3, y1 - 2, LightButton.alpha(0x30, 0xFFFFFF));
             ctx.fill(x0 + 3, y1 - 3, kx, y1 - 2, LightButton.alpha(0xFF, acc));
             ctx.fill(kx - 1, y1 - 5, kx + 2, y1, 0xFFFFFFFF);
         }
+    }
+
+    /** Where the drawn track starts and ends; clicks and drags use the same range, so the knob sits under the mouse. */
+    private int valW = 0;
+
+    private int[] track() {
+        net.minecraft.client.gui.Font font = net.minecraft.client.Minecraft.getInstance().font;
+        String msg = LightButton.strip(this.getMessage().getString());
+        int cut = msg.lastIndexOf(": ");
+        String label = cut > 0 ? msg.substring(0, cut) : msg;
+        String val = cut > 0 ? msg.substring(cut + 2) : "";
+        int x0 = this.getX(), x1 = x0 + this.getWidth();
+        this.valW = Math.max(this.valW, font.width(val)); // only grows, so the track does not wobble while dragging
+        int tx0 = x0 + 7 + font.width(label) + 8, tx1 = x1 - 7 - this.valW - 8;
+        if (tx1 - tx0 < 30) return new int[]{x0 + 3, x1 - 3, 1};
+        return new int[]{tx0, tx1, 0};
+    }
+
+    private void valueFromMouse(double mx) {
+        int[] tr = this.track();
+        if (tr[1] <= tr[0]) return;
+        this.setValue(Math.max(0.0, Math.min(1.0, (mx - tr[0]) / (double) (tr[1] - tr[0]))));
+    }
+
+    @Override
+    public void onClick(net.minecraft.client.input.MouseButtonEvent e, boolean dbl) {
+        super.onClick(e, dbl);
+        this.valueFromMouse(e.x());
+    }
+
+    @Override
+    protected void onDrag(net.minecraft.client.input.MouseButtonEvent e, double dx, double dy) {
+        super.onDrag(e, dx, dy);
+        this.valueFromMouse(e.x());
     }
 
     public float currentValue() {
