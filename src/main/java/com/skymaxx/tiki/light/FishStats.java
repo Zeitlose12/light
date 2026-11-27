@@ -272,8 +272,6 @@ public final class FishStats {
             String text = line(c, false);
             int bx = boxX(c, ctx.guiWidth()), by = boxY(c, ctx.guiHeight());
             Bestiary.draw(ctx, mc.font, bx, by, c.fishStatsScale, text);
-            int[] sz = Bestiary.size(mc.font, text);
-            HudVis.veil(ctx, bx, by, bx + Math.round(sz[0] * c.fishStatsScale), by + Math.round(sz[1] * c.fishStatsScale));
         } catch (Throwable t) {
             TikiGambleClient.LOGGER.warn("[Light] fishing stats HUD failed", t);
         }

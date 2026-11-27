@@ -462,11 +462,6 @@ public final class SackValue {
             }
             draw(ctx, mc.font, boxX(c, ctx.guiWidth()), boxY(c, ctx.guiHeight()), c.sackHudScale, now < 0 ? -1 : shown,
                 ms - deltaMs < 2500 ? delta : 0, "TEXT".equals(c.sackHudStyle), !"INSTA_SELL".equals(c.sackPriceMode));
-            if (!sackMenu) {
-                int[] sz = size(mc.font);
-                int bx = boxX(c, ctx.guiWidth()), by = boxY(c, ctx.guiHeight());
-                HudVis.veil(ctx, bx, by, bx + Math.round(sz[0] * c.sackHudScale), by + Math.round(sz[1] * c.sackHudScale));
-            }
         } catch (Throwable t) {
             TikiGambleClient.LOGGER.warn("[Light] sack HUD failed", t);
         }

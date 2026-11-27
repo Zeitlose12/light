@@ -198,8 +198,6 @@ public final class Bestiary {
             String text = line(mob, get(mob));
             int bx = boxX(c, ctx.guiWidth()), by = boxY(c, ctx.guiHeight());
             draw(ctx, mc.font, bx, by, c.bestiaryHudScale, text);
-            int[] sz = size(mc.font, text);
-            HudVis.veil(ctx, bx, by, bx + Math.round(sz[0] * c.bestiaryHudScale), by + Math.round(sz[1] * c.bestiaryHudScale));
         } catch (Throwable t) {
             TikiGambleClient.LOGGER.warn("[Light] bestiary HUD failed", t);
         }

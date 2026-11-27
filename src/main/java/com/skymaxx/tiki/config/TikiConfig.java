@@ -166,7 +166,7 @@ public class TikiConfig {
     public float fishStatsScale = 1.0f;
     /** Last fishing stats Light read (Speed, SCC, Double Hook, Trophy, Treasure; empty = unknown) - shown right after a restart. */
     public String fishStatsSaved = "";
-    /** Light HUDs while a menu (inventory, chest ...) is open: HIDDEN, DIMMED or SHOWN. */
+    /** Light HUDs while a menu (inventory, chest ...) is open: HIDDEN or SHOWN. */
     public String hudInMenus = "HIDDEN";
     /** Bestiary ranking HUD (one line, last killed mob). */
     public boolean bestiaryHud = true;

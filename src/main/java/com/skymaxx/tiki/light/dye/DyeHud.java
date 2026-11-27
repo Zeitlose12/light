@@ -49,7 +49,6 @@ public final class DyeHud {
         int sh = ctx.guiHeight();
         int hx = Math.round(cfg.dyeHudX * sw), hy = Math.round(cfg.dyeHudY * sh);
         DyeHud.draw(ctx, mc.font, hx, hy, cfg.dyeHudScale, cfg);
-        com.skymaxx.tiki.light.HudVis.veil(ctx, hx, hy, hx + Math.round(WIDTH * cfg.dyeHudScale), hy + Math.round(DyeHud.height(cfg) * cfg.dyeHudScale));
     }
 
     public static boolean isFishing(LocalPlayer player) {

@@ -910,7 +910,7 @@ extends Screen {
             this.cfg.save();
             b.setMessage((Component)Component.literal("HUDs in menus: \u00a7f" + com.skymaxx.tiki.light.HudVis.label(this.cfg.hudInMenus)));
         }).bounds(x, y, w, 20).build(), y));
-        this.tip("While your inventory, a chest or another menu is open: Hidden, Dimmed or Shown.");
+        this.tip("While your inventory, a chest or another menu is open: Hidden or Shown.");
         this.tip("The chat doesn't count. The sack value stays in the sack menu.");
         y += 22;
         y = this.heading(y, "Fishing stats");
