@@ -1,95 +1,55 @@
 # 📜 Changelog
 
-## 1.3.0 – Gambling, Themes & Achievements
+## 1.3.0 – Gambling, HUDs & Cosmetics
 
-### ✨ New
-- **🌋 Lava Gambling** *(still in testing – please report bugs)*: Lord Jawbus (iron slot machine), Thunder (storm roulette), Ragnarok (bounty shooting gallery with the Titanoboa rifle), Plhlegblast (jelly bubbles) – real 3D mobs, always your real drop (also drops that only show up in the [Sacks] message)
-- Every gambling mob has its **own category**: on/off, **speed (50 – 200 %)** and a **preview** button
-- **💰 Drop prices** from SkyCofl in the result – new **Settings** tab: Bazaar insta-sell or sell offer, auction lowest BIN or median of the 5 lowest BINs
-- **HUDs** tab: every HUD in one place, on/off and move
-- **Shark pop-up** *(test)* for Great White Sharks: Megalodon / Shark Tooth
-- **🎃 Spooky Fishing** *(test)*: Grim Reaper – graveyard, the scythe opens the grave with your drop
-- **❄️ Winter Fishing** *(test)*: Yeti – ice claw machine; Reindrake – an Ender Dragon drops three gifts, gift shuffle
-- **📜 History** tab: every gambling result with drop, price and time – total, best hit and coins per hour this session
-- **12 new achievements** (Lava, Festivals, Gambling) shown as cards with a gold star; new **achievement pop-up** you can move and resize in the HUDs tab
-- *Beta (General → Beta features):* **dry streak** in the result ("after 412 Lord Jawbus") and the **RNG fanfare** (gold rays, coin rain, sound, optional screenshot) for dyes and drops above a price you choose
-- *Debug test:* **My Fishing Journey** – the history as a book you can open and page through (`/light journal`)
-- Debug commands: `/light test fanfare|dry|history|clear`, `/light achievement list|remove`
-- **🎒 Sack value HUD** (Bazaar tab): value of all your sacks, sell offer or insta-sell, box or text only, movable
-- Menu background gets darker (adjustable in General)
-- Sack value: prices every 10 minutes (5 / 10 / 15 adjustable), compact numbers (902,97M / 1,21B) and a list to choose which sacks count (e.g. leave out the Bait Sack)
-- HUDs tab: every HUD has its own on/off and a clear yellow **Move** button
-- Sack value is remembered across restarts ("Last read" in the Bazaar tab), bait sacks are left out by default
-- Journal: text without drop shadow (like real books) in darker ink, bigger again, silk bookmark in the gutter
-- Reindrake scene runs smoother
-- **🎨 Themes**: Pink Glass, Midnight, Ocean, Clean, Lava, Frost, Royal Gold – for the menu and the HUDs separately. Rounded corners everywhere; Frost snows over the screen, Clean snows in December, Lava has a glowing lava pool and embers
-- Yeti: his own show - drums his chest, slams the machine (snow falls off the roof), roars with a blizzard while the claw goes down, jumps for joy on a win or kicks the machine on a miss
-- Thunder: prismarine lightning rods left and right of the roulette, charging up and struck by lightning
-- Drop boards checked against the wiki: Thunder now has the **Flash I** book and the **Thunder Fragment**, Lord Jawbus now has **Bobbin' Scriptures** and the **Magma Lord Fragment** (several drops at once: the best one is shown); Grim Reaper, Yeti and Reindrake have the **Aquamarine Dye**, Reindrake has **Bobbin' Scriptures**; shards and guaranteed drops (Prosperity I) never count as a gambling drop
-- RNG fanfare: calmer glow and one short ray burst instead of spinning rays; "RNG!" no longer covers the mob name
-- `/light achievement remove` now really keeps it locked (`/light achievement restore` undoes it)
-- Credits: Wiki Tiki & Titanoboa from SkyMaxx by Rachie, dye chances based on DyeAddons, everything else by Grundsteuer
-- **Custom buttons:** every button, switch and slider in the menu now follows the menu theme (rounded buttons with hover glow, sliding ON/OFF pills, category bars, slim sliders with a round knob).
-- Frost and Lava themes: a bit more snow, bubbles and embers.
+### 🎰 Gambling
+- **🌋 Lava** *(testing)* – Lord Jawbus, Thunder, Ragnarok, Plhlegblast
+- **🎃 Spooky** *(testing)* – Grim Reaper
+- **❄️ Winter** *(testing)* – Yeti, Reindrake
+- **💰 Drop prices** from SkyCofl in the result
+- **Gameplay corner** – your game stays visible, small in a corner
+- **Bobber timer** and **bite ping** during every animation (also Wiki Tiki & Titanoboa)
+- **Spoiler-free** – chat, titles, other HUDs and game sound pause while an animation runs
+- Every mob: on/off, speed and a preview button
 
-- **Spoiler-free gambling:** Lava, Spooky and Winter animations always fill the screen; chat, titles, other HUDs and the game sound stay off while they run (no spoiler from drop messages)
-- **Gameplay during Animation** (Gambling tab): your game, very small in a corner (top left, bottom left or top right) – like the Titanoboa
-- **Bobber timer during gambling:** Hypixel's countdown above your hook (and "!!!" when a fish bites) in a big box right under the small gameplay picture (or bottom middle) – also over Wiki Tiki and Titanoboa; plus a short **bite ping** that plays even while the game sound is off; display only, you still reel in yourself
-- **Cleaner menu:** section separators in the theme colour, long explanations moved into hover tooltips (General, Settings), more space between the gambling categories; the gambling display options moved to Settings → "Gambling display"
-- **History** is folded by day (today open), so long sessions stay tidy; Wiki Tiki and Titanoboa results are listed too
-- **Journal:** one page per drop with a counter (e.g. "Flash I ×2"), only real drops (no Thunder Fragments or junk), Wiki Tiki and Titanoboa in the contents
-- Menu header: "Fishing Gambling Mod" (credits moved to the Cosmetics tab)
-- **✨ Cosmetics tab:** every theme as a tile with a live preview, one click to use it for the menu or for the HUDs, "x / 14 unlocked" counter
-- **7 new themes:** Halloween (fog, bats with red eyes, evil pumpkins – free for everyone) and six themes you unlock with achievements: Radioactive (Glowing), Thunderstorm (Storm Chaser), End Times (Bounty Hunter), Abyss (Full Sweep), Sunken Treasure (High Roller), Moonlit Lake (Dry Spell)
-- **"NEW THEME UNLOCKED"** pop-up in the middle of the screen, drawn in the new theme's own look
-- **💜 Light Crew:** the people who build and test Light can pick one of 12 fishing lines (Aurora, Blitz, Flamme, Frost, Galaxie, Goldkette, Regenbogen, Seelenfeuer, Kirschblüte, Ender, Candy, Gift) and one of 11 bobbers (Leucht-Orb, Stern, Mini-Tiki, Feuerball, Eiskristall, Kürbis, Diamant, Totenkopf, Ender-Perle, Herz, Mini-Boa) – or Standard for the normal look. Each look has its own particles (never on the water, so they don't look like a bite). Only visible to players with Light, can be switched off (the crew looks come from crew.json in Light's GitHub repo, downloaded every 5 minutes – nothing about you is sent)
-- **Light Crew banner** when a crew member names a big drop in party chat (can be switched off)
-- Light Crew members are recognised by their **UUID** (a name change can't take or give crew looks). Roles: **Creator** and **Beta** get every theme, **Supporters** get the line and bobber looks. Crew looks reload every 5 minutes and when you join a world – no restart
-- **🎣 Fishing stats HUD** – one small line: Fishing Speed, Sea Creature Chance, Double Hook (Trophy and Treasure can be switched on), each on/off; a **[Marina]** badge while Marina is mayor or minister. Values come from Hypixel's Stats widget in the tab list or your SkyBlock menu; shown only while fishing (adjustable)
-- **🏆 Bestiary rankings** – Light remembers your place ("#3,012 out of 8,257,853") when you open a mob's Bestiary page. Small one-line HUD for the mob you killed last, with the change since last time and an orange dot when the ranking is older than 7 days
-- **📖 Journal:** old paper look (grain, spots, worn edges, the odd coffee ring), new **Bestiary Rankings** page and a **Total Drops** page with drops and coins per mob, right after the contents
-- **🕵️ 8 secret achievements** – hidden as "???" until you find them (they don't count towards the normal total)
-- **Credits** page in the Cosmetics tab (Light, SkyMaxx, DyeAddons, SkyCofl, Hypixel, Light Crew)
-- Debug commands: `/light testtheme <theme>`, `/light testcrew`
+### 🎣 HUDs
+- **Fishing stats** – Speed, Sea Creature Chance, Double Hook (+ Trophy, Treasure) and a **[Marina]** badge
+- **Bestiary ranking** – your place for the mob you killed last
+- **Sack value** – what your sacks are worth
+- **HUDs tab** – every HUD on/off and movable
+
+### 🏆 Progress
+- **12 new achievements** and **8 secret ones**
+- **📜 History** – every result with price, folded by day
+- **📖 Journal** *(test)* – old paper look, Bestiary Rankings, Total Drops, one page per drop
+- *Beta:* dry streak and RNG fanfare
+
+### 🖌️ Cosmetics
+- **Cosmetics tab** with live theme previews
+- **7 new themes** – Halloween (free) and 6 unlocked by achievements, with a "New theme unlocked" pop-up
+- **💜 Light Crew** – 12 fishing lines and 11 bobbers with particles, crew drop banner *(only visible to Light users)*
+- **Credits** page
 
 ### 🔧 Changed
-- Menu tabs shrink on small windows so every tab stays visible
-- Cleaner menu: new tab order (General first, Settings last); in Gambling only one category is open at a time and every mob is one line (on/off · speed · preview)
-- Ragnarok stops shooting as soon as a shot hits
+- Cleaner menu – separators, tooltips, new tab order
+- Buttons, switches and sliders follow the menu theme
+- Ragnarok has his own model and dodges your shots
 
 ### 🐛 Fixed
-- Kills of big sea creatures that vanish without showing 0 HP (e.g. Ragnarok) are recognised: your own creature that was nearly dead and close to you counts as killed
-- Double hook: a second gambling kill during a running animation is no longer lost (it goes into the History and the Journal)
-- Gambling: items that land in your inventory a moment before a loot share kill is counted (e.g. Magma Lord Fragment) are part of the result
-- Gambling: a drop that arrives after the result shows a small "Late drop" banner and is added to the History and Journal
-- Enchanted books get their bazaar price (also from Hypixel's own bazaar list); missing prices are filled in later
-- Thunder: the Thunder Fragment is no longer a gambling result (almost worthless)
-- Gambling: when several drops come at once the **most valuable** one wins (a dye always first); the price below is always the price of the shown drop
-- Gambling: book drops ("Enchanted Book (Flash 1)") get their price; prices that fail to load are fetched again and filled into the History later
-- Gambling: drops that are not on the mob's board (e.g. Rampart Leggings) count as nothing
-- Gambling: a board drop that only shows up later in the [Sacks] message is added to the History afterwards
-- Ragnarok: his own model – his real head (NEU repo), red armour, on a saddled skeleton horse; the rider looks where the horse runs
-- Ragnarok: on every miss he swerves left or right just before the bullet arrives (like the Titanoboa), the bullet sparks on the ground; which shot hits is random
-- Prices: Flash I uses its real id (ultimate enchantment); bazaar items always ask the bazaar, auction items always the auction house
-- Journal: always today's price – sell offer for bazaar items, lowest BIN for auction items
-- Sack value: items that fit several sacks ("Combat Sack, Nether Sack, Lava Fishing Sack") no longer create their own entry – they go to the existing sack and count once; old entries are merged automatically; long sack names are shortened in the list
-- Yeti: Yeti Rod removed from the board (no longer in the game), Hilt of True Ice is now True Ice
-- Frost snow is spread over the whole screen (it fell in two stripes before); HUD particles stay inside the HUD frame
-- Gambling: drop lines that arrive a moment before the kill is counted are no longer lost (e.g. Thunder showed the Thunder Fragment although Flash I dropped)
-- Gambling: "Enchanted Book (Flash I)" style drop lines are read correctly
-- Gambling: loot share items ("LOOT SHARE You received … for assisting …") count as your drop
-- Gambling: "Waiting for your drop" ends sooner when nothing dropped (5 s instead of 10 s); several drops of one kill are collected for a moment so the best one wins
-- Ragnarok: shows the red rider on his skeleton horse (no more two stacked horses); if the rider can't be found, a red-armoured stand-in rides the horse
-- Sliders: the knob stays under your mouse when you click or drag
-- Bite ping now also plays during the Wiki Tiki and Titanoboa animations (they turn every Minecraft sound channel off – the ping now comes from Light's own synth there)
-- Achievements: a newly reached achievement now shows its pop-up with sound (before, only the chat line came)
+- Big sea creatures that vanish without showing 0 HP (e.g. Ragnarok) are recognised
+- Loot share drops, late drops and drops only in the [Sacks] message count
+- Several drops at once: the most valuable one wins
+- Enchanted books (e.g. Flash I) get their price
+- Double hook: the second kill is saved too
+- Sack value: items that fit several sacks count once
+- Frost snow, slider knob, achievement pop-up and sound
 
 ### ⚠️ Known limitations
-- Double hook: when two Lava/Spooky/Winter gambling mobs die close together only one animation plays – both kills are still counted in the History and the Journal
+- **Double hook:** two Lava, Spooky or Winter mobs close together → only one animation (both kills are saved)
 
 ### ❤️ Credits
 - **Big shoutout to Gesundheitskarte** – the inspiration behind many gambling animations and features
-- Drop prices from **SkyCofl** (sky.coflnet.com/data), sack prices from Hypixel's public bazaar API
+- Prices from **SkyCofl** and Hypixel's public bazaar API
 
 ---
 
