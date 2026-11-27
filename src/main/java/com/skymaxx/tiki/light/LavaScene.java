@@ -816,6 +816,11 @@ public final class LavaScene {
 
     /** One short ping for "!!!" - marked as Light's own sound so it plays while the game is muted. */
     private static void bitePing() {
+        // Wiki Tiki / Titanoboa: SkyMaxx turns every Minecraft sound channel to 0 - ping through its own synth instead
+        if (!active && TikiGambleClient.gameShouldBeSilent() && TikiGambleClient.audio != null) {
+            TikiGambleClient.audio.bitePing();
+            return;
+        }
         try {
             float volume = Math.max(0.35f, vol());
             SimpleSoundInstance inst = SimpleSoundInstance.forUI(net.minecraft.sounds.SoundEvents.NOTE_BLOCK_PLING.value(), 1.6f, volume);

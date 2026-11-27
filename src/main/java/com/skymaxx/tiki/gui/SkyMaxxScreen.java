@@ -923,6 +923,25 @@ extends Screen {
         y = this.heading(y, "Sack value");
         y = this.hudRow(x, y, w, "Sack value HUD", () -> this.cfg.sackHudEnabled, v -> this.cfg.sackHudEnabled = v,
             () -> new com.skymaxx.tiki.light.SackEditScreen((Screen)this));
+        y = this.heading(y, "Fishing stats");
+        y = this.hudRow(x, y, w, "Fishing stats HUD", () -> this.cfg.fishStatsHud, v -> this.cfg.fishStatsHud = v,
+            () -> new com.skymaxx.tiki.light.HudMover((Screen)this, "Move fishing stats", com.skymaxx.tiki.light.HudMover.fishStats(), () -> com.skymaxx.tiki.light.FishStats.line(this.cfg, true)));
+        this.tip("From Hypixel's Stats widget in the tab list (/tab) or your SkyBlock menu.");
+        int third = (w - 8) / 3;
+        this.toggle(x, y, third, "\u2602 Speed", () -> this.cfg.fishStatSpeed, v -> this.cfg.fishStatSpeed = v);
+        this.toggle(x + third + 4, y, third, "\u03b1 SCC", () -> this.cfg.fishStatScc, v -> this.cfg.fishStatScc = v);
+        y = this.toggle(x + 2 * third + 8, y, w - 2 * third - 8, "\u2693 Double Hook", () -> this.cfg.fishStatDh, v -> this.cfg.fishStatDh = v);
+        this.toggle(x, y, third, "\u2654 Trophy", () -> this.cfg.fishStatTrophy, v -> this.cfg.fishStatTrophy = v);
+        this.toggle(x + third + 4, y, third, "\u26c3 Treasure", () -> this.cfg.fishStatTreasure, v -> this.cfg.fishStatTreasure = v);
+        y = this.toggle(x + 2 * third + 8, y, w - 2 * third - 8, "Marina badge", () -> this.cfg.fishStatsMarina, v -> this.cfg.fishStatsMarina = v);
+        this.tip("Marina from Hypixel's public election data (no key, every 30 min) and the tab list.");
+        y = this.toggle(x, y, w, "Only while fishing", () -> this.cfg.fishStatsOnlyFishing, v -> this.cfg.fishStatsOnlyFishing = v);
+        y = this.heading(y, "Bestiary ranking");
+        y = this.hudRow(x, y, w, "Ranking HUD", () -> this.cfg.bestiaryHud, v -> this.cfg.bestiaryHud = v,
+            () -> new com.skymaxx.tiki.light.HudMover((Screen)this, "Move ranking", com.skymaxx.tiki.light.HudMover.bestiary(), com.skymaxx.tiki.light.Bestiary::sample));
+        this.tip("Your place for the mob you killed last. Read when you open its Bestiary page (/be).");
+        this.tip("\u00a76\u25cf\u00a7r = older than 7 days, open /be to refresh.");
+        y = this.toggle(x, y, w, "Ranking only while fishing", () -> this.cfg.bestiaryHudOnlyFishing, v -> this.cfg.bestiaryHudOnlyFishing = v);
         y = this.heading(y, "Achievement pop-up");
         y = this.hudRow(x, y, w, "Achievement pop-up", () -> this.cfg.lightAchievementFx, v -> this.cfg.lightAchievementFx = v,
             () -> new com.skymaxx.tiki.light.AchievementPopupEditScreen((Screen)this));

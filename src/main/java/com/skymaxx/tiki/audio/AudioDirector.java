@@ -744,6 +744,16 @@ public class AudioDirector {
         this.synth.after(delaySeconds, action);
     }
 
+    /** Light: the bite ping ("!!!") while the Wiki Tiki / Titanoboa mute has every Minecraft sound channel at 0. */
+    public void bitePing() {
+        try {
+            this.synth.keepAwake();
+            this.synth.play(ToneVoice.bell(1568.0f, 0.24f, 0.0f));
+            this.schedule(0.07f, () -> this.synth.play(ToneVoice.bell(2093.0f, 0.16f, 0.0f)));
+        } catch (Throwable ignored) {
+        }
+    }
+
     public void setMuted(boolean wanted) {
         if (wanted) {
             this.synth.keepAwake();

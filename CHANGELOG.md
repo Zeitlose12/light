@@ -45,6 +45,9 @@
 - **💜 Light Crew:** the people who build and test Light can pick one of 12 fishing lines (Aurora, Blitz, Flamme, Frost, Galaxie, Goldkette, Regenbogen, Seelenfeuer, Kirschblüte, Ender, Candy, Gift) and one of 11 bobbers (Leucht-Orb, Stern, Mini-Tiki, Feuerball, Eiskristall, Kürbis, Diamant, Totenkopf, Ender-Perle, Herz, Mini-Boa) – or Standard for the normal look. Each look has its own particles (never on the water, so they don't look like a bite). Only visible to players with Light, can be switched off (the crew looks come from crew.json in Light's GitHub repo, downloaded every 5 minutes – nothing about you is sent)
 - **Light Crew banner** when a crew member names a big drop in party chat (can be switched off)
 - Light Crew members are recognised by their **UUID** (a name change can't take or give crew looks). Roles: **Creator** and **Beta** get every theme, **Supporters** get the line and bobber looks. Crew looks reload every 5 minutes and when you join a world – no restart
+- **🎣 Fishing stats HUD** – one small line: Fishing Speed, Sea Creature Chance, Double Hook (Trophy and Treasure can be switched on), each on/off; a **[Marina]** badge while Marina is mayor or minister. Values come from Hypixel's Stats widget in the tab list or your SkyBlock menu; shown only while fishing (adjustable)
+- **🏆 Bestiary rankings** – Light remembers your place ("#3,012 out of 8,257,853") when you open a mob's Bestiary page. Small one-line HUD for the mob you killed last, with the change since last time and an orange dot when the ranking is older than 7 days
+- **📖 Journal:** old paper look (grain, spots, worn edges, the odd coffee ring), new **Bestiary Rankings** page and a **Total Drops** page with drops and coins per mob, right after the contents
 - **🕵️ 8 secret achievements** – hidden as "???" until you find them (they don't count towards the normal total)
 - **Credits** page in the Cosmetics tab (Light, SkyMaxx, DyeAddons, SkyCofl, Hypixel, Light Crew)
 - Debug commands: `/light testtheme <theme>`, `/light testcrew`
@@ -78,6 +81,7 @@
 - Gambling: "Waiting for your drop" ends sooner when nothing dropped (5 s instead of 10 s); several drops of one kill are collected for a moment so the best one wins
 - Ragnarok: shows the red rider on his skeleton horse (no more two stacked horses); if the rider can't be found, a red-armoured stand-in rides the horse
 - Sliders: the knob stays under your mouse when you click or drag
+- Bite ping now also plays during the Wiki Tiki and Titanoboa animations (they turn every Minecraft sound channel off – the ping now comes from Light's own synth there)
 - Achievements: a newly reached achievement now shows its pop-up with sound (before, only the chat line came)
 
 ### ⚠️ Known limitations

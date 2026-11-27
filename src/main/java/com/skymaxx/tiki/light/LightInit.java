@@ -107,6 +107,8 @@ public final class LightInit implements ClientModInitializer {
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("light", "shark_popup"), SharkPopup::render);
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("light", "achievement_popup"), AchievementPopup::render);
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("light", "sack_value"), SackValue::render);
+        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("light", "fish_stats"), FishStats::render);
+        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("light", "bestiary_rank"), Bestiary::render);
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("light", "cosmetic_popup"), CosmeticPopup::render);
         net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents.CLIENT_STOPPING.register(client -> SackValue.saveNow());
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
@@ -116,6 +118,8 @@ public final class LightInit implements ClientModInitializer {
             GambleLog.tick();
             Crew.tick();
             Secrets.tick(client);
+            FishStats.tick(client);
+            Bestiary.tick(client);
             if (openRequested) {
                 openRequested = false;
                 client.gui.setScreen(SkyMaxxScreen.create());

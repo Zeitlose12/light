@@ -156,6 +156,24 @@ public class TikiConfig {
     public boolean crewCosmetics = true;
     /** Banner in the middle of the screen when a Light Crew member names a big drop in party chat. */
     public boolean crewBanner = true;
+    /** Fishing stats HUD (one line): which values, Marina badge, only while fishing, position. */
+    public boolean fishStatsHud = true;
+    public boolean fishStatSpeed = true;
+    public boolean fishStatScc = true;
+    public boolean fishStatDh = true;
+    public boolean fishStatTrophy = false;
+    public boolean fishStatTreasure = false;
+    public boolean fishStatsMarina = true;
+    public boolean fishStatsOnlyFishing = true;
+    public float fishStatsX = -1f;
+    public float fishStatsY = -1f;
+    public float fishStatsScale = 1.0f;
+    /** Bestiary ranking HUD (one line, last killed mob). */
+    public boolean bestiaryHud = true;
+    public boolean bestiaryHudOnlyFishing = true;
+    public float bestiaryHudX = -1f;
+    public float bestiaryHudY = -1f;
+    public float bestiaryHudScale = 1.0f;
     /** Particles along crew lines and above crew bobbers. */
     public boolean crewParticles = true;
     /** How dark the game gets behind the Light menu (0 - 0.9). */

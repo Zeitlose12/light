@@ -30,8 +30,9 @@ public final class JournalScreen extends Screen {
     private static final long HOLD_MS = 500L;
     private static final long OPEN_MS = 700L;
     private static final long FLIP_MS = 380L;
-    private static final int PAPER = 0xFFF2E4C2;
-    private static final int PAPER_EDGE = 0xFFE2CFA4;
+    private static final int PAPER = 0xFFE9D6AE;
+    private static final int PAPER_EDGE = 0xFFC9AE7C;
+    private static final int RANK_INK = 0xFF24486A;
     private static final int INK = 0xFF1A0E04;
     private static final int GOLD_INK = 0xFF7A4E00;
     private static final int ITEM_INK = 0xFF3C0C5C;
@@ -53,6 +54,7 @@ public final class JournalScreen extends Screen {
         this.parent = parent;
         Map<String, Integer> none = new LinkedHashMap<>();
         pages.add("toc");
+        pages.add("ranks");
         pages.add("sum");
         int drops = 0;
         // one page per mob + drop (newest first); a new drop of the same kind only raises its count
@@ -282,9 +284,53 @@ public final class JournalScreen extends Screen {
 
     // ------------------------------------------------------------------ one page at (x0 .. x0+PW, -PH/2 .. PH/2)
 
+    private static float hsh(int i) {
+        double v = Math.sin(i * 12.9898 + 78.233) * 43758.5453;
+        return (float) (v - Math.floor(v));
+    }
+
+    /** Old paper: grain, foxing spots, darker worn edges, a ragged outer edge, sometimes a coffee ring. Fixed per page. */
+    private void agedPaper(GuiGraphicsExtractor ctx, int x0, int top, int side, int seed) {
+        ctx.fill(x0, top, x0 + PW, top + PH, PAPER);
+        for (int i = 0; i < 260; i++) {
+            int gx = x0 + (int) (hsh(seed * 977 + i) * PW), gy = top + (int) (hsh(seed * 613 + i * 3) * PH);
+            int a = 10 + (int) (hsh(i * 7 + seed) * 22);
+            ctx.fill(gx, gy, gx + 1, gy + 1, a << 24 | (hsh(i * 11 + seed) > 0.5f ? 0x6A4418 : 0x8A6A3A));
+        }
+        for (int i = 0; i < 7; i++) {
+            int fx = x0 + 10 + (int) (hsh(seed * 31 + i * 17) * (PW - 20)), fy = top + 10 + (int) (hsh(seed * 37 + i * 19) * (PH - 20));
+            int r = 1 + (int) (hsh(seed * 41 + i) * 3);
+            for (int k = r; k >= 1; k--) ctx.fill(fx - k, fy - k, fx + k, fy + k, (int) (14 + 10 * (r - k + 1)) << 24 | 0x8C5A28);
+        }
+        // worn edges: top, bottom and the outer side get darker
+        for (int k = 0; k < 9; k++) {
+            int a = (9 - k) * 6;
+            ctx.fill(x0, top + k, x0 + PW, top + k + 1, a << 24 | 0x5A3410);
+            ctx.fill(x0, top + PH - 1 - k, x0 + PW, top + PH - k, a << 24 | 0x5A3410);
+            int ex = side < 0 ? x0 + k : x0 + PW - 1 - k;
+            ctx.fill(ex, top, ex + 1, top + PH, a << 24 | 0x5A3410);
+        }
+        // ragged outer edge (the leather shows through)
+        int edge = side < 0 ? x0 : x0 + PW;
+        for (int y = top; y < top + PH; y += 3) {
+            int d = (int) (hsh(seed * 53 + y) * 2.5f);
+            if (d > 0) ctx.fill(side < 0 ? edge : edge - d, y, side < 0 ? edge + d : edge, y + 3, LEATHER);
+        }
+        // a faint coffee ring on some pages
+        if (hsh(seed * 71) > 0.72f) {
+            int cx = x0 + 30 + (int) (hsh(seed * 73) * (PW - 60)), cy = top + PH - 50 - (int) (hsh(seed * 79) * 60);
+            for (int d = 0; d < 360; d += 6) {
+                if (d > 300) continue;
+                double rad = Math.toRadians(d);
+                int px = cx + (int) Math.round(Math.cos(rad) * 17), py = cy + (int) Math.round(Math.sin(rad) * 17);
+                ctx.fill(px, py, px + 2, py + 1, 0x2A784B23);
+            }
+        }
+    }
+
     private void page(GuiGraphicsExtractor ctx, int x0, Object what, int side) {
         int top = -PH / 2;
-        ctx.fill(x0, top, x0 + PW, top + PH, PAPER);
+        agedPaper(ctx, x0, top, side, Math.max(0, pages.indexOf(what)) + 1);
         // page edges and a soft curve towards the spine
         ctx.fill(x0, top, x0 + PW, top + 1, PAPER_EDGE);
         ctx.fill(x0, top + PH - 1, x0 + PW, top + PH, PAPER_EDGE);
@@ -299,25 +345,91 @@ public final class JournalScreen extends Screen {
             heading(ctx, "Contents", cx, top + 22);
             String[] names = GambleLog.JOURNAL_NAMES;
             boolean withTest = GambleLog.hasTest();
+            String[] special = {"Bestiary Rankings", "Total Drops"};
+            for (int i = 0; i < special.length; i++) {
+                int ly = top + 40 + i * 13;
+                String n = String.valueOf(i + 2);
+                ctx.text(this.font, Component.literal(special[i]).withStyle(ChatFormatting.ITALIC), x0 + 16, ly, RANK_INK, false);
+                ctx.text(this.font, Component.literal(n), x0 + PW - 16 - this.font.width(n), ly, RANK_INK, false);
+                int dotsFrom = x0 + 20 + this.font.width(Component.literal(special[i]).withStyle(ChatFormatting.ITALIC));
+                for (int d = dotsFrom; d < x0 + PW - 22 - this.font.width(n); d += 4) ctx.fill(d, ly + 7, d + 1, ly + 8, 0x8024486A);
+            }
+            ctx.fill(x0 + 40, top + 68, x0 + PW - 40, top + 69, 0x406A4E30);
             for (int i = 0; i < names.length; i++) {
-                int ly = top + 44 + i * 16;
+                int ly = top + 74 + i * 13;
                 ctx.text(this.font, Component.literal(names[i]), x0 + 16, ly, INK, false);
                 String n = String.valueOf(GambleLog.worthyDrops(GambleLog.JOURNAL[i], withTest));
                 ctx.text(this.font, Component.literal(n), x0 + PW - 16 - this.font.width(n), ly, INK_SOFT, false);
                 int dotsFrom = x0 + 20 + this.font.width(names[i]);
                 for (int d = dotsFrom; d < x0 + PW - 22 - this.font.width(n); d += 4) ctx.fill(d, ly + 7, d + 1, ly + 8, 0x806A4E30);
             }
-            ink(ctx, Component.literal("drops per mob"), cx, top + 200, INK_SOFT);
+            ink(ctx, Component.literal("drops per mob"), cx, top + 196, INK_SOFT);
+            return;
+        }
+        if ("ranks".equals(what)) {
+            heading(ctx, "Bestiary Rankings", cx, top + 22);
+            ink(ctx, Component.literal("your place among all players").withStyle(ChatFormatting.ITALIC), cx, top + 34, INK_SOFT);
+            java.util.List<Bestiary.Rank> all = new java.util.ArrayList<>();
+            for (String n : GambleLog.JOURNAL_NAMES) {
+                Bestiary.Rank r = Bestiary.get(n);
+                if (r != null) all.add(r);
+            }
+            for (Bestiary.Rank r : Bestiary.all()) if (!all.contains(r)) all.add(r);
+            if (all.isEmpty()) {
+                ink(ctx, Component.literal("Open a sea creature"), cx, top + 80, INK_SOFT);
+                ink(ctx, Component.literal("in your Bestiary (/be)"), cx, top + 92, INK_SOFT);
+                ink(ctx, Component.literal("and its place shows"), cx, top + 104, INK_SOFT);
+                ink(ctx, Component.literal("up right here."), cx, top + 116, INK_SOFT);
+                return;
+            }
+            int i = 0;
+            for (Bestiary.Rank r : all) {
+                int ly = top + 48 + i * 21;
+                if (ly > top + PH - 44) break;
+                ctx.text(this.font, Component.literal(r.mob), x0 + 16, ly, INK, false);
+                String place = "#" + String.format(Locale.ROOT, "%,d", r.rank);
+                Component pc = Component.literal(place).withStyle(ChatFormatting.BOLD);
+                ctx.text(this.font, pc, x0 + PW - 16 - this.font.width(pc), ly, RANK_INK, false);
+                long ch = r.change();
+                String sub = r.top() + (ch > 0 ? "  \u2191" + String.format(Locale.ROOT, "%,d", ch) : ch < 0 ? "  \u2193" + String.format(Locale.ROOT, "%,d", -ch) : "");
+                ps2(ctx, sub, x0 + 16, ly + 10, INK_SOFT);
+                if (r.stale()) {
+                    long days = (System.currentTimeMillis() - r.ms) / 86_400_000L;
+                    String old = "\u25cf " + days + " days old";
+                    ps2(ctx, old, x0 + PW - 16 - Math.round(this.font.width(old) * 0.75f), ly + 10, 0xFFB8661A);
+                }
+                ctx.fill(x0 + 16, ly + 18, x0 + PW - 16, ly + 19, 0x306A4E30);
+                i++;
+            }
+            ps2(ctx, "updated when you open /be", x0 + 16, top + PH - 30, INK_SOFT);
             return;
         }
         if ("sum".equals(what)) {
             boolean withTest = GambleLog.hasTest();
-            heading(ctx, "Totals", cx, top + 22);
+            heading(ctx, "Total Drops", cx, top + 22);
             GambleLog.Entry best = GambleLog.best(withTest);
-            stat(ctx, x0, top + 46, "Total", LavaPrices.format(GambleLog.total(withTest)), 0xFF7A4E00);
-            stat(ctx, x0, top + 80, "Best hit", best == null ? "-" : best.drop, 0xFF9A3A00);
-            stat(ctx, x0, top + 114, "Drops", GambleLog.drops(null, withTest) + " of " + GambleLog.count(withTest) + " kills", INK);
-            stat(ctx, x0, top + 148, "RNG fanfares", GambleLog.fanfares(withTest) + " ★", 0xFF7A4E00);
+            stat(ctx, x0, top + 40, "Total", LavaPrices.format(GambleLog.total(withTest)), 0xFF7A4E00);
+            stat(ctx, x0, top + 66, "Best hit", best == null ? "-" : LavaPrices.display(best.drop), 0xFF9A3A00);
+            stat(ctx, x0, top + 92, "Drops", GambleLog.drops(null, withTest) + " of " + GambleLog.count(withTest) + " kills", INK);
+            stat(ctx, x0, top + 118, "RNG fanfares", GambleLog.fanfares(withTest) + " \u2605", 0xFF7A4E00);
+            // per mob: drops and value
+            ctx.fill(x0 + 40, top + 146, x0 + PW - 40, top + 147, 0x406A4E30);
+            int i = 0;
+            for (int m = 0; m < GambleLog.JOURNAL.length && i < 6; m++) {
+                int n = 0;
+                long sum = 0;
+                for (GambleLog.Entry e : GambleLog.entries()) {
+                    if ((!withTest && e.test) || !GambleLog.JOURNAL[m].equals(e.mob) || !GambleLog.worthy(e)) continue;
+                    n++;
+                    if (e.price > 0) sum += e.price;
+                }
+                if (n == 0) continue;
+                int ly = top + 152 + i * 11;
+                ps2(ctx, GambleLog.JOURNAL_NAMES[m], x0 + 16, ly, INK);
+                String v = n + (sum > 0 ? " \u00b7 " + LavaPrices.format(sum) : "");
+                ps2(ctx, v, x0 + PW - 16 - Math.round(this.font.width(v) * 0.75f), ly, INK_SOFT);
+                i++;
+            }
             return;
         }
         if ("empty".equals(what)) {
@@ -398,6 +510,16 @@ public final class JournalScreen extends Screen {
         float s = Math.min(2f, (PW - 28f) / Math.max(1, this.font.width(c)));
         ps.scale(s, s);
         ink(ctx, c, 0, -4, color);
+        ps.popMatrix();
+    }
+
+    /** Small text (3/4 size), no shadow. */
+    private void ps2(GuiGraphicsExtractor ctx, String text, int x, int y, int color) {
+        Matrix3x2fStack ps = ctx.pose();
+        ps.pushMatrix();
+        ps.translate(x, y);
+        ps.scale(0.75f, 0.75f);
+        ctx.text(this.font, Component.literal(text), 0, 0, color, false);
         ps.popMatrix();
     }
 
