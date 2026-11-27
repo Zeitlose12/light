@@ -114,6 +114,15 @@ public final class LavaPrices {
      * Light Crew banner: the board drop named in this chat text (any bazaar / auction drop Light prices), or null.
      * Thunder Fragment and Prosperity I are left out (almost worthless / always dropped).
      */
+    private static final String[][] SHORT = {
+        {"vial", "Radioactive Vial"}, {"flash ?(1|i)?( book)?", "Flash I"}, {"scriptures?|bobbin", "Bobbin' Scriptures"},
+        {"magma lord frag(ment)?|mlf", "Magma Lord Fragment"}, {"burnt texts?", "Burnt Texts"}, {"chain", "Chain of the End Times"},
+        {"brimstone", "Brimstone Handle"}, {"vampire fang|fang", "Vampire Fang"}, {"orb", "Deep Sea Orb"},
+        {"bubble", "Troubled Bubble"}, {"shed", "Titanoboa Shed"}, {"mask", "Tiki Mask"}, {"snake ?eyes", "Snake Eyes"},
+        {"baby yeti", "Baby Yeti"}, {"true ice|hilt", "True Ice"}, {"gws tooth|shark tooth", "Great White Shark Tooth"},
+        {"flaming heart", "Flaming Heart"}, {"aqua(marine)?", "Aquamarine Dye"}, {"iceberg", "Iceberg Dye"},
+        {"carmine", "Carmine Dye"}, {"midnight", "Midnight Dye"}};
+
     public static String boardDropIn(String text) {
         String t = text.toLowerCase(Locale.ROOT);
         String best = null;
@@ -125,7 +134,11 @@ public final class LavaPrices {
             String inner = key.startsWith("enchanted book (") && key.endsWith(")") ? key.substring(16, key.length() - 1) : key;
             if ((t.contains(key) || t.contains(inner)) && (best == null || key.length() > best.length())) best = key;
         }
-        if (best == null) return null;
+        if (best == null) {
+            // custom party messages from other mods often use short names
+            for (String[] al : SHORT) if (t.matches(".*\\b(?:" + al[0] + ")\\b.*")) return al[1];
+            return null;
+        }
         String d = display(best);
         StringBuilder out = new StringBuilder();
         for (String w : d.split(" ")) {

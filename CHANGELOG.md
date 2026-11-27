@@ -28,6 +28,7 @@
 
 ### 💬 Light Crew banner
 - Shows for **every board drop** Light prices (bazaar and auction house) – Flash I included, Thunder Fragment and Prosperity I left out
+- Also works with **custom drop messages** from other mods (short names like "vial", "flash book", "MLF")
 
 ### 🐛 Fixed
 - The **bite ping** is now audible during Wiki Tiki and Titanoboa animations
