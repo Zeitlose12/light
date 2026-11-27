@@ -1,5 +1,32 @@
 # 📜 Changelog
 
+## 1.4.0 – Fishing HUDs, Rankings & Secrets
+
+### 🎣 HUDs
+- **Fishing stats** – one small line: ☂ Speed · α Sea Creature Chance · ⚓ Double Hook (+ Trophy, Treasure), each on/off
+- **[Marina] badge** while Marina is mayor or minister
+- **Bestiary ranking** – your place for a mob of your choice, e.g. *Wiki Tiki #3,012 ↑37*, with a reminder when it's older than 7 days
+
+### 📖 Journal
+- **Old paper** look – grain, spots, worn edges
+- New **Bestiary Rankings** and **Total Drops** pages right after the contents
+
+### 🏆 Achievements
+- **8 secret achievements** – hidden as "???" until you find them
+
+### 💜 Light Crew
+- Members are recognised by their **UUID**
+- New **Supporter** role – line and bobber looks, themes are earned like everyone else
+- Crew looks reload every 5 minutes and when you join a world – no restart
+
+### 🐛 Fixed
+- The **bite ping** is now audible during Wiki Tiki and Titanoboa animations
+
+### 🗑️ Removed
+- Shark pop-up
+
+---
+
 ## 1.3.0 – Gambling, HUDs & Cosmetics
 
 ### 🎰 Gambling
@@ -13,15 +40,13 @@
 - Every mob: on/off, speed and a preview button
 
 ### 🎣 HUDs
-- **Fishing stats** – Speed, Sea Creature Chance, Double Hook (+ Trophy, Treasure) and a **[Marina]** badge
-- **Bestiary ranking** – your place for the mob you killed last
 - **Sack value** – what your sacks are worth
 - **HUDs tab** – every HUD on/off and movable
 
 ### 🏆 Progress
-- **12 new achievements** and **8 secret ones**
+- **12 new achievements**
 - **📜 History** – every result with price, folded by day
-- **📖 Journal** *(test)* – old paper look, Bestiary Rankings, Total Drops, one page per drop
+- **📖 Journal** *(test)* – one page per drop
 - *Beta:* dry streak and RNG fanfare
 
 ### 🖌️ Cosmetics
