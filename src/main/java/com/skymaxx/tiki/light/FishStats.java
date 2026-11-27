@@ -72,6 +72,7 @@ public final class FishStats {
     public static void tick(Minecraft mc) {
         TikiConfig c = cfg();
         if (c == null || !c.fishStatsHud || mc.level == null) return;
+        if (!loaded) load(c);
         if (++tick % 20 != 0) return;
         try {
             readTab(mc);
@@ -149,6 +150,37 @@ public final class FishStats {
     private static void take(double[] found) {
         for (int i = 0; i < found.length; i++) if (!Double.isNaN(found[i])) VALUES[i] = found[i];
         readMs = System.currentTimeMillis();
+        save();
+    }
+
+    private static boolean loaded;
+
+    /** The last values from the config, so the HUD shows them right after a restart. */
+    private static void load(TikiConfig c) {
+        loaded = true;
+        if (c.fishStatsSaved == null || c.fishStatsSaved.isBlank()) return;
+        String[] p = c.fishStatsSaved.split(",", -1);
+        for (int i = 0; i < VALUES.length && i < p.length; i++) {
+            try {
+                if (!p[i].isBlank() && Double.isNaN(VALUES[i])) VALUES[i] = Double.parseDouble(p[i]);
+            } catch (NumberFormatException ignored) {
+            }
+        }
+    }
+
+    /** Writes the values to the config, only when they changed. */
+    private static void save() {
+        TikiConfig c = cfg();
+        if (c == null) return;
+        StringBuilder b = new StringBuilder();
+        for (int i = 0; i < VALUES.length; i++) {
+            if (i > 0) b.append(',');
+            if (!Double.isNaN(VALUES[i])) b.append(VALUES[i]);
+        }
+        String s = b.toString();
+        if (s.equals(c.fishStatsSaved)) return;
+        c.fishStatsSaved = s;
+        c.save();
     }
 
     /** Hypixel's public election resource (no key): is Marina mayor or minister? */
@@ -205,6 +237,7 @@ public final class FishStats {
 
     /** The line as shown, e.g. "☂200 α72.93% ⚓5.3%  [Marina]". sample = values for the move screen. */
     public static String line(TikiConfig c, boolean sample) {
+        if (!loaded) load(c);
         double[] demo = {200, 72.93, 5.3, 26.5, 18.44};
         StringBuilder b = new StringBuilder();
         boolean have = false;
