@@ -1237,8 +1237,7 @@ extends Screen {
         double autoMf = com.skymaxx.tiki.light.Calc.magicFind();
         this.calcBox(bx, y, 4, calcMf != null ? calcMf : autoMf < 0 ? "" : String.valueOf(Math.round(autoMf)), s -> calcMf = s.isEmpty() ? null : s);
         y += 22;
-        y = this.calcButton(bx, y, bw, () -> "§f" + com.skymaxx.tiki.light.Calc.WEAPON[Math.floorMod(cd.weapon, 3)], () -> cd.weapon = (cd.weapon + 1) % 3);
-        this.tip("Looting on your weapon: VI = +20, VII = +25 Magic Find.");
+        y += 22; // Looting: check boxes, drawn and clicked in drawCalculator / calcChipClick
         Double typed = cd.bestiaryTyped.get(key);
         this.calcBox(bx, y, 5, typed != null ? mfNum(typed) : com.skymaxx.tiki.light.Calc.bestiaryRead(key) ? mfNum(com.skymaxx.tiki.light.Calc.bestiary(key)) : "", s -> {
             String n = s.replaceAll("[^0-9.]", "");
@@ -1247,12 +1246,7 @@ extends Screen {
             com.skymaxx.tiki.light.Calc.save();
         });
         y += 22;
-        y = this.calcButton(bx, y, bw, () -> "§f" + com.skymaxx.tiki.light.Calc.BOBBIN[Math.floorMod(cd.bobbin, 4)], () -> cd.bobbin = (cd.bobbin + 1) % 4);
-        this.tip("Bobbin' Time on all 4 armor pieces with 5 bobbers nearby (the most it gives). Only on sea creatures.");
-        y = this.calcButton(bx, y, bw, () -> cd.waterbug ? "§a+5" : "§7Off", () -> cd.waterbug = !cd.waterbug);
-        this.tip("Giant Waterbug Shard: +5 Magic Find on aquatic mobs (all sea creatures).");
-        y = this.calcButton(bx, y, bw, () -> (com.skymaxx.tiki.light.Calc.lava(key) ? "§f" : "§8") + com.skymaxx.tiki.light.Calc.MAGMA[Math.floorMod(cd.magma, 5)], () -> cd.magma = (cd.magma + 1) % 5);
-        this.tip("Magma Lord Armor \"Lord's Blessing\": +2.5 to +10 Magic Find, only on lava sea creatures.");
+        y += 22 * 3; // Bobbin' Time, Waterbug Shard, Magma Lord: check boxes
         y = this.calcButton(bx, y, bw, () -> (com.skymaxx.tiki.light.Calc.winter(key) ? "§f" : "§8") + com.skymaxx.tiki.light.Calc.YETI[Math.floorMod(cd.yeti, 3)]
             + (cd.yeti == 0 ? (com.skymaxx.tiki.light.Calc.yetiPet() ? " §a(active)" : " §8(not active)") : ""), () -> cd.yeti = (cd.yeti + 1) % 3);
         this.tip("Baby Yeti pet \"Frosty Familiarity\": +10 Magic Find on winter sea creatures. Auto = when Light sees it as your active pet.");
@@ -1283,14 +1277,33 @@ extends Screen {
         int sx = x + 188;
         double autoMf = com.skymaxx.tiki.light.Calc.magicFind();
         double base = calcMf != null ? parse(calcMf) : autoMf;
-        String[] labels = {"Base Magic Find", "Weapon", "Bestiary", "Bobbin' Time", "Waterbug Shard",
+        String[] labels = {"Base Magic Find", "Looting", "Bestiary", "Bobbin' Time", "Waterbug Shard",
             com.skymaxx.tiki.light.Calc.lava(key) ? "Magma Lord Set" : "§8Magma Lord · lava",
             com.skymaxx.tiki.light.Calc.winter(key) ? "Baby Yeti pet" : "§8Baby Yeti · winter", "Extra", "Kills since drop"};
         for (int i = 0; i < labels.length; i++) ctx.text(this.font, (Component)Component.literal(labels[i]), x, y0 + 5 + i * 22, T().text);
         ctx.text(this.font, (Component)Component.literal(calcMf == null && autoMf >= 0 ? "§a● from your stats" : calcMf == null ? "§8open SkyBlock menu once" : "§8typed"), sx, y0 + 5, -1);
         boolean typed = com.skymaxx.tiki.light.Calc.data().bestiaryTyped.containsKey(key);
         ctx.text(this.font, (Component)Component.literal(typed ? "§8typed" : com.skymaxx.tiki.light.Calc.bestiaryRead(key) ? "§a● from Bestiary" : "§8open its /be page"), sx, y0 + 5 + 2 * 22, -1);
-        ctx.text(this.font, (Component)Component.literal("§8armor, shards ..."), sx, y0 + 5 + 7 * 22, -1);
+        this.calcChips.clear();
+        com.skymaxx.tiki.light.Calc.Data cd = com.skymaxx.tiki.light.Calc.data();
+        int bx = x + 112;
+        int kx = bx;
+        kx = this.chip(ctx, kx, y0 + 22, "VI +20", cd.weapon == 1, true, () -> cd.weapon = cd.weapon == 1 ? 0 : 1);
+        this.chip(ctx, kx, y0 + 22, "VII +25", cd.weapon == 2, true, () -> cd.weapon = cd.weapon == 2 ? 0 : 2);
+        kx = bx;
+        for (int i = 1; i <= 3; i++) {
+            final int v = i;
+            kx = this.chip(ctx, kx, y0 + 3 * 22, com.skymaxx.tiki.light.Calc.BOBBIN[i], cd.bobbin == i, true, () -> cd.bobbin = cd.bobbin == v ? 0 : v);
+        }
+        this.chip(ctx, bx, y0 + 4 * 22, "+5", cd.waterbug, true, () -> cd.waterbug = !cd.waterbug);
+        boolean lava = com.skymaxx.tiki.light.Calc.lava(key);
+        kx = bx;
+        for (int i = 1; i <= 4; i++) {
+            final int v = i;
+            kx = this.chip(ctx, kx, y0 + 5 * 22, String.valueOf(i + 1), cd.magma == i, lava, () -> cd.magma = cd.magma == v ? 0 : v);
+        }
+        ctx.text(this.font, (Component)Component.literal((lava ? "§7" : "§8") + "pieces"
+            + (cd.magma > 0 ? " +" + mfNum(com.skymaxx.tiki.light.Calc.MAGMA_MF[Math.floorMod(cd.magma, 5)]) : "")), kx, y0 + 5 + 5 * 22, -1);
         long[] dryAuto = com.skymaxx.tiki.light.Calc.dry(d);
         long dry = calcDry != null ? (long) parse(calcDry) : dryAuto[0];
         ctx.text(this.font, (Component)Component.literal(calcDry == null ? "§a● from History" : "§8typed"), sx, y0 + 5 + 8 * 22, -1);
@@ -1335,6 +1348,36 @@ extends Screen {
                 + " kills · §f" + Math.round(wait * 100) + "%§7 of players wait this long §8→ " + com.skymaxx.tiki.light.Calc.verdict(wait);
             ctx.text(this.font, (Component)Component.literal("§7" + t), x + 8, ry + 96, -1);
         }
+    }
+
+    private record Chip(int x, int y, int w, int h, Runnable act) {
+    }
+
+    private final List<Chip> calcChips = new ArrayList<>();
+
+    /** A check box with a label; returns the x for the next one. Dimmed = does not count for this mob (still clickable). */
+    private int chip(GuiGraphicsExtractor ctx, int x, int y, String label, boolean on, boolean active, Runnable act) {
+        int bx = x, by = y + 4;
+        ctx.fill(bx, by, bx + 10, by + 10, active ? 0xFF6A5676 : 0xFF3A3040);
+        ctx.fill(bx + 1, by + 1, bx + 9, by + 9, 0xFF221A2A);
+        if (on) ctx.text(this.font, (Component)Component.literal("✔"), bx + 2, by + 1, active ? 0xFF7DFF9A : 0xFF4A7A55);
+        String t = (active ? (on ? "§f" : "§7") : "§8") + label;
+        ctx.text(this.font, (Component)Component.literal(t), bx + 14, by + 1, -1);
+        int w = 14 + this.font.width(label) + 10;
+        if (y + 18 > this.viewTop && y < this.viewBottom) this.calcChips.add(new Chip(x, y, w, 18, act));
+        return x + w;
+    }
+
+    private boolean calcChipClick(double mx, double my) {
+        if (activeTab != Tab.CALCULATOR || !query.isBlank()) return false;
+        for (Chip c : this.calcChips) {
+            if (mx >= c.x() && mx < c.x() + c.w() && my >= c.y() && my < c.y() + c.h()) {
+                c.act().run();
+                com.skymaxx.tiki.light.Calc.save();
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Drop list lines: a mob header (-1 - first drop index) or a drop index. */
@@ -1854,6 +1897,9 @@ extends Screen {
                 calcOpen = false;
                 return true;
             }
+        }
+        if (event.button() == 0 && this.calcChipClick(mouseX, mouseY)) {
+            return true;
         }
         if (event.button() == 0 && this.overScrollbar(mouseX, mouseY)) {
             int top = this.thumbTop();

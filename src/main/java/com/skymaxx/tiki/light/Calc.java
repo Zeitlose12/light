@@ -323,7 +323,7 @@ public final class Calc {
             if (!rest.isEmpty() && !rest.matches("[IVXLC\\d]+")) return; // "Wiki Tiki 25" / "Wiki Tiki XXV"
             Double found = null, later = null;
             boolean next = false;
-            Pattern mfp = Pattern.compile("\\+([\\d.]+)\\s*\u272f?\\s*magic find");
+            Pattern mfp = Pattern.compile("\\+([\\d.]+)\\s*[^\\sa-z\\d]?\\s*magic find");
             for (String line : lore) {
                 String l = line.toLowerCase(Locale.ROOT);
                 if (l.contains("next") || l.contains("upgrade") || l.contains("to unlock")) next = true;
