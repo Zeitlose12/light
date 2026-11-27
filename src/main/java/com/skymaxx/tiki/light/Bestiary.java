@@ -109,10 +109,21 @@ public final class Bestiary {
         Screen screen = mc.gui == null ? null : mc.gui.screen();
         if (!(screen instanceof AbstractContainerScreen<?> container)) return;
         try {
+            String title = DropLines.stripFormatting(container.getTitle().getString()).toLowerCase(Locale.ROOT);
+            boolean bestiaryPage = title.contains("bestiary") || title.contains("fishing") || title.contains("sea creature");
+            for (Calc.Drop d : Calc.DROPS) if (title.contains(d.mob().toLowerCase(Locale.ROOT))) bestiaryPage = true;
             for (Slot slot : container.getMenu().slots) {
                 if (slot.container instanceof net.minecraft.world.entity.player.Inventory) continue;
                 ItemStack stack = slot.getItem();
                 if (stack == null || stack.isEmpty()) continue;
+                if (bestiaryPage) {
+                    ItemLore bl = stack.get(DataComponents.LORE);
+                    if (bl != null) {
+                        java.util.List<String> lines = new java.util.ArrayList<>();
+                        for (Component line : bl.lines()) lines.add(DropLines.stripFormatting(line.getString()));
+                        Calc.readBestiaryItem(DropLines.stripFormatting(stack.getHoverName().getString()), lines);
+                    }
+                }
                 Matcher n = NAME.matcher(DropLines.stripFormatting(stack.getHoverName().getString()).trim());
                 if (!n.matches()) continue;
                 ItemLore lore = stack.get(DataComponents.LORE);

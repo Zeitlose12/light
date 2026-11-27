@@ -83,6 +83,11 @@ implements ClientModInitializer {
         com.skymaxx.tiki.light.LavaScene.onChat(message, overlay);
         com.skymaxx.tiki.light.SackValue.onChat(message, overlay);
         try {
+            com.skymaxx.tiki.light.Calc.onChat(message, overlay);
+        } catch (Throwable t) {
+            LOGGER.warn("[Light] calc chat failed", t);
+        }
+        try {
             com.skymaxx.tiki.light.Crew.onChat(message, overlay);
         } catch (Throwable t) {
             LOGGER.warn("[Light] crew chat failed", t);

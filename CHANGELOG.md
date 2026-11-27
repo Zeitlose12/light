@@ -20,8 +20,11 @@
 - **HUDs tab** – every HUD on/off and movable, hidden while your inventory or a chest is open (or shown)
 
 ### 🧮 Drop calculator
-- **Calculator** tab – pick a drop, Light fills in your Magic Find and your dry streak: chance per kill, kills for 50 % / 90 %, how rare your dry streak is
-- **`/light chance <drop>`** – the same in chat
+- **Calculator** tab – pick a drop from a **drop-down list** (grouped by sea creature, scroll over it to flip through)
+- **Magic Find per mob**, every part on its own line: your base Magic Find (from your stats) + weapon (**Looting VI +20 / VII +25**) + **Bestiary** (read from the mob's Bestiary page, or typed) + **Bobbin' Time** (III/IV/V) + **Giant Waterbug Shard** (+5) + **Magma Lord Set** (+2.5 to +10, lava only) + **Baby Yeti pet** (+10, winter only, finds your active pet) + extra – capped at 500
+- **Last drop message** – the Magic Find Hypixel shows in your `RARE DROP!` message, to compare with Light's sum
+- Chance per kill, kills for 50 % / 90 %, and your dry streak with a verdict: normal / unlucky / very unlucky
+- **`/light chance <drop>`** – the same in chat; drops from several mobs (Aquamarine, Carmine, Iceberg, Bobbin' Scriptures) show one line per mob plus all kills together
 - All chances on the **Magic Find Rework** (Hypixel SkyBlock 0.27.3, Nov 17 2026) – also the luck meter
 
 ### 🎨 Dye tracker

@@ -125,6 +125,7 @@ public final class LightInit implements ClientModInitializer {
             Secrets.tick(client);
             FishStats.tick(client);
             Bestiary.tick(client);
+            Calc.tick(client);
             if (openRequested) {
                 openRequested = false;
                 client.gui.setScreen(SkyMaxxScreen.create());

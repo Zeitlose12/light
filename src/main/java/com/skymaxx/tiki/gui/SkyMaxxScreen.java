@@ -1177,86 +1177,141 @@ extends Screen {
     // ------------------------------------------------------------------ Calculator tab
 
     private static int calcIndex;
-    /** Typed values; null = automatic (Magic Find from your stats, kills from History). */
+    /** Typed base Magic Find; null = automatic from your stats. */
     private static String calcMf;
     private static String calcDry;
+    /** Drop list open, its scroll offset (lines). */
+    private static boolean calcOpen;
+    private static int calcListScroll;
     private int calcInputY = -1;
     private int calcResultY = -1;
+    private int calcDdY = -1;
     private int calcLeft;
     private int calcW;
+    private static final int CALC_LINE = 12;
 
-    private int buildCalculator(int x, int y, int w) {
+    private com.skymaxx.tiki.light.Calc.Drop calcDrop() {
         com.skymaxx.tiki.light.Calc.Drop[] all = com.skymaxx.tiki.light.Calc.DROPS;
         calcIndex = Math.floorMod(calcIndex, all.length);
-        com.skymaxx.tiki.light.Calc.Drop d = all[calcIndex];
+        return all[calcIndex];
+    }
+
+    private int calcButton(int x, int y, int w, java.util.function.Supplier<String> label, Runnable click) {
+        this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal(label.get()), b -> {
+            click.run();
+            com.skymaxx.tiki.light.Calc.save();
+            b.setMessage(Component.literal(label.get()));
+        }).bounds(x, y, w, 18).build(), y));
+        return y + 22;
+    }
+
+    private EditBox calcBox(int x, int y, int maxLen, String value, Consumer<String> responder) {
+        EditBox box = new EditBox(this.font, x, y, 70, 18, (Component)Component.literal("value"));
+        box.setMaxLength(maxLen);
+        box.setValue(value);
+        box.setResponder(responder);
+        this.rows.add(new Row((AbstractWidget)box, y));
+        return box;
+    }
+
+    private static String mfNum(double v) {
+        return v == Math.rint(v) ? String.valueOf(Math.round(v)) : String.format(java.util.Locale.ROOT, "%.1f", v);
+    }
+
+    private int buildCalculator(int x, int y, int w) {
+        com.skymaxx.tiki.light.Calc.Drop d = this.calcDrop();
+        com.skymaxx.tiki.light.Calc.Data cd = com.skymaxx.tiki.light.Calc.data();
+        String key = d.mobKey();
         y = this.heading(y, "Drop chance");
-        this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal("\u25c0"), b -> {
-            calcIndex--;
-            calcDry = null;
-            this.rebuildWidgets();
-        }).bounds(x, y, 20, 20).build(), y));
-        this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal("\u00a7f" + d.item() + " \u00a78\u00b7 \u00a77" + d.mob()), b -> {
-            calcIndex++;
-            calcDry = null;
-            this.rebuildWidgets();
-        }).bounds(x + 24, y, w - 48, 20).build(), y));
-        this.tip("Click (or the arrows) to pick the drop. Base chances after the Magic Find Rework (Nov 2026).");
-        this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal("\u25b6"), b -> {
-            calcIndex++;
-            calcDry = null;
-            this.rebuildWidgets();
-        }).bounds(x + w - 20, y, 20, 20).build(), y));
+        this.calcDdY = y;
+        this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal("§f" + d.item() + " §8· §7" + d.mob() + "   §8▾"), b -> {
+            calcOpen = !calcOpen;
+            if (calcOpen) calcListScroll = Math.max(0, this.calcLineOf(calcIndex) - 2);
+        }).bounds(x, y, w, 20).build(), y));
+        this.tip("Click to pick the drop, or scroll over it. Base chances after the Magic Find Rework (Nov 2026).");
         y += 26;
         this.calcLeft = x;
         this.calcW = w;
         this.calcInputY = y;
-        int boxX = x + 112, boxW = 70;
+        int bx = x + 112, bw = w - 112;
         double autoMf = com.skymaxx.tiki.light.Calc.magicFind();
-        EditBox mf = new EditBox(this.font, boxX, y, boxW, 18, (Component)Component.literal("Magic Find"));
-        mf.setMaxLength(4);
-        mf.setValue(calcMf != null ? calcMf : autoMf < 0 ? "" : String.valueOf(Math.round(autoMf)));
-        mf.setResponder(s -> calcMf = s.isEmpty() ? null : s);
-        this.rows.add(new Row((AbstractWidget)mf, y));
+        this.calcBox(bx, y, 4, calcMf != null ? calcMf : autoMf < 0 ? "" : String.valueOf(Math.round(autoMf)), s -> calcMf = s.isEmpty() ? null : s);
+        y += 22;
+        y = this.calcButton(bx, y, bw, () -> "§f" + com.skymaxx.tiki.light.Calc.WEAPON[Math.floorMod(cd.weapon, 3)], () -> cd.weapon = (cd.weapon + 1) % 3);
+        this.tip("Looting on your weapon: VI = +20, VII = +25 Magic Find.");
+        Double typed = cd.bestiaryTyped.get(key);
+        this.calcBox(bx, y, 5, typed != null ? mfNum(typed) : com.skymaxx.tiki.light.Calc.bestiaryRead(key) ? mfNum(com.skymaxx.tiki.light.Calc.bestiary(key)) : "", s -> {
+            String n = s.replaceAll("[^0-9.]", "");
+            if (n.isEmpty()) cd.bestiaryTyped.remove(key);
+            else try { cd.bestiaryTyped.put(key, Double.parseDouble(n)); } catch (NumberFormatException ignored) { }
+            com.skymaxx.tiki.light.Calc.save();
+        });
+        y += 22;
+        y = this.calcButton(bx, y, bw, () -> "§f" + com.skymaxx.tiki.light.Calc.BOBBIN[Math.floorMod(cd.bobbin, 4)], () -> cd.bobbin = (cd.bobbin + 1) % 4);
+        this.tip("Bobbin' Time on all 4 armor pieces with 5 bobbers nearby (the most it gives). Only on sea creatures.");
+        y = this.calcButton(bx, y, bw, () -> cd.waterbug ? "§a+5" : "§7Off", () -> cd.waterbug = !cd.waterbug);
+        this.tip("Giant Waterbug Shard: +5 Magic Find on aquatic mobs (all sea creatures).");
+        y = this.calcButton(bx, y, bw, () -> (com.skymaxx.tiki.light.Calc.lava(key) ? "§f" : "§8") + com.skymaxx.tiki.light.Calc.MAGMA[Math.floorMod(cd.magma, 5)], () -> cd.magma = (cd.magma + 1) % 5);
+        this.tip("Magma Lord Armor \"Lord's Blessing\": +2.5 to +10 Magic Find, only on lava sea creatures.");
+        y = this.calcButton(bx, y, bw, () -> (com.skymaxx.tiki.light.Calc.winter(key) ? "§f" : "§8") + com.skymaxx.tiki.light.Calc.YETI[Math.floorMod(cd.yeti, 3)]
+            + (cd.yeti == 0 ? (com.skymaxx.tiki.light.Calc.yetiPet() ? " §a(active)" : " §8(not active)") : ""), () -> cd.yeti = (cd.yeti + 1) % 3);
+        this.tip("Baby Yeti pet \"Frosty Familiarity\": +10 Magic Find on winter sea creatures. Auto = when Light sees it as your active pet.");
+        Double ex = cd.extra.get(key);
+        this.calcBox(bx, y, 5, ex == null ? "" : mfNum(ex), s -> {
+            String n = s.replaceAll("[^0-9.]", "");
+            if (n.isEmpty()) cd.extra.remove(key);
+            else try { cd.extra.put(key, Double.parseDouble(n)); } catch (NumberFormatException ignored) { }
+            com.skymaxx.tiki.light.Calc.save();
+        });
         y += 22;
         long[] dry = com.skymaxx.tiki.light.Calc.dry(d);
-        EditBox dk = new EditBox(this.font, boxX, y, boxW, 18, (Component)Component.literal("Kills"));
-        dk.setMaxLength(7);
-        dk.setValue(calcDry != null ? calcDry : String.valueOf(dry[0]));
-        dk.setResponder(s -> calcDry = s.isEmpty() ? null : s);
-        this.rows.add(new Row((AbstractWidget)dk, y));
+        this.calcBox(bx, y, 7, calcDry != null ? calcDry : String.valueOf(dry[0]), s -> calcDry = s.isEmpty() ? null : s);
         y += 26;
         this.calcResultY = y;
-        y += 118;
-        y = this.note(y, "\u00a78Chance = base \u00d7 (1 + Magic Find / 100)" + (d.dye() != null ? " \u00d7 Vincent" : "") + ". Over 100% the rest is a double drop.");
-        y = this.note(y, "\u00a78Also in chat: /light chance <drop>");
+        y += 26 + 118;
+        y = this.note(y, "§8Chance = base × (1 + Magic Find / 100)" + (d.dye() != null ? " × Vincent" : "") + ". Over 100% the rest is a double drop.");
+        y = this.note(y, "§8Also in chat: /light chance <drop>");
         return y;
     }
 
     private void drawCalculator(GuiGraphicsExtractor ctx) {
         if (this.calcInputY < 0) return;
-        com.skymaxx.tiki.light.Calc.Drop d = com.skymaxx.tiki.light.Calc.DROPS[Math.floorMod(calcIndex, com.skymaxx.tiki.light.Calc.DROPS.length)];
+        com.skymaxx.tiki.light.Calc.Drop d = this.calcDrop();
+        String key = d.mobKey();
         int x = this.calcLeft, w = this.calcW;
         int y0 = this.viewTop + this.calcInputY - this.scroll;
+        int sx = x + 188;
         double autoMf = com.skymaxx.tiki.light.Calc.magicFind();
-        double mf = calcMf != null ? parse(calcMf) : Math.max(0, autoMf);
+        double base = calcMf != null ? parse(calcMf) : autoMf;
+        String[] labels = {"Base Magic Find", "Weapon", "Bestiary", "Bobbin' Time", "Waterbug Shard",
+            com.skymaxx.tiki.light.Calc.lava(key) ? "Magma Lord Set" : "§8Magma Lord · lava",
+            com.skymaxx.tiki.light.Calc.winter(key) ? "Baby Yeti pet" : "§8Baby Yeti · winter", "Extra", "Kills since drop"};
+        for (int i = 0; i < labels.length; i++) ctx.text(this.font, (Component)Component.literal(labels[i]), x, y0 + 5 + i * 22, T().text);
+        ctx.text(this.font, (Component)Component.literal(calcMf == null && autoMf >= 0 ? "§a● from your stats" : calcMf == null ? "§8open SkyBlock menu once" : "§8typed"), sx, y0 + 5, -1);
+        boolean typed = com.skymaxx.tiki.light.Calc.data().bestiaryTyped.containsKey(key);
+        ctx.text(this.font, (Component)Component.literal(typed ? "§8typed" : com.skymaxx.tiki.light.Calc.bestiaryRead(key) ? "§a● from Bestiary" : "§8open its /be page"), sx, y0 + 5 + 2 * 22, -1);
+        ctx.text(this.font, (Component)Component.literal("§8armor, shards ..."), sx, y0 + 5 + 7 * 22, -1);
         long[] dryAuto = com.skymaxx.tiki.light.Calc.dry(d);
         long dry = calcDry != null ? (long) parse(calcDry) : dryAuto[0];
-        ctx.text(this.font, (Component)Component.literal("Magic Find"), x, y0 + 5, T().text);
-        ctx.text(this.font, (Component)Component.literal(calcMf == null && autoMf >= 0 ? "\u00a7a\u25cf from your stats" : calcMf == null ? "\u00a78open SkyBlock menu once" : "\u00a78typed"), x + 188, y0 + 5, -1);
-        ctx.text(this.font, (Component)Component.literal("Kills since drop"), x, y0 + 27, T().text);
-        ctx.text(this.font, (Component)Component.literal(calcDry == null ? "\u00a7a\u25cf from History" : "\u00a78typed"), x + 188, y0 + 27, -1);
-        int ry = this.viewTop + this.calcResultY - this.scroll;
+        ctx.text(this.font, (Component)Component.literal(calcDry == null ? "§a● from History" : "§8typed"), sx, y0 + 5 + 8 * 22, -1);
+        double mf = com.skymaxx.tiki.light.Calc.total(base, key);
+        int ty = this.viewTop + this.calcResultY - this.scroll;
+        ctx.text(this.font, (Component)Component.literal("§f= §l" + mfNum(mf) + "§r§f Magic Find §7against " + d.mob()
+            + (mf >= com.skymaxx.tiki.light.Calc.MF_CAP ? " §6(cap)" : "")), x, ty, -1);
+        double meas = com.skymaxx.tiki.light.Calc.measured(key);
+        ctx.text(this.font, (Component)Component.literal(meas >= 0 ? "§8last drop message: " + mfNum(meas) + " MF" : "§8no drop message with Magic Find yet"), x, ty + 11, -1);
+        int ry = ty + 26;
         com.skymaxx.tiki.light.Theme.round(ctx, x, ry, x + w, ry + 112, 0x30FFFFFF);
         double p = com.skymaxx.tiki.light.Calc.chance(d, mf);
-        ctx.text(this.font, (Component)Component.literal("\u00a77Chance per kill"), x + 8, ry + 6, -1);
+        ctx.text(this.font, (Component)Component.literal("§7Chance per kill"), x + 8, ry + 6, -1);
         Matrix3x2fStack ps = ctx.pose();
         ps.pushMatrix();
         ps.translate(x + 8, ry + 18);
         ps.scale(1.6f, 1.6f);
         ctx.text(this.font, (Component)Component.literal(com.skymaxx.tiki.light.Calc.pct(p)), 0, 0, -1);
         ps.popMatrix();
-        String sub = com.skymaxx.tiki.light.Calc.oneIn(p) + "  \u00b7  base " + com.skymaxx.tiki.light.Calc.pct(d.base()) + " \u00d7 " + String.format(java.util.Locale.ROOT, "%.2f", p / d.base());
-        ctx.text(this.font, (Component)Component.literal("\u00a77" + sub), x + 8, ry + 36, -1);
+        String sub = com.skymaxx.tiki.light.Calc.oneIn(p) + "  ·  base " + com.skymaxx.tiki.light.Calc.pct(d.base()) + " × " + String.format(java.util.Locale.ROOT, "%.2f", p / d.base());
+        ctx.text(this.font, (Component)Component.literal("§7" + sub), x + 8, ry + 36, -1);
         int cw = (w - 24) / 3;
         String[] val = p >= 1 ? new String[]{"1", "1", "1"} : new String[]{
             String.format(java.util.Locale.ROOT, "%,d", com.skymaxx.tiki.light.Calc.killsFor(p, 0.5)),
@@ -1266,20 +1321,123 @@ extends Screen {
         for (int i = 0; i < 3; i++) {
             int cx = x + 8 + i * (cw + 4);
             ctx.fill(cx, ry + 50, cx + cw, ry + 76, 0x40000000);
-            ctx.centeredText(this.font, (Component)Component.literal("\u00a7e" + val[i]), cx + cw / 2, ry + 54, -1);
-            ctx.centeredText(this.font, (Component)Component.literal("\u00a78" + cap[i]), cx + cw / 2, ry + 65, -1);
+            ctx.centeredText(this.font, (Component)Component.literal("§e" + val[i]), cx + cw / 2, ry + 54, -1);
+            ctx.centeredText(this.font, (Component)Component.literal("§8" + cap[i]), cx + cw / 2, ry + 65, -1);
         }
         if (p < 1) {
             double wait = com.skymaxx.tiki.light.Calc.stillWaiting(p, dry);
             int bw = w - 16;
             ctx.fill(x + 8, ry + 84, x + 8 + bw, ry + 90, 0x50000000);
             int fillW = (int) Math.round(bw * Math.min(1, 1 - wait));
-            int col = wait > 0.5 ? 0xFF7DFF9A : wait > 0.15 ? 0xFFFFD24A : 0xFFFF6A4A;
+            int col = wait >= 0.5 ? 0xFF7DFF9A : wait >= 0.1 ? 0xFFFFD24A : 0xFFFF6A4A;
             ctx.fill(x + 8, ry + 84, x + 8 + fillW, ry + 90, col);
             String t = String.format(java.util.Locale.ROOT, "%,d", dry) + (calcDry == null && dryAuto[1] == 0 && dry > 0 ? "+" : "")
-                + " kills without it \u2192 only \u00a7f" + String.format(java.util.Locale.ROOT, "%.1f", wait * 100) + "%\u00a77 of players wait this long";
-            ctx.text(this.font, (Component)Component.literal("\u00a77" + t), x + 8, ry + 96, -1);
+                + " kills · §f" + Math.round(wait * 100) + "%§7 of players wait this long §8→ " + com.skymaxx.tiki.light.Calc.verdict(wait);
+            ctx.text(this.font, (Component)Component.literal("§7" + t), x + 8, ry + 96, -1);
         }
+    }
+
+    /** Drop list lines: a mob header (-1 - first drop index) or a drop index. */
+    private static List<Integer> calcLines() {
+        List<Integer> out = new ArrayList<>();
+        com.skymaxx.tiki.light.Calc.Drop[] all = com.skymaxx.tiki.light.Calc.DROPS;
+        String last = null;
+        for (int i = 0; i < all.length; i++) {
+            if (!all[i].mob().equals(last)) {
+                out.add(-1 - i);
+                last = all[i].mob();
+            }
+            out.add(i);
+        }
+        return out;
+    }
+
+    private int calcLineOf(int index) {
+        List<Integer> lines = calcLines();
+        for (int i = 0; i < lines.size(); i++) if (lines.get(i) == index) return i;
+        return 0;
+    }
+
+    /** {left, top, right, bottom, visible lines} of the open drop list. */
+    private int[] calcListBox() {
+        int top = this.viewTop + this.calcDdY - this.scroll + 21;
+        int lines = calcLines().size();
+        int room = Math.max(3, (Math.min(this.height - 4, this.viewBottom + 30) - top - 4) / CALC_LINE);
+        int vis = Math.min(lines, Math.min(room, 16));
+        return new int[]{this.calcLeft, top, this.calcLeft + this.calcW, top + vis * CALC_LINE + 4, vis};
+    }
+
+    private boolean calcListShown() {
+        return calcOpen && activeTab == Tab.CALCULATOR && query.isBlank() && this.calcDdY >= 0;
+    }
+
+    private void drawCalcList(GuiGraphicsExtractor ctx, int mx, int my) {
+        if (!this.calcListShown()) return;
+        int[] b = this.calcListBox();
+        List<Integer> lines = calcLines();
+        calcListScroll = Math.max(0, Math.min(calcListScroll, lines.size() - b[4]));
+        ctx.fill(b[0] - 1, b[1] - 1, b[2] + 1, b[3] + 1, T().accent);
+        ctx.fill(b[0], b[1], b[2], b[3], 0xF0181420);
+        com.skymaxx.tiki.light.Calc.Drop[] all = com.skymaxx.tiki.light.Calc.DROPS;
+        for (int i = 0; i < b[4]; i++) {
+            int li = calcListScroll + i;
+            if (li >= lines.size()) break;
+            int v = lines.get(li);
+            int ly = b[1] + 2 + i * CALC_LINE;
+            if (v < 0) {
+                com.skymaxx.tiki.light.Calc.Drop h = all[-1 - v];
+                String tag = com.skymaxx.tiki.light.Calc.lava(h.mobKey()) ? " §8· lava" : com.skymaxx.tiki.light.Calc.winter(h.mobKey()) ? " §8· winter" : "";
+                ctx.text(this.font, (Component)Component.literal("§6" + h.mob() + tag), b[0] + 4, ly + 2, -1);
+                continue;
+            }
+            boolean hover = mx >= b[0] && mx < b[2] && my >= ly && my < ly + CALC_LINE;
+            if (v == calcIndex) ctx.fill(b[0] + 1, ly, b[2] - 1, ly + CALC_LINE, T().active());
+            else if (hover) ctx.fill(b[0] + 1, ly, b[2] - 1, ly + CALC_LINE, 0x30FFFFFF);
+            ctx.text(this.font, (Component)Component.literal("§f" + all[v].item() + " §8" + com.skymaxx.tiki.light.Calc.pct(all[v].base())), b[0] + 14, ly + 2, -1);
+        }
+        if (lines.size() > b[4]) {
+            int track = b[3] - b[1] - 4;
+            int th = Math.max(8, track * b[4] / lines.size());
+            int tt = b[1] + 2 + (track - th) * calcListScroll / Math.max(1, lines.size() - b[4]);
+            ctx.fill(b[2] - 3, tt, b[2] - 1, tt + th, 0x80FFFFFF);
+        }
+    }
+
+    private boolean calcListClick(double mx, double my) {
+        if (!this.calcListShown()) return false;
+        int[] b = this.calcListBox();
+        if (mx >= b[0] && mx < b[2] && my >= b[1] && my < b[3]) {
+            int li = calcListScroll + (int) ((my - b[1] - 2) / CALC_LINE);
+            List<Integer> lines = calcLines();
+            if (li >= 0 && li < lines.size() && lines.get(li) >= 0) {
+                calcIndex = lines.get(li);
+                calcDry = null;
+                calcOpen = false;
+                this.rebuildWidgets();
+            }
+            return true;
+        }
+        return false;
+    }
+
+    private boolean calcScroll(double mx, double my, double amount) {
+        if (activeTab != Tab.CALCULATOR || !query.isBlank() || this.calcDdY < 0) return false;
+        if (this.calcListShown()) {
+            int[] b = this.calcListBox();
+            if (mx >= b[0] && mx < b[2] && my >= b[1] && my < b[3]) {
+                calcListScroll -= (int) Math.signum(amount) * 2;
+                return true;
+            }
+            return false;
+        }
+        int ddTop = this.viewTop + this.calcDdY - this.scroll;
+        if (mx >= this.calcLeft && mx < this.calcLeft + this.calcW && my >= ddTop && my < ddTop + 20 && amount != 0) {
+            calcIndex -= (int) Math.signum(amount);
+            calcDry = null;
+            this.rebuildWidgets();
+            return true;
+        }
+        return false;
     }
 
     private static double parse(String s) {
@@ -1608,6 +1766,7 @@ extends Screen {
     }
 
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        if (this.calcScroll(mouseX, mouseY, scrollY)) return true;
         if (mouseX >= (double)this.cardLeft && mouseX <= (double)this.cardRight && mouseY >= (double)this.cardTop && mouseY <= (double)this.cardBottom) {
             this.scroll -= (int)(scrollY * 18.0);
             this.applyScroll();
@@ -1654,6 +1813,15 @@ extends Screen {
         this.applyScroll();
     }
 
+    @Override
+    public boolean keyPressed(net.minecraft.client.input.KeyEvent event) {
+        if (event.key() == 256 && this.calcListShown()) {
+            calcOpen = false;
+            return true;
+        }
+        return super.keyPressed(event);
+    }
+
     public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
         if (this.draggingScrollbar) {
             this.dragScrollbarTo(event.y());
@@ -1674,6 +1842,19 @@ extends Screen {
         int index;
         double mouseX = event.x();
         double mouseY = event.y();
+        if (this.calcListShown()) {
+            int[] lb = this.calcListBox();
+            if (mouseX >= lb[0] && mouseX < lb[2] && mouseY >= lb[1] && mouseY < lb[3]) {
+                if (event.button() == 0) this.calcListClick(mouseX, mouseY);
+                return true;
+            }
+            int ddTop = this.viewTop + this.calcDdY - this.scroll;
+            boolean onButton = mouseX >= this.calcLeft && mouseX < this.calcLeft + this.calcW && mouseY >= ddTop && mouseY < ddTop + 20;
+            if (!onButton) {
+                calcOpen = false;
+                return true;
+            }
+        }
         if (event.button() == 0 && this.overScrollbar(mouseX, mouseY)) {
             int top = this.thumbTop();
             int thumb = this.thumbHeight();
@@ -1748,6 +1929,7 @@ extends Screen {
         ctx.disableScissor();
         this.drawScrollbar(ctx, mouseX, mouseY);
         super.extractRenderState(ctx, mouseX, mouseY, partial);
+        this.drawCalcList(ctx, mouseX, mouseY);
         T().screenSnow(ctx, this.width, this.height);
     }
 
