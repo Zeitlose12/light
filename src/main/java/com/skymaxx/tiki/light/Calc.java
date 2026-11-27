@@ -52,6 +52,9 @@ public final class Calc {
         new Drop("Lord Jawbus", "Carmine Dye", 1.0 / 25_000, "jawbus", Dye.CARMINE),
         new Drop("Thunder", "Flash I", 0.04, "thunder", null),
         new Drop("Thunder", "Carmine Dye", 1.0 / 50_000, "thunder", Dye.CARMINE),
+        new Drop("Ragnarok", "Chain of the End Times", 0.02, "ragnarok", null),
+        new Drop("Ragnarok", "Brimstone Handle", 0.015, "ragnarok", null),
+        new Drop("Ragnarok", "Burnt Texts", 0.01, "ragnarok", null),
         new Drop("Ragnarok", "Carmine Dye", 1.0 / 25_000, "ragnarok", Dye.CARMINE),
         new Drop("Plhlegblast", "Carmine Dye", 1.0 / 50_000, "plhlegblast", Dye.CARMINE),
         new Drop("Yeti", "True Ice", 0.05, "yeti", null),
@@ -59,6 +62,10 @@ public final class Calc {
         new Drop("Yeti", "Iceberg Dye", 1.0 / 25_000, "yeti", Dye.ICEBERG),
         new Drop("Reindrake", "Iceberg Dye", 1.0 / 10_000, "reindrake", Dye.ICEBERG),
         new Drop("Grim Reaper", "Vampire Fang", 0.05, "grim", null),
+        new Drop("Grim Reaper", "Deep Sea Orb", 0.04, "grim", null),
+        new Drop("Grim Reaper", "Shredded Line", 0.025, "grim", null),
+        new Drop("Grim Reaper", "Polished Pumpkin", 0.025, "grim", null),
+        new Drop("Grim Reaper", "Bobbin' Scriptures", 0.01, "grim", null),
         new Drop("Grim Reaper", "Midnight Dye", 1.0 / 10_000, "grim", Dye.MIDNIGHT)};
 
     public static final double MF_CAP = 500;
