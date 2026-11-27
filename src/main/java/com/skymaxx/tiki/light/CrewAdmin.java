@@ -102,8 +102,10 @@ public final class CrewAdmin {
 
     private static String error(int code) {
         return switch (code) {
-            case 401 -> "§c[Light] GitHub says the token is wrong or expired - make a new one.";
-            case 403, 404 -> "§c[Light] The token may not write to the light repo (Contents: Read and write, only \"light\").";
+            case 401 -> "§c[Light] Token wrong or expired §8(401)§c - make a new one on GitHub.";
+            case 403 -> "§c[Light] Token may not write §8(403)§c - Contents must be \"Read and write\".";
+            case 404 -> "§c[Light] Repo or crew.json not found §8(404)§c - is \"Zeitlose12/light\" selected for the token?";
+            case 422 -> "§c[Light] GitHub refused the change §8(422)§c - try again.";
             case -1 -> "§7[Light] Nothing to change.";
             default -> "§c[Light] GitHub answered " + code + " - try again in a minute.";
         };
@@ -278,17 +280,32 @@ public final class CrewAdmin {
 
     public static int list() {
         if (!available()) return 0;
-        StringBuilder b = new StringBuilder("§d[Light] Crew: ");
-        boolean first = true;
-        for (Crew.Member m : Crew.members()) {
-            if (!first) b.append("§8, ");
-            b.append("§f").append(m.name()).append(" §7(").append(m.role()).append(", ")
-                .append(Crew.LINES[m.line()]).append(" + ").append(Crew.BOBBERS[m.bobber()]).append(")");
-            first = false;
+        java.util.List<Crew.Member> all = Crew.members();
+        all.sort((a, b) -> rank(a) != rank(b) ? rank(a) - rank(b) : a.name().compareToIgnoreCase(b.name()));
+        TikiGambleClient.chat("§8§m          §r §d§lLight Crew §7(" + all.size() + ") §8§m          ");
+        for (Crew.Member m : all) {
+            String col = switch (rank(m)) {
+                case 0 -> "§6";
+                case 1 -> "§d";
+                default -> "§b";
+            };
+            String icon = switch (rank(m)) {
+                case 0 -> "★";
+                case 1 -> "◆";
+                default -> "●";
+            };
+            String role = rank(m) == 1 ? "Beta" : m.role();
+            TikiGambleClient.chat(col + icon + " §l" + m.name() + "§r  " + col + role);
+            TikiGambleClient.chat("   §7Line: §f" + Crew.LINES[m.line()] + " §8· §7Bobber: §f" + Crew.BOBBERS[m.bobber()]);
         }
-        TikiGambleClient.chat(b.toString());
         if (token() == null) TikiGambleClient.chat("§7[Light] No token yet: config/light/crew_token.txt");
         return 1;
+    }
+
+    /** 0 Creator, 1 Beta, 2 Supporter. */
+    private static int rank(Crew.Member m) {
+        if (Crew.DEV_UUID.equals(m.uuid())) return 0;
+        return m.allThemes() ? 1 : 2;
     }
 
     public static String[] lineNames() {
