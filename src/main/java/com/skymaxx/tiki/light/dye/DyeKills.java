@@ -394,6 +394,5 @@ public final class DyeKills {
         DyeTracker.countKill(creature, lootShare);
         if (debug()) TikiGambleClient.LOGGER.info("[Light] kill: {} {}", creature, lootShare ? "(loot share)" : "(yours)");
         com.skymaxx.tiki.light.LavaScene.onKill(creature, lootShare, body);
-        com.skymaxx.tiki.light.SharkPopup.onKill(creature, body);
     }
 }

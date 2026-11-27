@@ -101,10 +101,6 @@ public class TikiConfig {
     public float dyeHudX = 0.01f;
     public float dyeHudY = 0.30f;
     public float dyeHudScale = 1.0f;
-    public float sharkPopupX = -1f;
-    public float sharkPopupY = -1f;
-    public float sharkPopupScale = 1.0f;
-    public boolean sharkPopupNoDrop = false;
     public boolean lavaGambleEnabled = true;
     public boolean lavaGambleJawbus = true;
     public boolean lavaGambleThunder = true;

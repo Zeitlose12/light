@@ -329,7 +329,6 @@ extends Screen {
         y = this.category(x, y, w, "lava", "Lava Fishing  \u00a78(Test)", this.cfg.lavaGambleEnabled, () -> this.buildLavaGambling(x + 10, 0, w - 10));
         y = this.category(x, y, w, "spooky", "Spooky Fishing  \u00a78(Test)", this.cfg.spookyGambleEnabled, () -> this.buildSpooky(x + 10, 0, w - 10));
         y = this.category(x, y, w, "winter", "Winter Fishing  \u00a78(Test)", this.cfg.winterGambleEnabled, () -> this.buildWinter(x + 10, 0, w - 10));
-        y = this.category(x, y, w, "shark", "Shark Pop-up  \u00a78(Debug)", null, () -> this.buildFishingAnims(x + 10, 0, w - 10));
         return y;
     }
 
@@ -371,12 +370,6 @@ extends Screen {
         int bottom = y + 4 + height + 6;
         this.panels.add(new Panel(y - 2, bottom));
         return bottom + 2;
-    }
-
-    private int buildFishingAnims(int x, int y, int w) {
-        y = this.note(y, "\u00a77Great White Shark: Megalodon / Shark Tooth pop-up.");
-        y = this.buildSharkControls(x, y, w);
-        return y;
     }
 
 
@@ -477,18 +470,6 @@ extends Screen {
         }).bounds(x + tw + gap + sw + gap, y, pw, 20).build();
         play.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal("Preview (random result)")));
         this.rows.add(new Row((AbstractWidget)play, y));
-        return y + 22;
-    }
-
-    private int buildSharkControls(int x, int y, int w) {
-        y = this.toggle(x, y, w, "Shark pop-up without a drop", () -> this.cfg.sharkPopupNoDrop, v -> {
-            this.cfg.sharkPopupNoDrop = v;
-        });
-        this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal((String)"\u00a7bMove and resize shark pop-up"), b -> {
-            if (this.minecraft != null) {
-                this.minecraft.gui.setScreen((Screen)new com.skymaxx.tiki.light.SharkEditScreen((Screen)this));
-            }
-        }).bounds(x, y, w, 20).build(), y));
         return y + 22;
     }
 
@@ -945,9 +926,6 @@ extends Screen {
         y = this.heading(y, "Achievement pop-up");
         y = this.hudRow(x, y, w, "Achievement pop-up", () -> this.cfg.lightAchievementFx, v -> this.cfg.lightAchievementFx = v,
             () -> new com.skymaxx.tiki.light.AchievementPopupEditScreen((Screen)this));
-        y = this.heading(y, "Shark pop-up \u00a78(Debug)");
-        y = this.hudRow(x, y, w, "Also without a drop", () -> this.cfg.sharkPopupNoDrop, v -> this.cfg.sharkPopupNoDrop = v,
-            () -> new com.skymaxx.tiki.light.SharkEditScreen((Screen)this));
         y = this.heading(y, "Titanoboa corner");
         y = this.toggle(x, y, w, "Gameplay during Animation", () -> this.cfg.boaGameplayView, v -> {
             this.cfg.boaGameplayView = v;

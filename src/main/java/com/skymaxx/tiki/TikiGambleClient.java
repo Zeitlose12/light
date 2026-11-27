@@ -81,7 +81,6 @@ implements ClientModInitializer {
             LOGGER.warn("[Light] dye chat failed", t);
         }
         com.skymaxx.tiki.light.LavaScene.onChat(message, overlay);
-        com.skymaxx.tiki.light.SharkPopup.onChat(message, overlay);
         com.skymaxx.tiki.light.SackValue.onChat(message, overlay);
         try {
             com.skymaxx.tiki.light.Crew.onChat(message, overlay);
@@ -197,7 +196,6 @@ implements ClientModInitializer {
         inventory.listen((n, id, c, sack) -> {
             try {
                 com.skymaxx.tiki.light.LavaScene.onItemGained(n, id, c, sack);
-                com.skymaxx.tiki.light.SharkPopup.onItemGained(n);
             } catch (Throwable ignored) {
             }
         });

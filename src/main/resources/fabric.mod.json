@@ -3,7 +3,7 @@
 	"id": "light",
 	"version": "1.3.0",
 	"name": "Light",
-	"description": "Light - a fork of SkyMaxx 1.0.1 by Rachie (MIT, Copyright (c) 2026 SkyMaxx). Wiki Tiki and Titanoboa drop animations with bug fixes (volume, loot share, ESC-only skip), a new menu and a Bazaar Sell Sacks lock, and a fishing dye tracker (dye chance tables based on DyeAddons by anlg, Apache-2.0).",
+	"description": "Light - fishing gambling animations for Hypixel SkyBlock (Wiki Tiki and Titanoboa from SkyMaxx 1.0.1 by Rachie, MIT, Copyright (c) 2026 SkyMaxx), a fishing dye tracker (dye chance tables based on DyeAddons by anlg, Apache-2.0), small fishing HUDs, a Bazaar Sell Sacks lock and themes.",
 	"authors": [
 		"Grundsteuer"
 	],

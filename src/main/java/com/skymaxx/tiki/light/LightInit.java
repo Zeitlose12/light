@@ -104,7 +104,6 @@ public final class LightInit implements ClientModInitializer {
         DyeTracker.load();
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("light", "dye_hud"), DyeHud::render);
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("light", "lava_scene"), LavaScene::render);
-        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("light", "shark_popup"), SharkPopup::render);
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("light", "achievement_popup"), AchievementPopup::render);
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("light", "sack_value"), SackValue::render);
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("light", "fish_stats"), FishStats::render);
@@ -127,7 +126,7 @@ public final class LightInit implements ClientModInitializer {
         });
     }
 
-    private static final String[] ANIMS = {"jawbus", "thunder", "ragnarok", "plhlegblast", "grim", "yeti", "reindrake", "shark", "sharktooth", "sharkmiss"};
+    private static final String[] ANIMS = {"jawbus", "thunder", "ragnarok", "plhlegblast", "grim", "yeti", "reindrake"};
 
     /** Debug only: plays a lava scene with a made-up drop. Nothing is counted. */
     private static int testAnim(String which, boolean loot) {
@@ -137,12 +136,9 @@ public final class LightInit implements ClientModInitializer {
         }
         String key = which.toLowerCase(Locale.ROOT);
         switch (key) {
-            case "shark": SharkPopup.play("Megalodon", null); break;
-            case "sharktooth": SharkPopup.play("Shark Tooth", null); break;
-            case "sharkmiss": SharkPopup.play(null, null); break;
             default:
                 if (!LavaScene.test(key, loot)) {
-                    TikiGambleClient.chat("\u00a7c[Light] Unknown: " + which + " (jawbus, thunder, ragnarok, plhlegblast, grim, yeti, reindrake, shark, sharktooth, sharkmiss)");
+                    TikiGambleClient.chat("\u00a7c[Light] Unknown: " + which + " (jawbus, thunder, ragnarok, plhlegblast, grim, yeti, reindrake)");
                     return 0;
                 }
         }
