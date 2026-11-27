@@ -7,7 +7,7 @@ version 3 only (GPL-3.0-only), printed below.
 Exceptions:
 - Code that comes from SkyMaxx by Rachie (the Wiki Tiki and Titanoboa animations and the
   code they are built on) stays under the MIT License - see LICENSE-SKYMAXX.
-- Light versions up to and including 1.3.0 were released under the MIT License and stay so.
+- Light versions up to and including 1.2.0 were released under the MIT License and stay so.
 - The dye drop chance tables are based on DyeAddons by anlg (Apache-2.0).
 
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;

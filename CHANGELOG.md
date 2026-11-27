@@ -1,55 +1,6 @@
 # 📜 Changelog
 
-## 1.4.0 – Fishing HUDs, Rankings & Secrets
-
-### 🎣 HUDs
-- **Fishing stats** – one small line: ☂ Speed · α Sea Creature Chance · ⚓ Double Hook (+ Trophy, Treasure), each on/off
-- **[Marina] badge** while Marina is mayor or minister
-- Your last fishing stats are **remembered** – shown right after a restart
-- **HUDs in menus:** hidden or shown while your inventory or a chest is open
-- **Bestiary ranking** – your place for a mob of your choice, e.g. *Wiki Tiki #3,012 ↑37*, with a reminder when it's older than 7 days
-
-### 🧮 Drop calculator
-- New **Calculator** tab – pick a drop, Light fills in your Magic Find and your dry streak: chance per kill, kills for 50 % / 90 %, how rare your dry streak is
-- **`/light chance <drop>`** – the same in chat
-- All chances updated to the **Magic Find Rework** (Hypixel SkyBlock 0.27.3, Nov 17 2026) – also the luck meter
-
-### 📖 Journal
-- **Old paper** look – grain, spots, worn edges
-- New **Bestiary Rankings** and **Total Drops** pages right after the contents
-
-### 🏆 Achievements
-- **8 secret achievements** – hidden as "???" until you find them
-
-### 💜 Light Crew
-- Members are recognised by their **UUID**
-- New **Supporter** role – line and bobber looks, themes are earned like everyone else
-- Crew looks reload every 5 minutes and when you join a world – no restart
-
-### 🎨 Dye tracker
-- **Auto mode** – the HUD shows the dyes that matter where you fish: lava → Carmine, water → Aquamarine (+ Iceberg / Midnight at their events)
-- Chances with **two decimals** and a small **+x% this session**, so you see them grow while you fish
-
-### 🎰 Gambling
-- Lord Jawbus' **slot machine is 25 % bigger** – Jawbus still looks over it
-
-### 💬 Light Crew banner
-- Shows for **every board drop** Light prices (bazaar and auction house) – Flash I included, Thunder Fragment and Prosperity I left out
-- Also works with **custom drop messages** from other mods (short names like "vial", "flash book", "MLF")
-
-### 🐛 Fixed
-- The **bite ping** is now audible during Wiki Tiki and Titanoboa animations (soft tone)
-- Journal: Tiki Mask, Troubled Bubble and Snake Eyes show their real item pictures
-
-### 📄 License
-- Light is now **GPL-3.0** – the Wiki Tiki & Titanoboa parts from SkyMaxx stay MIT
-
-### 🗑️ Removed
-- Shark pop-up
-
----
-
-## 1.3.0 – Gambling, HUDs & Cosmetics
+## 1.4.0 – Gambling, HUDs, Calculator & Cosmetics
 
 ### 🎰 Gambling
 - **🌋 Lava** *(testing)* – Lord Jawbus, Thunder, Ragnarok, Plhlegblast
@@ -57,30 +8,44 @@
 - **❄️ Winter** *(testing)* – Yeti, Reindrake
 - **💰 Drop prices** from SkyCofl in the result
 - **Gameplay corner** – your game stays visible, small in a corner
-- **Bobber timer** and **bite ping** during every animation (also Wiki Tiki & Titanoboa)
+- **Bobber timer** and a soft **bite ping** during every animation (also Wiki Tiki & Titanoboa)
 - **Spoiler-free** – chat, titles, other HUDs and game sound pause while an animation runs
 - Every mob: on/off, speed and a preview button
 
 ### 🎣 HUDs
+- **Fishing stats** – one small line: ☂ Speed · α Sea Creature Chance · ⚓ Double Hook (+ Trophy, Treasure), each on/off, remembered after a restart
+- **[Marina] badge** while Marina is mayor or minister
+- **Bestiary ranking** – your place for a mob of your choice, e.g. *Wiki Tiki #3,012 ↑37*, with a reminder when it's older than 7 days
 - **Sack value** – what your sacks are worth
-- **HUDs tab** – every HUD on/off and movable
+- **HUDs tab** – every HUD on/off and movable, hidden while your inventory or a chest is open (or shown)
+
+### 🧮 Drop calculator
+- **Calculator** tab – pick a drop, Light fills in your Magic Find and your dry streak: chance per kill, kills for 50 % / 90 %, how rare your dry streak is
+- **`/light chance <drop>`** – the same in chat
+- All chances on the **Magic Find Rework** (Hypixel SkyBlock 0.27.3, Nov 17 2026) – also the luck meter
+
+### 🎨 Dye tracker
+- **Auto mode** – the HUD shows the dyes that matter where you fish: lava → Carmine, water → Aquamarine (+ Iceberg / Midnight at their events)
+- Chances with **two decimals** and a small **+x% this session**
 
 ### 🏆 Progress
-- **12 new achievements**
+- **12 new achievements** and **8 secret ones** – hidden as "???" until you find them
 - **📜 History** – every result with price, folded by day
-- **📖 Journal** *(test)* – one page per drop
+- **📖 Journal** *(test)* – old paper look, Bestiary Rankings, Total Drops, one page per drop
 - *Beta:* dry streak and RNG fanfare
 
 ### 🖌️ Cosmetics
 - **Cosmetics tab** with live theme previews
 - **7 new themes** – Halloween (free) and 6 unlocked by achievements, with a "New theme unlocked" pop-up
-- **💜 Light Crew** – 12 fishing lines and 11 bobbers with particles, crew drop banner *(only visible to Light users)*
+- **💜 Light Crew** – 12 fishing lines and 11 bobbers with particles *(only visible to Light users)*, recognised by UUID, Supporter role
+- **Crew drop banner** for every board drop a crew member names in party chat – also custom drop messages from other mods
 - **Credits** page
 
 ### 🔧 Changed
 - Cleaner menu – separators, tooltips, new tab order
 - Buttons, switches and sliders follow the menu theme
 - Ragnarok has his own model and dodges your shots
+- Lord Jawbus' slot machine is 25 % bigger
 
 ### 🐛 Fixed
 - Big sea creatures that vanish without showing 0 HP (e.g. Ragnarok) are recognised
@@ -89,7 +54,11 @@
 - Enchanted books (e.g. Flash I) get their price
 - Double hook: the second kill is saved too
 - Sack value: items that fit several sacks count once
+- Real item pictures for Tiki Mask, Troubled Bubble and Snake Eyes
 - Frost snow, slider knob, achievement pop-up and sound
+
+### 📄 License
+- Light is now **GPL-3.0** – the Wiki Tiki & Titanoboa parts from SkyMaxx stay MIT
 
 ### ⚠️ Known limitations
 - **Double hook:** two Lava, Spooky or Winter mobs close together → only one animation (both kills are saved)
