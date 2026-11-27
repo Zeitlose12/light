@@ -154,6 +154,8 @@ public class TikiConfig {
     public boolean crewCosmetics = true;
     /** Banner in the middle of the screen when a Light Crew member names a big drop in party chat. */
     public boolean crewBanner = true;
+    /** Particles along crew lines and above crew bobbers. */
+    public boolean crewParticles = true;
     /** How dark the game gets behind the Light menu (0 - 0.9). */
     public float menuDim = 0.55f;
     /** Achievement pop-up position (-1 = top right) and size. */

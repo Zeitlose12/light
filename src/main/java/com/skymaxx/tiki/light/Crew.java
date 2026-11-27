@@ -24,9 +24,20 @@ import net.minecraft.world.entity.player.Player;
  * read from crew.json in Light's GitHub repo (one small download every 30 minutes, can be switched off).
  */
 public final class Crew {
-    public static final String[] LINES = {"Standard", "Aurora", "Blitz", "Flamme", "Frost", "Galaxie", "Goldkette"};
-    public static final String[] BOBBERS = {"Standard", "Leucht-Orb", "Stern", "Mini-Tiki", "Feuerball", "Eiskristall"};
-    private static final String[] BOBBER_FILES = {null, "orb", "star", "tiki", "fireball", "ice"};
+    public static final String[] LINES = {"Standard", "Aurora", "Blitz", "Flamme", "Frost", "Galaxie", "Goldkette",
+        "Regenbogen", "Seelenfeuer", "Kirschbl\u00fcte", "Ender", "Candy", "Gift"};
+    public static final String[] BOBBERS = {"Standard", "Leucht-Orb", "Stern", "Mini-Tiki", "Feuerball", "Eiskristall",
+        "K\u00fcrbis", "Diamant", "Totenkopf", "Ender-Perle", "Herz", "Mini-Boa"};
+    private static final String[] BOBBER_FILES = {null, "orb", "star", "tiki", "fireball", "ice", "pumpkin", "diamond", "skull", "pearl", "heart", "boa"};
+
+    public static Identifier bobberTexture(int b) {
+        return Identifier.fromNamespaceAndPath("light", "textures/entity/bobber/" + BOBBER_FILES[b] + ".png");
+    }
+
+    /** Texture size in pixels (the Mini-Tiki is drawn finer). */
+    public static int bobberSize(int b) {
+        return b == 3 ? 32 : 16;
+    }
     private static final RenderType[] BOBBER_TYPES = new RenderType[BOBBER_FILES.length];
     private static final String URL = "https://raw.githubusercontent.com/Zeitlose12/light/main/crew.json";
     private static final long REFRESH_MS = 30L * 60L * 1000L;
@@ -102,7 +113,7 @@ public final class Crew {
     public static RenderType bobberType(int b) {
         if (b <= 0 || b >= BOBBER_FILES.length) return null;
         if (BOBBER_TYPES[b] == null) {
-            BOBBER_TYPES[b] = RenderTypes.entityCutoutCull(Identifier.fromNamespaceAndPath("light", "textures/entity/bobber/" + BOBBER_FILES[b] + ".png"));
+            BOBBER_TYPES[b] = RenderTypes.entityCutoutCull(bobberTexture(b));
         }
         return BOBBER_TYPES[b];
     }
@@ -128,6 +139,12 @@ public final class Crew {
                 int r = (int) (160 + 64 * link + 31 * shine), g = (int) (115 + 61 * link + 70 * shine), b = (int) (20 + 28 * link + 150 * shine);
                 yield 0xFF000000 | Math.min(255, r) << 16 | Math.min(255, g) << 8 | Math.min(255, b);
             }
+            case 7 -> 0xFF000000 | hsb(t + time * 0.33f, 0.9f, 1f);
+            case 8 -> 0xFF000000 | hsb(0.51f + 0.03f * (float) Math.sin(t * 18f - time * 8f), 0.85f, 0.85f + 0.15f * (float) Math.sin(time * 10f + t * 9f));
+            case 9 -> 0xFF000000 | hsb(0.93f, 0.45f + 0.1f * (float) Math.sin(t * 10f - time * 2f), 1f);
+            case 10 -> 0xFF000000 | hsb(0.79f, 0.8f, 0.45f + 0.25f * (float) Math.sin(t * 14f + time * 3f));
+            case 11 -> ((int) Math.floor(t * 20f - time * 4f) & 1) == 0 ? 0xFFE8323C : 0xFFFFFFFF;
+            case 12 -> 0xFF000000 | hsb(0.28f, 0.85f, 0.6f + 0.25f * (float) Math.sin(t * 16f - time * 5f));
             default -> 0xFF000000;
         };
     }
@@ -155,10 +172,96 @@ public final class Crew {
         return (float) (v - Math.floor(v));
     }
 
+    // ------------------------------------------------------------------ particles
+
+    private static int particleTick;
+
+    /** Particles along crew lines and above crew bobbers. Client side only; never on the water where a bite shows. */
+    private static void particles(Minecraft mc) {
+        TikiConfig c = cfg();
+        if (c == null || !c.crewParticles || mc.level == null || mc.player == null || mc.isPaused()) return;
+        if (LavaScene.ownsScreen()) return;
+        particleTick++;
+        for (net.minecraft.world.entity.Entity e : mc.level.entitiesForRendering()) {
+            if (!(e instanceof net.minecraft.world.entity.projectile.FishingHook hook)) continue;
+            Player owner = hook.getPlayerOwner();
+            if (owner == null) continue;
+            int[] st = styleFor(owner);
+            if (st[0] == 0 && st[1] == 0) continue;
+            net.minecraft.world.phys.Vec3 h = hook.position().add(0, 0.25, 0);
+            if (h.distanceToSqr(mc.player.position()) > 48 * 48) continue;
+            boolean firstPerson = owner == mc.player && mc.options.getCameraType().isFirstPerson();
+            if (st[0] != 0 && particleTick % 3 == 0) {
+                net.minecraft.world.phys.Vec3 eye = owner.getEyePosition(1f);
+                net.minecraft.world.phys.Vec3 look = owner.getLookAngle();
+                net.minecraft.world.phys.Vec3 tip = eye.add(look.scale(1.2)).add(0, -0.35, 0);
+                net.minecraft.world.phys.Vec3 d = tip.subtract(h);
+                // close to your own camera the particles would get in the way
+                float u = (float) Math.random() * (firstPerson ? 0.7f : 0.95f) + 0.05f;
+                double px = h.x + d.x * u, py = h.y + d.y * (u * u + u) * 0.5, pz = h.z + d.z * u;
+                lineParticle(mc, st[0], px, py, pz, u);
+            }
+            if (st[1] != 0 && particleTick % 6 == 0) {
+                double a = Math.random() * Math.PI * 2;
+                bobberParticle(mc, st[1], h.x + Math.cos(a) * 0.25, h.y + 0.3 + Math.random() * 0.25, h.z + Math.sin(a) * 0.25);
+            }
+        }
+    }
+
+    private static void add(Minecraft mc, net.minecraft.core.particles.ParticleOptions p, double x, double y, double z, double vx, double vy, double vz) {
+        mc.level.addParticle(p, x, y, z, vx, vy, vz);
+    }
+
+    private static net.minecraft.core.particles.DustParticleOptions dust(int rgb, float size) {
+        return new net.minecraft.core.particles.DustParticleOptions(rgb, size);
+    }
+
+    private static void lineParticle(Minecraft mc, int line, double x, double y, double z, float u) {
+        float time = (System.currentTimeMillis() % 1_000_000L) / 1000f;
+        switch (line) {
+            case 1 -> add(mc, dust(hsb(0.42f + (float) Math.random() * 0.3f, 0.8f, 1f), 0.6f), x, y, z, 0, 0.01, 0);
+            case 2 -> add(mc, net.minecraft.core.particles.ParticleTypes.ELECTRIC_SPARK, x, y, z, 0, 0, 0);
+            case 3 -> add(mc, net.minecraft.core.particles.ParticleTypes.SMALL_FLAME, x, y, z, 0, 0.005, 0);
+            case 4 -> add(mc, net.minecraft.core.particles.ParticleTypes.SNOWFLAKE, x, y, z, 0, -0.01, 0);
+            case 5 -> add(mc, dust(Math.random() < 0.6 ? 0xFFFFFF : 0xC8A0FF, 0.45f), x, y, z, 0, 0, 0);
+            case 6 -> add(mc, dust(0xFFE08A, 0.5f), x, y, z, 0, 0, 0);
+            case 7 -> add(mc, dust(hsb(u + time * 0.33f, 0.9f, 1f), 0.6f), x, y, z, 0, 0.01, 0);
+            case 8 -> add(mc, net.minecraft.core.particles.ParticleTypes.SOUL_FIRE_FLAME, x, y, z, 0, 0.005, 0);
+            case 9 -> add(mc, net.minecraft.core.particles.ParticleTypes.CHERRY_LEAVES, x, y, z, 0, 0, 0);
+            case 10 -> add(mc, net.minecraft.core.particles.ParticleTypes.PORTAL, x, y, z, 0, 0, 0);
+            case 11 -> add(mc, dust(Math.random() < 0.5 ? 0xFF8090 : 0xFFFFFF, 0.55f), x, y, z, 0, 0.01, 0);
+            case 12 -> add(mc, dust(0x7DFF4A, 0.6f), x, y, z, 0, -0.03, 0);
+            default -> {
+            }
+        }
+    }
+
+    private static void bobberParticle(Minecraft mc, int b, double x, double y, double z) {
+        switch (b) {
+            case 1 -> add(mc, dust(0xFF8CFF, 0.6f), x, y, z, 0, 0.01, 0);
+            case 2 -> add(mc, dust(0xFFD85A, 0.6f), x, y, z, 0, 0, 0);
+            case 3 -> add(mc, dust(0xFFC600, 0.6f), x, y, z, 0, 0.01, 0);
+            case 4, 6 -> add(mc, net.minecraft.core.particles.ParticleTypes.SMALL_FLAME, x, y, z, 0, 0.005, 0);
+            case 5 -> add(mc, net.minecraft.core.particles.ParticleTypes.SNOWFLAKE, x, y, z, 0, -0.005, 0);
+            case 7 -> add(mc, dust(0xBFFFF7, 0.55f), x, y, z, 0, 0, 0);
+            case 8 -> add(mc, net.minecraft.core.particles.ParticleTypes.SOUL_FIRE_FLAME, x, y, z, 0, 0.005, 0);
+            case 9 -> add(mc, net.minecraft.core.particles.ParticleTypes.PORTAL, x, y, z, 0, 0, 0);
+            case 10 -> add(mc, dust(0xFF8AA0, 0.6f), x, y, z, 0, 0.01, 0);
+            case 11 -> add(mc, dust(0x7DFF4A, 0.55f), x, y, z, 0, 0.01, 0);
+            default -> {
+            }
+        }
+    }
+
     // ------------------------------------------------------------------ crew.json
 
     /** Called every client tick: reloads crew.json every 30 minutes (only if crew looks are shown). */
     public static void tick() {
+        try {
+            particles(Minecraft.getInstance());
+        } catch (Throwable t) {
+            TikiGambleClient.LOGGER.debug("[Light] crew particles failed", t);
+        }
         TikiConfig c = cfg();
         if (c == null || !c.crewCosmetics || fetching) return;
         long now = System.currentTimeMillis();

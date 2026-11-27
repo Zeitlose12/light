@@ -557,6 +557,11 @@ extends Screen {
             this.cfg.crewBanner = v;
         });
         this.tip("A banner when a crew member names a big drop in party chat.");
+        y = this.toggle(x, y, w, "Light Crew particles", () -> this.cfg.crewParticles, v -> {
+            this.cfg.crewParticles = v;
+        });
+        this.tip("Sparks, snow, petals ... along crew lines and above crew bobbers.");
+        this.tip("Never on the water, so they don't look like a bite.");
         y = this.heading(y, "Credits");
         y = this.note(y, "\u00a7f\u00a7lLight \u00a77by Grundsteuer");
         y = this.note(y, "\u00a7fSkyMaxx \u00a77by Rachie \u00b7 Wiki Tiki & Titanoboa (MIT)");
@@ -744,10 +749,9 @@ extends Screen {
             pose.scale(2.25f, 2.25f);
             ctx.blit(RenderPipelines.GUI_TEXTURED, vanilla, 0, 0, 0f, 0f, 8, 8, 8, 8);
         } else {
-            String[] files = {null, "orb", "star", "tiki", "fireball", "ice"};
-            Identifier own = Identifier.fromNamespaceAndPath("light", "textures/entity/bobber/" + files[id] + ".png");
-            pose.scale(1.125f, 1.125f);
-            ctx.blit(RenderPipelines.GUI_TEXTURED, own, 0, 0, 0f, 0f, 16, 16, 16, 16);
+            int ts = com.skymaxx.tiki.light.Crew.bobberSize(id);
+            pose.scale(18f / ts, 18f / ts);
+            ctx.blit(RenderPipelines.GUI_TEXTURED, com.skymaxx.tiki.light.Crew.bobberTexture(id), 0, 0, 0f, 0f, ts, ts, ts, ts);
         }
         pose.popMatrix();
         this.tileName(ctx, r, com.skymaxx.tiki.light.Crew.BOBBERS[id], pv + 4, selected ? -1 : 0xFFD8DEE6);
