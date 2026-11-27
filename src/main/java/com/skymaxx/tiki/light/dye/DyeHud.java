@@ -16,6 +16,8 @@ import org.joml.Matrix3x2fStack;
 /** Light: the small pink glass dye panel. Shows only while you fish (by default). */
 public final class DyeHud {
     public static final int WIDTH = 150;
+    /** Chance of each dye when it was first shown this game session (for the small "+0.12%"). */
+    private static final java.util.Map<Dye, Double> SESSION_START = new java.util.EnumMap<>(Dye.class);
     private static final int PINK = 0xFFFF8CC8;
     private static final int TEXT = 0xFFF2EEF3;
     private static final int DIM = 0xFFA79AAE;
@@ -52,6 +54,7 @@ public final class DyeHud {
     }
 
     public static List<Dye> shown(TikiConfig cfg) {
+        if (cfg.dyeHudAuto) return DyeContext.current();
         ArrayList<Dye> out = new ArrayList<Dye>();
         if (cfg.dyeShowAquamarine) out.add(Dye.AQUAMARINE);
         if (cfg.dyeShowIceberg) out.add(Dye.ICEBERG);
@@ -85,7 +88,10 @@ public final class DyeHud {
         for (Dye dye : dyes) {
             DyeTracker.Progress p = DyeTracker.progress(dye);
             double pc = p.chance() * 100.0;
-            String pct = pc < 10.0 ? String.format("%.1f%%", pc) : Math.round(pc) + "%";
+            // two decimals: at many kills one catch only moves the chance a tiny bit
+            String pct = String.format(java.util.Locale.ROOT, "%.2f%%", pc);
+            SESSION_START.putIfAbsent(dye, pc);
+            double gain = pc - SESSION_START.get(dye);
             ctx.text(font, (Component)Component.literal(dye.shortName), 6, ry, dye.color);
             ctx.text(font, (Component)Component.literal(pct), WIDTH - 6 - font.width(pct), ry, th.text);
             int barW = WIDTH - 12;
@@ -95,6 +101,9 @@ public final class DyeHud {
                 ctx.fill(6, ry + 10, 6 + filled, ry + 13, dye.color);
             }
             String sub = String.format("%,d kills · %d found", p.kills(), p.found());
+            if (gain >= 0.005 && font.width(sub + String.format(java.util.Locale.ROOT, " · +%.2f%%", gain)) <= WIDTH - 12) {
+                sub += String.format(java.util.Locale.ROOT, " · \u00a7a+%.2f%%", gain);
+            }
             ctx.text(font, (Component)Component.literal(sub), 6, ry + 15, th.dim);
             ry += ROW;
         }

@@ -19,6 +19,10 @@
 - New **Supporter** role – line and bobber looks, themes are earned like everyone else
 - Crew looks reload every 5 minutes and when you join a world – no restart
 
+### 🎨 Dye tracker
+- **Auto mode** – the HUD shows the dyes that matter where you fish: lava → Carmine, water → Aquamarine (+ Iceberg / Midnight at their events)
+- Chances with **two decimals** and a small **+x% this session**, so you see them grow while you fish
+
 ### 🐛 Fixed
 - The **bite ping** is now audible during Wiki Tiki and Titanoboa animations
 

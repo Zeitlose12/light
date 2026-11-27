@@ -1229,6 +1229,12 @@ extends Screen {
         }).bounds(x, y, w, 20).build(), y));
         y += 22;
         y = this.heading(y, "Dyes in the HUD");
+        y = this.toggle(x, y, w, "Auto (by where you fish)", () -> this.cfg.dyeHudAuto, v -> {
+            this.cfg.dyeHudAuto = v;
+        });
+        this.tip("Lava: Carmine. Water: Aquamarine, plus Iceberg on Jerry's Workshop");
+        this.tip("or after winter creatures, plus Midnight after Spooky creatures.");
+        this.tip("Off: you pick the dyes below.");
         y = this.toggle(x, y, w, "Aquamarine", () -> this.cfg.dyeShowAquamarine, v -> {
             this.cfg.dyeShowAquamarine = v;
         });

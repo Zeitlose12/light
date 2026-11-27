@@ -195,6 +195,8 @@ public class TikiConfig {
     }
     public String priceBazaarMode = "INSTA_SELL";
     public String priceAuctionMode = "LOWEST_BIN";
+    /** Dye HUD picks the dyes itself: lava -> Carmine, water -> Aquamarine (+ Iceberg / Midnight at their events). */
+    public boolean dyeHudAuto = true;
     public boolean dyeShowAquamarine = true;
     public boolean dyeShowIceberg = true;
     public boolean dyeShowCarmine = true;

@@ -316,6 +316,7 @@ public final class DyeTracker {
     /** Called by DyeKills for every sea creature kill near you. */
     static void countKill(String creature, boolean lootShare) {
         (lootShare ? data.liveLootShare : data.live).merge(creature, 1L, Long::sum);
+        DyeContext.seen(creature);
         dirty = true;
     }
 
