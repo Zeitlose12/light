@@ -534,7 +534,9 @@ public final class LavaScene {
         }
         float volume = v * vol();
         if (volume <= 0.01f) return;
-        Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(ev, pitch, volume));
+        SimpleSoundInstance inst = SimpleSoundInstance.forUI(ev, pitch, volume);
+        OWN_SOUNDS.add(inst); // the scene's own sounds pass while the game is muted
+        Minecraft.getInstance().getSoundManager().play(inst);
     }
 
     /** Board slot of a drop for this mob, or -1 when it is not on the board (junk like Rampart Leggings). */
@@ -666,68 +668,59 @@ public final class LavaScene {
         TARGET_P[k] = base + Math.floorMod(finalIdx - base, n);
     }
 
-    /** A scene is running and covers the whole screen (Light then hides chat, titles and other HUDs). */
+    /** A scene is running: it covers the whole screen and Light hides chat, titles and the other HUDs. */
     public static boolean ownsScreen() {
-        TikiConfig c = cfg();
-        return active && (c == null || !corner(c)) && (c == null || c.gambleHideHud);
+        return active;
     }
 
-    /** A scene is running and chat / titles should be hidden. */
+    /** A scene is running and chat / titles stay hidden. */
     public static boolean hidesChat() {
-        TikiConfig c = cfg();
-        return active && (c == null || c.gambleHideHud);
+        return active;
     }
 
-    private static boolean corner(TikiConfig c) {
-        return c.gambleView != null && !"FULL".equals(c.gambleView);
+    /** Game sounds stay off while a scene runs (the scene's own sounds still play). */
+    public static boolean silencesGame() {
+        return active && !test;
+    }
+
+    private static final java.util.Set<Object> OWN_SOUNDS = java.util.Collections.newSetFromMap(new java.util.WeakHashMap<>());
+
+    private static boolean usedGameplay;
+
+    public static boolean isOwnSound(Object instance) {
+        return OWN_SOUNDS.contains(instance);
     }
 
     public static void render(GuiGraphicsExtractor ctx, DeltaTracker delta) {
         if (!active) {
             try {
+                if (usedGameplay && !TikiGambleClient.gameShouldBeSilent()) {
+                    usedGameplay = false;
+                    com.skymaxx.tiki.render.GameplayView.release(); // free the picture once the scene is over
+                }
                 drawLate(ctx);
             } catch (Throwable ignored) {
             }
             return;
         }
         TikiConfig c = cfg();
-        boolean small = c != null && corner(c);
-        var pose = ctx.pose();
         int sw = ctx.guiWidth(), sh = ctx.guiHeight();
-        float s = 0.42f;
-        int cw = Math.round(sw * s), ch = Math.round(sh * s);
-        int x0 = c != null && c.gambleView.endsWith("LEFT") ? 6 : sw - cw - 6;
-        int y0 = c != null && c.gambleView.startsWith("TOP") ? 6 : sh - ch - 6;
-        boolean pushed = false, scissor = false;
         try {
-            if (small) {
-                // the whole scene shrunk into a corner, with a thin frame - the game stays visible
-                Theme.round(ctx, x0 - 2, y0 - 2, x0 + cw + 2, y0 + ch + 2, 0xC0101018);
-                ctx.enableScissor(x0, y0, x0 + cw, y0 + ch);
-                scissor = true;
-                ctx.fill(x0, y0, x0 + cw, y0 + ch, 0xFF07060A);
-                pose.pushMatrix();
-                pushed = true;
-                pose.translate(x0, y0);
-                pose.scale(s, s);
-                MobView.vx = x0;
-                MobView.vy = y0;
-                MobView.vs = s;
-            } else if (c == null || c.gambleHideHud) {
-                // full screen: nothing of the game shines through (no spoiler)
-                ctx.fill(0, 0, sw, sh, argb(fadeAlpha(), 0x050308));
-            }
+            // always full screen: nothing of the game shines through (no spoiler)
+            ctx.fill(0, 0, sw, sh, argb(fadeAlpha(), 0x050308));
             draw(ctx);
         } catch (Throwable t) {
             active = false;
             mob = null;
             TikiGambleClient.LOGGER.warn("[Light] lava gambling render failed", t);
-        } finally {
-            if (pushed) pose.popMatrix();
-            if (scissor) ctx.disableScissor();
-            MobView.vx = 0f;
-            MobView.vy = 0f;
-            MobView.vs = 1f;
+        }
+        try {
+            // like the Titanoboa: your game, very small, in a corner
+            if (active && c != null && c.gambleGameplayView) {
+                usedGameplay = true;
+                com.skymaxx.tiki.render.GameplayView.draw(ctx, com.skymaxx.tiki.config.GameplayCorner.byName(c.gambleGameplayCorner), fadeAlpha());
+            }
+        } catch (Throwable ignored) {
         }
         try {
             drawBobber(ctx);
@@ -782,10 +775,13 @@ public final class LavaScene {
         int bw = 26 + mc.font.width(txt) + 8 + mc.font.width(sub) + 10, bh = 18;
         int sw = ctx.guiWidth(), sh = ctx.guiHeight();
         int bx = sw / 2 - bw / 2, by = sh - bh - 34;
-        if ("TOP_LEFT".equals(c.gambleBobberPos)) {
+        String pos = c.gambleBobberPos;
+        // never on top of the small gameplay picture: then it moves to the bottom middle
+        if (active && c.gambleGameplayView && pos != null && pos.equals(com.skymaxx.tiki.config.GameplayCorner.byName(c.gambleGameplayCorner).name())) pos = "BOTTOM";
+        if ("TOP_LEFT".equals(pos)) {
             bx = 8;
             by = 8;
-        } else if ("TOP_RIGHT".equals(c.gambleBobberPos)) {
+        } else if ("TOP_RIGHT".equals(pos)) {
             bx = sw - bw - 8;
             by = 8;
         }

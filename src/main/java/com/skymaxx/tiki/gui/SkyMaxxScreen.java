@@ -384,29 +384,19 @@ extends Screen {
         };
     }
 
-    private static String gambleViewLabel(String v) {
-        return "Position: " + switch (v == null ? "FULL" : v) {
-            case "TOP_LEFT" -> "Top left";
-            case "TOP_RIGHT" -> "Top right";
-            case "BOTTOM_LEFT" -> "Bottom left";
-            case "BOTTOM_RIGHT" -> "Bottom right";
-            default -> "Full screen";
-        };
-    }
-
     private int buildGambleView(int x, int y, int w) {
-        y = this.note(y, "\u00a77Full screen hides the game, so no drop message spoils the result.");
-        this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal(SkyMaxxScreen.gambleViewLabel(this.cfg.gambleView)), b -> {
-            String[] order = {"FULL", "TOP_LEFT", "TOP_RIGHT", "BOTTOM_LEFT", "BOTTOM_RIGHT"};
-            int i = java.util.Arrays.asList(order).indexOf(this.cfg.gambleView);
-            this.cfg.gambleView = order[(i + 1) % order.length];
+        y = this.note(y, "\u00a77The animation always fills the screen - no drop message spoils it.");
+        y = this.toggle(x, y, w, "Gameplay during Animation", () -> this.cfg.gambleGameplayView, v -> {
+            this.cfg.gambleGameplayView = v;
+        });
+        this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal("Corner: \u00a7f" + GameplayCorner.byName(this.cfg.gambleGameplayCorner).title()), b -> {
+            this.cfg.gambleGameplayCorner = GameplayCorner.byName(this.cfg.gambleGameplayCorner).next().name();
             this.cfg.save();
-            b.setMessage((Component)Component.literal(SkyMaxxScreen.gambleViewLabel(this.cfg.gambleView)));
+            b.setMessage((Component)Component.literal("Corner: \u00a7f" + GameplayCorner.byName(this.cfg.gambleGameplayCorner).title()));
         }).bounds(x, y, w, 20).build(), y));
         y += 24;
-        y = this.toggle(x, y, w, "Hide chat & titles while it runs", () -> this.cfg.gambleHideHud, v -> {
-            this.cfg.gambleHideHud = v;
-        });
+        y = this.note(y, "Your game, very small, so you can see where you are");
+        y = this.note(y, "and move. The HUD stays hidden and the game sound off.");
         y = this.toggle(x, y, w, "Bobber timer while it runs", () -> this.cfg.gambleBobberTimer, v -> {
             this.cfg.gambleBobberTimer = v;
         });

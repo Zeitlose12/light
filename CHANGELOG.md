@@ -32,7 +32,8 @@
 - **Custom buttons:** every button, switch and slider in the menu now follows the menu theme (rounded buttons with hover glow, sliding ON/OFF pills, category bars, slim sliders with a round knob).
 - Frost and Lava themes: a bit more snow, bubbles and embers.
 
-- **Gambling view** (Gambling tab): full screen hides the game, chat, titles and other HUDs while a scene runs (no spoiler from drop messages) – or show the scene small in a corner of your choice
+- **Spoiler-free gambling:** Lava, Spooky and Winter animations always fill the screen; chat, titles, other HUDs and the game sound stay off while they run (no spoiler from drop messages)
+- **Gameplay during Animation** (Gambling tab): your game, very small in a corner (top left, bottom left or top right) – like the Titanoboa
 - **Bobber timer during gambling:** Hypixel's countdown above your hook (and "!!!" when a fish bites) shows in a small box over the scene, so you can keep fishing (also over Wiki Tiki and Titanoboa) – bottom middle, top left or top right; display only, you still reel in yourself
 - **History** is folded by day (today open), so long sessions stay tidy; Wiki Tiki and Titanoboa results are listed too
 - **Journal:** one page per drop with a counter (e.g. "Flash I ×2"), only real drops (no Thunder Fragments or junk), Wiki Tiki and Titanoboa in the contents

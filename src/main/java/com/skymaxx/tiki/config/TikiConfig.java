@@ -109,8 +109,11 @@ public class TikiConfig {
     public boolean lavaGambleRagnarok = true;
     public boolean lavaGamblePlhlegblast = true;
     public boolean lavaGambleOwnOnly = false;
-    /** Gambling scenes (Lava, Spooky, Winter): FULL covers the game; TOP_LEFT/TOP_RIGHT/BOTTOM_LEFT/BOTTOM_RIGHT = small in a corner. */
+    /** Old setting (scene small in a corner) - no longer used: gambling scenes are always full screen. */
     public String gambleView = "FULL";
+    /** Gambling scenes: your game, very small in a corner (like the Titanoboa's "Gameplay during Animation"). */
+    public boolean gambleGameplayView = false;
+    public String gambleGameplayCorner = "TOP_LEFT";
     /** Hide chat, titles and the other HUDs while a gambling scene runs (no spoiler from drop messages). */
     public boolean gambleHideHud = true;
     /** Show Hypixel's bobber countdown / "!!!" in a small box while a gambling scene runs (display only). */

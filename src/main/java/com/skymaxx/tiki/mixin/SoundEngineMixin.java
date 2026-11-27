@@ -14,6 +14,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class SoundEngineMixin {
     @Inject(method={"play(Lnet/minecraft/client/resources/sounds/SoundInstance;)Lnet/minecraft/client/sounds/SoundEngine$PlayResult;"}, at={@At(value="HEAD")}, cancellable=true)
     private void skymaxx$refuseSound(SoundInstance instance, CallbackInfoReturnable<SoundEngine.PlayResult> cir) {
+        // Light: game sound off while a Lava / Spooky / Winter gambling scene runs (its own sounds still play)
+        try {
+            if (com.skymaxx.tiki.light.LavaScene.silencesGame() && !com.skymaxx.tiki.light.LavaScene.isOwnSound(instance)) {
+                cir.setReturnValue(SoundEngine.PlayResult.NOT_STARTED);
+                return;
+            }
+        } catch (Throwable ignored) {
+        }
         if (TikiGambleClient.gameShouldBeSilent()) {
             cir.setReturnValue(SoundEngine.PlayResult.NOT_STARTED);
             return;
@@ -25,6 +33,13 @@ public class SoundEngineMixin {
 
     @Inject(method={"playDelayed(Lnet/minecraft/client/resources/sounds/SoundInstance;I)V"}, at={@At(value="HEAD")}, cancellable=true)
     private void skymaxx$refuseDelayedSound(SoundInstance instance, int delay, CallbackInfo ci) {
+        try {
+            if (com.skymaxx.tiki.light.LavaScene.silencesGame() && !com.skymaxx.tiki.light.LavaScene.isOwnSound(instance)) {
+                ci.cancel();
+                return;
+            }
+        } catch (Throwable ignored) {
+        }
         if (TikiGambleClient.gameShouldBeSilent()) {
             ci.cancel();
         }
