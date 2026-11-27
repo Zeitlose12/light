@@ -7,7 +7,7 @@
 	"authors": [
 		"Grundsteuer"
 	],
-	"license": "MIT",
+	"license": ["GPL-3.0-only", "MIT"],
 	"icon": "assets/light/icon.png",
 	"environment": "client",
 	"entrypoints": {

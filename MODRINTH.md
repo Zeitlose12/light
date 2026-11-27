@@ -176,4 +176,10 @@ Light started as a fork of SkyMaxx by Rachie, which brought the Wiki Tiki and Ti
 - **SkyCofl** – drop prices · **Hypixel** – bazaar and election data
 - **Light Crew:** Grundsteuer (Creator) · Gesundheitskarte (Beta & ideas) ❤
 
+## 📄 License
+
+- **Light** (from 1.4.0) – **GPL-3.0**: use it, change it, share it – but changed versions must stay open source under GPL-3.0 and credit Grundsteuer
+- **Wiki Tiki & Titanoboa** parts from SkyMaxx – MIT (see `LICENSE-SKYMAXX`)
+- Versions up to 1.3.0 – MIT
+
 *Not affiliated with Hypixel or Mojang.*
