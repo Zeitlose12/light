@@ -11,7 +11,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
  * Effects are a handful of fills per frame (a few dozen at most), so they never cost real performance:
  * Frost snows over the whole screen while /light is open and inside its HUDs, Clean snows in December,
  * Lava has a glowing lava pool at the bottom of the menu and embers in its HUDs, Ocean has waves,
- * Royal Gold an inner gold frame.
+ * Royal Gold an inner gold frame. The newer themes (Halloween and the six achievement themes) draw their effects in {@link Fx}.
  */
 public enum Theme {
     PINK("Pink Glass", 0xD01A0F1C, 0xE02A1428, 0x50000000, 0xFFFF8CC8, 0x14FFFFFF, 0xC8140812, 0xFFF2EEF3, 0xFFA79AAE, 0),
@@ -20,14 +20,29 @@ public enum Theme {
     CLEAN("Clean", 0x59000000, 0x66000000, 0x00000000, 0xFFFFFFFF, 0x10FFFFFF, 0x00000000, 0xFFFFFFFF, 0xFFCFCFCF, 2),
     LAVA("Lava", 0xE01E0A06, 0xE82C0E06, 0x50140400, 0xFFFF8A2A, 0x14FF7828, 0xCC1C0804, 0xFFFFE9D6, 0xFFC8987A, 3),
     FROST("Frost", 0xE02C4458, 0xE8345068, 0x40C8E6FF, 0xFFBFE9FF, 0x18BFE9FF, 0xCC223648, 0xFFF0F8FF, 0xFFA8C4D8, 4),
-    GOLD("Royal Gold", 0xEC0C0A06, 0xF0161208, 0x50241C0C, 0xFFE8C060, 0x12E8C060, 0xD80E0C06, 0xFFF6EEDC, 0xFFB0A080, 5);
+    GOLD("Royal Gold", 0xEC0C0A06, 0xF0161208, 0x50241C0C, 0xFFE8C060, 0x12E8C060, 0xD80E0C06, 0xFFF6EEDC, 0xFFB0A080, 5),
+    HALLOWEEN("Halloween", 0xEC0A050A, 0xF0140A12, 0x50100008, 0xFFFF7A1A, 0x14FF7A1A, 0xD80C060A, 0xFFF5E6DA, 0xFFA08C80, 6),
+    RADIOACTIVE("Radioactive", 0xE8061208, 0xF00A1A0C, 0x50001000, 0xFF7DFF4A, 0x147DFF4A, 0xD0061008, 0xFFEFFFE6, 0xFF98B890, 7, "GLOWING"),
+    THUNDER("Thunderstorm", 0xE80B1020, 0xF0101830, 0x50000010, 0xFF8FB8FF, 0x148FB8FF, 0xD00A0E1C, 0xFFEAF0FF, 0xFF98A4C0, 8, "STORM_CHASER"),
+    END_TIMES("End Times", 0xE8140604, 0xF01E0806, 0x50140000, 0xFFFF5030, 0x14FF5030, 0xD0140604, 0xFFFFE6DE, 0xFFC09080, 9, "BOUNTY_HUNTER"),
+    ABYSS("Abyss", 0xEC020A14, 0xF0041220, 0x50000408, 0xFF5EF0FF, 0x105EF0FF, 0xD8020A14, 0xFFE0FAFF, 0xFF7FA8B8, 10, "FULL_SWEEP"),
+    TREASURE("Sunken Treasure", 0xE0062428, 0xE80A3034, 0x50001414, 0xFFFFCF5A, 0x12FFCF5A, 0xCC06201E, 0xFFFFF6E0, 0xFFA8C0B0, 11, "HIGH_ROLLER"),
+    MOONLIT("Moonlit Lake", 0xE80A1030, 0xF00E163C, 0x50000418, 0xFFCFD8FF, 0x12CFD8FF, 0xD00A1030, 0xFFF0F4FF, 0xFF9CA6C8, 12, "DRY_SPELL");
 
     public final String title;
     public final int glass, header, side, accent, ground, hudBg, text, dim;
-    /** 0 none, 1 waves, 2 clean (snow in December), 3 lava, 4 frost (snow), 5 gold frame */
+    /** 0 none, 1 waves, 2 clean (snow in December), 3 lava, 4 frost (snow), 5 gold frame, 6 halloween, 7 radioactive,
+     *  8 thunderstorm, 9 end times, 10 abyss, 11 sunken treasure, 12 moonlit lake */
     public final int effect;
+    /** Achievement that unlocks this theme (enum name), or null = free for everyone. */
+    public final String unlock;
 
     Theme(String title, int glass, int header, int side, int accent, int ground, int hudBg, int text, int dim, int effect) {
+        this(title, glass, header, side, accent, ground, hudBg, text, dim, effect, null);
+    }
+
+    Theme(String title, int glass, int header, int side, int accent, int ground, int hudBg, int text, int dim, int effect, String unlock) {
+        this.unlock = unlock;
         this.title = title;
         this.glass = glass;
         this.header = header;
@@ -61,18 +76,66 @@ public enum Theme {
         return PINK;
     }
 
+    /** Locked = needs an achievement the player does not have yet (the Light Crew has everything). */
+    public boolean locked() {
+        if (this.unlock == null) return false;
+        TikiConfig c = TikiGambleClient.config;
+        if (c == null) return true;
+        if (Crew.isLocalCrew()) return false;
+        String have = c.lightAchievements == null ? "" : c.lightAchievements;
+        if (!have.equals(cachedFor)) {
+            cachedSet = Achievements.unlocked(c);
+            cachedFor = have;
+        }
+        return !cachedSet.contains(this.unlock);
+    }
+
+    /** The menu asks this many times per frame: the achievement list is parsed only when it changes. */
+    private static String cachedFor;
+    private static java.util.Set<String> cachedSet = java.util.Set.of();
+
+    /** The achievement that unlocks it, e.g. "Storm Chaser". */
+    public String requirement() {
+        Achievements a = this.unlock == null ? null : Achievements.byName(this.unlock);
+        return a == null ? "" : a.title;
+    }
+
+    public String requirementText() {
+        Achievements a = this.unlock == null ? null : Achievements.byName(this.unlock);
+        return a == null ? "" : a.description;
+    }
+
+    public static int unlockedCount() {
+        int n = 0;
+        for (Theme t : values()) if (!t.locked()) n++;
+        return n;
+    }
+
+    /** Themes unlocked by this achievement (shown in the centre pop-up when it unlocks). */
+    public static Theme unlockedBy(String achievement) {
+        for (Theme t : values()) if (achievement.equals(t.unlock)) return t;
+        return null;
+    }
+
     public Theme next() {
-        return values()[(this.ordinal() + 1) % values().length];
+        Theme t = this;
+        for (int i = 0; i < values().length; i++) {
+            t = values()[(t.ordinal() + 1) % values().length];
+            if (!t.locked()) return t;
+        }
+        return this;
     }
 
     public static Theme menu() {
         TikiConfig c = TikiGambleClient.config;
-        return c == null ? PINK : byName(c.menuTheme);
+        Theme t = c == null ? PINK : byName(c.menuTheme);
+        return t.locked() ? PINK : t;
     }
 
     public static Theme hud() {
         TikiConfig c = TikiGambleClient.config;
-        return c == null ? PINK : byName(c.hudTheme);
+        Theme t = c == null ? PINK : byName(c.hudTheme);
+        return t.locked() ? PINK : t;
     }
 
     public boolean snows() {
@@ -141,6 +204,8 @@ public enum Theme {
                 int y = Math.max(y0, Math.min(y1 - 1 - (int) (l * h), y1 - 1));
                 ctx.fill(x, y, x + 1, y + 1, (int) (220 * (1 - l)) << 24 | (i % 2 == 0 ? 0xFF9A2A : 0xFFD04A));
             }
+        } else if (this.effect >= 6) {
+            Fx.hud(this.effect, ctx, x0, y0, x1, y1, t);
         }
     }
 
@@ -180,12 +245,13 @@ public enum Theme {
             }
             case 5 -> roundOutline(ctx, left + 3, top + 3, right - 3, bottom - 3, 0x50E8C060);
             default -> {
+                if (this.effect >= 6) Fx.menu(this.effect, ctx, left, top, right, bottom, t);
             }
         }
     }
 
     /** A fixed pseudo-random number in [0, 1) for particle i. */
-    private static float hash(int i) {
+    static float hash(int i) {
         double v = Math.sin(i * 12.9898 + 78.233) * 43758.5453;
         return (float) (v - Math.floor(v));
     }

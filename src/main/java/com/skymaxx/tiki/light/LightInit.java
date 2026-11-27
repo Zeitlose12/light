@@ -47,6 +47,11 @@ public final class LightInit implements ClientModInitializer {
                 .then(ClientCommands.literal("history").executes(c -> LightInit.testHistory()))
                 .then(ClientCommands.literal("clear").executes(c -> LightInit.testClear())))
             .then(ClientCommands.literal("journal").executes(c -> LightInit.openJournal()))
+            .then(ClientCommands.literal("testtheme").then(ClientCommands.argument("theme", StringArgumentType.word()).suggests((c, b) -> {
+                for (Theme t : Theme.values()) b.suggest(t.name().toLowerCase(Locale.ROOT));
+                return b.buildFuture();
+            }).executes(c -> LightInit.testTheme(StringArgumentType.getString(c, "theme")))))
+            .then(ClientCommands.literal("testcrew").executes(c -> LightInit.testCrew()))
             .then(ClientCommands.literal("achievement")
                 .then(ClientCommands.literal("list").executes(c -> LightInit.listAchievements()))
                 .then(ClientCommands.literal("remove").then(ClientCommands.argument("name", StringArgumentType.word()).suggests((c, b) -> {
@@ -78,12 +83,14 @@ public final class LightInit implements ClientModInitializer {
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("light", "shark_popup"), SharkPopup::render);
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("light", "achievement_popup"), AchievementPopup::render);
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("light", "sack_value"), SackValue::render);
+        HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("light", "cosmetic_popup"), CosmeticPopup::render);
         net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents.CLIENT_STOPPING.register(client -> SackValue.saveNow());
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             Achievements.tick();
             DyeTracker.tick(client);
             SackValue.tick(client);
             GambleLog.tick();
+            Crew.tick();
             if (openRequested) {
                 openRequested = false;
                 client.gui.setScreen(SkyMaxxScreen.create());
@@ -153,6 +160,28 @@ public final class LightInit implements ClientModInitializer {
             return 0;
         }
         TikiGambleClient.chat("\u00a78[Light] Test only - dry streak " + kills + ", nothing is counted.");
+        return 1;
+    }
+
+    /** Debug: the centre "NEW THEME UNLOCKED" pop-up for this theme. Nothing is unlocked. */
+    private static int testTheme(String name) {
+        if (!needDebug("test the theme pop-up")) return 0;
+        Theme t = null;
+        for (Theme x : Theme.values()) if (x.name().equalsIgnoreCase(name)) t = x;
+        if (t == null) {
+            TikiGambleClient.chat("\u00a7c[Light] Unknown theme: " + name);
+            return 0;
+        }
+        CosmeticPopup.theme(t, 0L);
+        TikiGambleClient.chat("\u00a78[Light] Test only - nothing was unlocked.");
+        return 1;
+    }
+
+    /** Debug: the Light Crew party banner. */
+    private static int testCrew() {
+        if (!needDebug("test the crew banner")) return 0;
+        CosmeticPopup.crewDrop("Gesundheitskarte", "Radioactive Vial");
+        TikiGambleClient.chat("\u00a78[Light] Test only.");
         return 1;
     }
 

@@ -22,13 +22,13 @@
 - Sack value is remembered across restarts ("Last read" in the Bazaar tab), bait sacks are left out by default
 - Journal: text without drop shadow (like real books) in darker ink, bigger again, silk bookmark in the gutter
 - Reindrake scene runs smoother
-- **🎨 Themes** (Settings): Pink Glass, Midnight, Ocean, Clean, Lava, Frost, Royal Gold – for the menu and the HUDs separately. Rounded corners everywhere; Frost snows over the screen, Clean snows in December, Lava has a glowing lava pool and embers
+- **🎨 Themes**: Pink Glass, Midnight, Ocean, Clean, Lava, Frost, Royal Gold – for the menu and the HUDs separately. Rounded corners everywhere; Frost snows over the screen, Clean snows in December, Lava has a glowing lava pool and embers
 - Yeti: his own show - drums his chest, slams the machine (snow falls off the roof), roars with a blizzard while the claw goes down, jumps for joy on a win or kicks the machine on a miss
 - Thunder: prismarine lightning rods left and right of the roulette, charging up and struck by lightning
 - Drop boards checked against the wiki: Thunder now has the **Flash I** book and the **Thunder Fragment**, Lord Jawbus now has **Bobbin' Scriptures** and the **Magma Lord Fragment** (several drops at once: the best one is shown); Grim Reaper, Yeti and Reindrake have the **Aquamarine Dye**, Reindrake has **Bobbin' Scriptures**; shards and guaranteed drops (Prosperity I) never count as a gambling drop
 - RNG fanfare: calmer glow and one short ray burst instead of spinning rays; "RNG!" no longer covers the mob name
 - `/light achievement remove` now really keeps it locked (`/light achievement restore` undoes it)
-- Credits: Wiki Tiki & Titanoboa from SkyMaxx by Rachie, dye chances based on DyeAddons, everything else by Grundsteuer (built with the help of AI)
+- Credits: Wiki Tiki & Titanoboa from SkyMaxx by Rachie, dye chances based on DyeAddons, everything else by Grundsteuer
 - **Custom buttons:** every button, switch and slider in the menu now follows the menu theme (rounded buttons with hover glow, sliding ON/OFF pills, category bars, slim sliders with a round knob).
 - Frost and Lava themes: a bit more snow, bubbles and embers.
 
@@ -38,7 +38,14 @@
 - **Cleaner menu:** section separators in the theme colour, long explanations moved into hover tooltips (General, Settings), more space between the gambling categories; the gambling display options moved to Settings → "Gambling display"
 - **History** is folded by day (today open), so long sessions stay tidy; Wiki Tiki and Titanoboa results are listed too
 - **Journal:** one page per drop with a counter (e.g. "Flash I ×2"), only real drops (no Thunder Fragments or junk), Wiki Tiki and Titanoboa in the contents
-- Menu header: "Fishing Gambling Mod" with the credits next to the search bar
+- Menu header: "Fishing Gambling Mod" (credits moved to the Cosmetics tab)
+- **✨ Cosmetics tab:** every theme as a tile with a live preview, one click to use it for the menu or for the HUDs, "x / 14 unlocked" counter
+- **7 new themes:** Halloween (fog, bats with red eyes, evil pumpkins – free for everyone) and six themes you unlock with achievements: Radioactive (Glowing), Thunderstorm (Storm Chaser), End Times (Bounty Hunter), Abyss (Full Sweep), Sunken Treasure (High Roller), Moonlit Lake (Dry Spell)
+- **"NEW THEME UNLOCKED"** pop-up in the middle of the screen, drawn in the new theme's own look
+- **💜 Light Crew:** the people who build and test Light can pick a fishing line (Aurora, Blitz, Flamme, Frost, Galaxie, Goldkette) and a bobber (Leucht-Orb, Stern, Mini-Tiki, Feuerball, Eiskristall) – or Standard for the normal look. Only visible to players with Light, can be switched off
+- **Light Crew banner** when a crew member names a big drop in party chat (can be switched off)
+- **Credits** page in the Cosmetics tab (Light, SkyMaxx, DyeAddons, SkyCofl, Hypixel, Light Crew)
+- Debug commands: `/light testtheme <theme>`, `/light testcrew`
 
 ### 🔧 Changed
 - Menu tabs shrink on small windows so every tab stays visible
@@ -69,6 +76,7 @@
 - Gambling: "Waiting for your drop" ends sooner when nothing dropped (5 s instead of 10 s); several drops of one kill are collected for a moment so the best one wins
 - Ragnarok: shows the red rider on his skeleton horse (no more two stacked horses); if the rider can't be found, a red-armoured stand-in rides the horse
 - Sliders: the knob stays under your mouse when you click or drag
+- Achievements: a newly reached achievement now shows its pop-up with sound (before, only the chat line came)
 
 ### ⚠️ Known limitations
 - Double hook: when two Lava/Spooky/Winter gambling mobs die close together only one animation plays – both kills are still counted in the History and the Journal

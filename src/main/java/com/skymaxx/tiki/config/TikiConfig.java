@@ -144,9 +144,16 @@ public class TikiConfig {
     public String sackExcluded = "";
     /** Bait sacks hold fishing bait, not loot: left out unless switched on. */
     public boolean sackBaitCounted = false;
-    /** Light themes: menu and HUDs separately (PINK, MIDNIGHT, OCEAN, CLEAN, LAVA, FROST, GOLD). */
+    /** Light themes: menu and HUDs separately (chosen in the Cosmetics tab; some unlock with achievements). */
     public String menuTheme = "PINK";
     public String hudTheme = "PINK";
+    /** Light Crew: fishing line and bobber look (0 = Standard, see Crew.LINES / Crew.BOBBERS). Only crew members can pick. */
+    public int crewLine = 0;
+    public int crewBobber = 0;
+    /** Show the line / bobber looks of Light Crew members (needs crew.json from Light's GitHub, every 30 min). */
+    public boolean crewCosmetics = true;
+    /** Banner in the middle of the screen when a Light Crew member names a big drop in party chat. */
+    public boolean crewBanner = true;
     /** How dark the game gets behind the Light menu (0 - 0.9). */
     public float menuDim = 0.55f;
     /** Achievement pop-up position (-1 = top right) and size. */

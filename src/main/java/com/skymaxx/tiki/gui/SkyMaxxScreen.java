@@ -188,6 +188,7 @@ extends Screen {
                 case STATS -> y = this.buildStats(left, y, w);
                 case ACHIEVEMENTS -> y = this.buildAchievements(left, y, w);
                 case HISTORY -> y = this.buildHistory(left, y, w);
+                case COSMETICS -> y = this.buildCosmetics(left, y, w);
             }
         }
         this.contentHeight = y;
@@ -499,24 +500,263 @@ extends Screen {
         return "Auction price: \u00a7f" + ("MEDIAN_5".equals(mode) ? "Median of 5 lowest BINs" : "Lowest BIN");
     }
 
+    // ------------------------------------------------------------------ Cosmetics tab
+
+    /** Cosmetics: themes are set for the menu or for the HUDs (switch at the top). */
+    private static boolean cosHud;
+    private static final int COS_GAP = 6;
+    private static final int THEME_TILE_H = 48;
+    private static final int CREW_TILE_H = 40;
+    private int cosLeft;
+    private int cosW;
+    private int cosCols;
+    private int cosThemeTop = -1;
+    private int cosLineTop = -1;
+    private int cosBobberTop = -1;
+
+    private int buildCosmetics(int x, int y, int w) {
+        com.skymaxx.tiki.light.Theme[] all = com.skymaxx.tiki.light.Theme.values();
+        y = this.heading(y, "Themes \u00b7 " + com.skymaxx.tiki.light.Theme.unlockedCount() + " / " + all.length + " unlocked");
+        int half = (w - 4) / 2;
+        this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal((cosHud ? "\u00a77" : "\u00a7f\u25b6 ") + "Menu: \u00a7f" + T().title), b -> {
+            cosHud = false;
+            this.rebuildWidgets();
+        }).bounds(x, y, half, 20).build(), y));
+        this.tip("Click a theme below to use it for the /light menu.");
+        this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal((cosHud ? "\u00a7f\u25b6 " : "\u00a77") + "HUDs: \u00a7f" + com.skymaxx.tiki.light.Theme.hud().title), b -> {
+            cosHud = true;
+            this.rebuildWidgets();
+        }).bounds(x + half + 4, y, w - half - 4, 20).build(), y));
+        this.tip("Click a theme below to use it for all HUDs and pop-ups.");
+        y += 26;
+        this.cosLeft = x;
+        this.cosW = w;
+        this.cosCols = w >= 330 ? 4 : 3;
+        this.cosThemeTop = y;
+        y += this.gridHeight(all.length, THEME_TILE_H);
+        y = this.note(y, "\u00a77Locked themes unlock with the achievement shown on them.");
+        y = this.heading(y, "Light Crew");
+        this.cosLineTop = -1;
+        this.cosBobberTop = -1;
+        if (com.skymaxx.tiki.light.Crew.isLocalCrew()) {
+            y = this.note(y, "\u00a7dLine \u00a78\u00b7 Standard = the normal look");
+            this.cosLineTop = y;
+            y += this.gridHeight(com.skymaxx.tiki.light.Crew.LINES.length, CREW_TILE_H);
+            y = this.note(y, "\u00a7dBobber");
+            this.cosBobberTop = y;
+            y += this.gridHeight(com.skymaxx.tiki.light.Crew.BOBBERS.length, CREW_TILE_H);
+        } else {
+            y = this.note(y, "\u00a77The crew that builds and tests Light has its own line and bobber.");
+        }
+        y = this.toggle(x, y, w, "Show Light Crew looks", () -> this.cfg.crewCosmetics, v -> {
+            this.cfg.crewCosmetics = v;
+        });
+        this.tip("Lines and bobbers of crew members you meet. Only you see it.");
+        this.tip("Reads crew.json from Light's GitHub every 30 min. Off = no download.");
+        y = this.toggle(x, y, w, "Light Crew drop banner", () -> this.cfg.crewBanner, v -> {
+            this.cfg.crewBanner = v;
+        });
+        this.tip("A banner when a crew member names a big drop in party chat.");
+        y = this.heading(y, "Credits");
+        y = this.note(y, "\u00a7f\u00a7lLight \u00a77by Grundsteuer");
+        y = this.note(y, "\u00a7fSkyMaxx \u00a77by Rachie \u00b7 Wiki Tiki & Titanoboa (MIT)");
+        y = this.note(y, "\u00a7fDyeAddons \u00a77\u00b7 dye chances");
+        y = this.note(y, "\u00a7fSkyCofl \u00a77\u00b7 prices  \u00a78|  \u00a7fHypixel \u00a77\u00b7 bazaar");
+        StringBuilder crew = new StringBuilder("\u00a7dLight Crew: ");
+        boolean first = true;
+        for (com.skymaxx.tiki.light.Crew.Member m : com.skymaxx.tiki.light.Crew.members()) {
+            if (!first) crew.append(" \u00a78\u00b7 ");
+            crew.append("\u00a7f").append(m.name()).append(" \u00a77(").append(m.role()).append(")");
+            first = false;
+        }
+        y = this.note(y, crew.toString() + " \u00a7d\u2764");
+        return y;
+    }
+
+    private int gridHeight(int n, int tileH) {
+        int rowsN = (n + this.cosCols - 1) / this.cosCols;
+        return rowsN * (tileH + COS_GAP) + 2;
+    }
+
+    private int tileW() {
+        return (this.cosW - (this.cosCols - 1) * COS_GAP) / this.cosCols;
+    }
+
+    /** Screen rectangle {x0, y0, x1, y1} of tile i in a grid starting at content y = top. */
+    private int[] tile(int top, int i, int tileH) {
+        int tw = this.tileW();
+        int x0 = this.cosLeft + (i % this.cosCols) * (tw + COS_GAP);
+        int y0 = this.viewTop + top + (i / this.cosCols) * (tileH + COS_GAP) - this.scroll;
+        return new int[]{x0, y0, x0 + tw, y0 + tileH};
+    }
+
+    private static boolean inside(int[] r, double mx, double my) {
+        return mx >= r[0] && mx < r[2] && my >= r[1] && my < r[3];
+    }
+
+    private boolean clickCosmetics(double mx, double my) {
+        if (my < this.viewTop || my > this.viewBottom || this.cosThemeTop < 0) return false;
+        com.skymaxx.tiki.light.Theme[] all = com.skymaxx.tiki.light.Theme.values();
+        for (int i = 0; i < all.length; i++) {
+            if (!inside(this.tile(this.cosThemeTop, i, THEME_TILE_H), mx, my)) continue;
+            if (all[i].locked()) {
+                this.click(0.6f);
+                return true;
+            }
+            if (cosHud) this.cfg.hudTheme = all[i].name();
+            else this.cfg.menuTheme = all[i].name();
+            this.cfg.save();
+            this.click(1f);
+            this.rebuildWidgets();
+            return true;
+        }
+        if (this.cosLineTop >= 0) {
+            for (int i = 0; i < com.skymaxx.tiki.light.Crew.LINES.length; i++) {
+                if (!inside(this.tile(this.cosLineTop, i, CREW_TILE_H), mx, my)) continue;
+                this.cfg.crewLine = i;
+                this.cfg.save();
+                this.click(1f);
+                return true;
+            }
+        }
+        if (this.cosBobberTop >= 0) {
+            for (int i = 0; i < com.skymaxx.tiki.light.Crew.BOBBERS.length; i++) {
+                if (!inside(this.tile(this.cosBobberTop, i, CREW_TILE_H), mx, my)) continue;
+                this.cfg.crewBobber = i;
+                this.cfg.save();
+                this.click(1f);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void click(float pitch) {
+        if (this.minecraft != null) {
+            this.minecraft.getSoundManager().play(net.minecraft.client.resources.sounds.SimpleSoundInstance.forUI(net.minecraft.sounds.SoundEvents.UI_BUTTON_CLICK, pitch));
+        }
+    }
+
+    private void drawCosmetics(GuiGraphicsExtractor ctx, int mx, int my) {
+        if (this.cosThemeTop < 0) return;
+        com.skymaxx.tiki.light.Theme[] all = com.skymaxx.tiki.light.Theme.values();
+        com.skymaxx.tiki.light.Theme current = cosHud ? com.skymaxx.tiki.light.Theme.hud() : T();
+        for (int i = 0; i < all.length; i++) {
+            int[] r = this.tile(this.cosThemeTop, i, THEME_TILE_H);
+            if (r[3] < this.viewTop - 4 || r[1] > this.viewBottom + 4) continue;
+            this.drawThemeTile(ctx, r, all[i], all[i] == current, inside(r, mx, my) && my >= this.viewTop && my <= this.viewBottom);
+        }
+        if (this.cosLineTop >= 0) {
+            for (int i = 0; i < com.skymaxx.tiki.light.Crew.LINES.length; i++) {
+                int[] r = this.tile(this.cosLineTop, i, CREW_TILE_H);
+                if (r[3] < this.viewTop - 4 || r[1] > this.viewBottom + 4) continue;
+                this.drawLineTile(ctx, r, i, i == this.cfg.crewLine, inside(r, mx, my));
+            }
+        }
+        if (this.cosBobberTop >= 0) {
+            for (int i = 0; i < com.skymaxx.tiki.light.Crew.BOBBERS.length; i++) {
+                int[] r = this.tile(this.cosBobberTop, i, CREW_TILE_H);
+                if (r[3] < this.viewTop - 4 || r[1] > this.viewBottom + 4) continue;
+                this.drawBobberTile(ctx, r, i, i == this.cfg.crewBobber, inside(r, mx, my));
+            }
+        }
+    }
+
+    private void tileFrame(GuiGraphicsExtractor ctx, int[] r, boolean selected, boolean hover) {
+        if (selected) {
+            com.skymaxx.tiki.light.Theme.roundOutline(ctx, r[0] - 1, r[1] - 1, r[2] + 1, r[3] + 1, T().accent);
+            com.skymaxx.tiki.light.Theme.roundOutline(ctx, r[0], r[1], r[2], r[3], T().soft());
+        } else if (hover) {
+            com.skymaxx.tiki.light.Theme.roundOutline(ctx, r[0], r[1], r[2], r[3], 0x80FFFFFF);
+        }
+    }
+
+    private void tileName(GuiGraphicsExtractor ctx, int[] r, String name, int y, int color) {
+        String s = name;
+        while (s.length() > 2 && this.font.width(s) > r[2] - r[0] - 4) s = s.substring(0, s.length() - 2) + "\u2026";
+        ctx.text(this.font, (Component)Component.literal(s), (r[0] + r[2]) / 2 - this.font.width(s) / 2, y, color);
+    }
+
+    private void drawThemeTile(GuiGraphicsExtractor ctx, int[] r, com.skymaxx.tiki.light.Theme th, boolean selected, boolean hover) {
+        int pv = r[1] + 30;
+        com.skymaxx.tiki.light.Theme.round(ctx, r[0], r[1], r[2], r[3], 0x30FFFFFF);
+        // mini window: header, sidebar, theme effects
+        ctx.enableScissor(r[0] + 1, Math.max(r[1] + 1, this.viewTop - 4), r[2] - 1, Math.min(pv, this.viewBottom + 4));
+        ctx.fill(r[0] + 1, r[1] + 1, r[2] - 1, pv, 0xFF000000 | (th.glass & 0xFFFFFF));
+        ctx.fill(r[0] + 1, r[1] + 1, r[2] - 1, r[1] + 7, 0xFF000000 | (th.header & 0xFFFFFF));
+        ctx.fill(r[0] + 1, r[1] + 7, r[0] + 12, pv, th.side);
+        ctx.fill(r[0] + 2, r[1] + 9, r[0] + 3, r[1] + 13, th.accent);
+        ctx.fill(r[0] + 3, r[1] + 3, r[0] + 10, r[1] + 5, th.accent);
+        ctx.fill(r[0] + 16, r[1] + 11, r[2] - 6, r[1] + 13, th.line());
+        ctx.fill(r[0] + 16, r[1] + 16, r[2] - 14, r[1] + 18, th.line());
+        th.menuFx(ctx, r[0], r[1], r[2], pv);
+        th.hudFx(ctx, r[0] + 1, r[1] + 1, r[2] - 1, pv);
+        ctx.disableScissor();
+        boolean locked = th.locked();
+        if (locked) {
+            ctx.fill(r[0] + 1, r[1] + 1, r[2] - 1, pv, 0xB4000000);
+            int cx = (r[0] + r[2]) / 2, cy = r[1] + 15;
+            ctx.fill(cx - 4, cy - 1, cx + 4, cy + 5, 0xFFCFD8E2);
+            ctx.fill(cx - 3, cy - 5, cx - 2, cy - 1, 0xFFCFD8E2);
+            ctx.fill(cx + 2, cy - 5, cx + 3, cy - 1, 0xFFCFD8E2);
+            ctx.fill(cx - 2, cy - 6, cx + 2, cy - 5, 0xFFCFD8E2);
+            ctx.fill(cx - 1, cy + 1, cx + 1, cy + 3, 0xFF404850);
+            this.tileName(ctx, r, th.title, pv + 3, 0xFF9AA4B0);
+            this.tileName(ctx, r, th.requirement(), pv + 12, 0xFF6E7884);
+            if (hover) ctx.setTooltipForNextFrame(java.util.List.of(Component.literal("\u00a77Unlock: \u00a7f" + th.requirement()).getVisualOrderText(), Component.literal("\u00a78" + th.requirementText()).getVisualOrderText()), r[0], r[3] + 2);
+        } else {
+            this.tileName(ctx, r, th.title, pv + 6, selected ? -1 : 0xFFD8DEE6);
+        }
+        this.tileFrame(ctx, r, selected, hover);
+    }
+
+    private void drawLineTile(GuiGraphicsExtractor ctx, int[] r, int id, boolean selected, boolean hover) {
+        int pv = r[1] + 24;
+        com.skymaxx.tiki.light.Theme.round(ctx, r[0], r[1], r[2], r[3], 0x30FFFFFF);
+        ctx.fill(r[0] + 1, r[1] + 1, r[2] - 1, r[1] + 12, 0xFF6E9ED0);
+        ctx.fill(r[0] + 1, r[1] + 12, r[2] - 1, pv, 0xFF2A5A8A);
+        int x0 = r[0] + 6, x1 = r[2] - 8, n = 28;
+        for (int k = 0; k <= n; k++) {
+            float u = k / (float) n;
+            int x = x0 + Math.round(u * (x1 - x0));
+            int y = r[1] + 4 + Math.round((float) Math.sin(u * Math.PI * 0.9) * 13);
+            int col = id == 0 ? 0xFF1A1A1A : com.skymaxx.tiki.light.Crew.lineColor(id, 1f - u);
+            ctx.fill(x, y, x + 2, y + (id == 0 ? 1 : 2), col);
+        }
+        ctx.fill(x1, r[1] + 2, x1 + 2, r[1] + 8, 0xFF6B4A2A);
+        this.tileName(ctx, r, com.skymaxx.tiki.light.Crew.LINES[id], pv + 4, selected ? -1 : 0xFFD8DEE6);
+        this.tileFrame(ctx, r, selected, hover);
+    }
+
+    private void drawBobberTile(GuiGraphicsExtractor ctx, int[] r, int id, boolean selected, boolean hover) {
+        int pv = r[1] + 24;
+        com.skymaxx.tiki.light.Theme.round(ctx, r[0], r[1], r[2], r[3], 0x30FFFFFF);
+        ctx.fill(r[0] + 1, r[1] + 1, r[2] - 1, r[1] + 14, 0xFF6E9ED0);
+        ctx.fill(r[0] + 1, r[1] + 14, r[2] - 1, pv, 0xFF2A5A8A);
+        int cx = (r[0] + r[2]) / 2;
+        float bob = (float) Math.sin(System.currentTimeMillis() / 400.0 + id) * 1.5f;
+        ctx.fill(cx, r[1] + 1, cx + 1, r[1] + 4, 0xFF1A1A1A);
+        Matrix3x2fStack pose = ctx.pose();
+        pose.pushMatrix();
+        pose.translate(cx - 9f, r[1] + 3 + bob);
+        if (id == 0) {
+            Identifier vanilla = Identifier.withDefaultNamespace("textures/entity/fishing/fishing_hook.png");
+            pose.scale(2.25f, 2.25f);
+            ctx.blit(RenderPipelines.GUI_TEXTURED, vanilla, 0, 0, 0f, 0f, 8, 8, 8, 8);
+        } else {
+            String[] files = {null, "orb", "star", "tiki", "fireball", "ice"};
+            Identifier own = Identifier.fromNamespaceAndPath("light", "textures/entity/bobber/" + files[id] + ".png");
+            pose.scale(1.125f, 1.125f);
+            ctx.blit(RenderPipelines.GUI_TEXTURED, own, 0, 0, 0f, 0f, 16, 16, 16, 16);
+        }
+        pose.popMatrix();
+        this.tileName(ctx, r, com.skymaxx.tiki.light.Crew.BOBBERS[id], pv + 4, selected ? -1 : 0xFFD8DEE6);
+        this.tileFrame(ctx, r, selected, hover);
+    }
+
     private int buildSettings(int x, int y, int w) {
         y = this.heading(y, "Gambling display");
         y = this.buildGambleDisplay(x, y, w);
-        y = this.heading(y, "Theme");
-        int half = (w - 4) / 2;
-        this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal("Menu: \u00a7f" + T().title), b -> {
-            this.cfg.menuTheme = T().next().name();
-            this.cfg.save();
-            this.rebuildWidgets();
-        }).bounds(x, y, half, 20).build(), y));
-        this.tip("Pink Glass, Midnight, Ocean, Clean, Lava, Frost, Royal Gold.");
-        this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal("HUDs: \u00a7f" + com.skymaxx.tiki.light.Theme.hud().title), b -> {
-            this.cfg.hudTheme = com.skymaxx.tiki.light.Theme.hud().next().name();
-            this.cfg.save();
-            b.setMessage((Component)Component.literal("HUDs: \u00a7f" + com.skymaxx.tiki.light.Theme.hud().title));
-        }).bounds(x + half + 4, y, w - half - 4, 20).build(), y));
-        this.tip("Menu and HUDs separately. Gambling scenes keep their own look.");
-        y += 22;
         y = this.heading(y, "Prices");
         y = this.toggle(x, y, w, "Show drop prices", () -> this.cfg.lavaGamblePrices, v -> {
             this.cfg.lavaGamblePrices = v;
@@ -1278,6 +1518,9 @@ extends Screen {
             }
             return true;
         }
+        if (event.button() == 0 && activeTab == Tab.COSMETICS && query.isBlank() && this.clickCosmetics(mouseX, mouseY)) {
+            return true;
+        }
         if ((index = this.tabAt(mouseX, mouseY)) >= 0) {
             Tab target = Tab.values()[index];
             if (target != activeTab || !query.isEmpty()) {
@@ -1328,6 +1571,9 @@ extends Screen {
         if (activeTab == Tab.STATS && query.isBlank()) {
             this.drawStats(ctx);
         }
+        if (activeTab == Tab.COSMETICS && query.isBlank()) {
+            this.drawCosmetics(ctx, mouseX, mouseY);
+        }
         ctx.disableScissor();
         this.drawScrollbar(ctx, mouseX, mouseY);
         super.extractRenderState(ctx, mouseX, mouseY, partial);
@@ -1344,18 +1590,7 @@ extends Screen {
         int titleWidth = this.font.width((net.minecraft.network.chat.FormattedText)Component.literal("Light").withStyle(net.minecraft.ChatFormatting.BOLD));
         int after = this.winLeft + 12 + titleWidth * 2 + 14;
         ctx.text(this.font, (Component)Component.literal((String)"Fishing Gambling Mod"), after, this.winTop + 15, -7695484);
-        // credits on the right of the header, just left of the search bar (only if there is room)
-        int searchLeft = this.searchBox != null ? this.searchBox.getX() : this.winRight - 10;
-        String credit = "Tiki & Boa: SkyMaxx by Rachie \u00b7 MIT \u00b7 \u2764 Gesundheitskarte";
-        int cw = this.font.width(credit);
-        int afterSub = after + this.font.width("Fishing Gambling Mod") + 30;
-        if (searchLeft - 14 - cw < afterSub) {
-            credit = "SkyMaxx by Rachie \u00b7 \u2764 Gesundheitskarte";
-            cw = this.font.width(credit);
-        }
-        if (searchLeft - 14 - cw >= afterSub) {
-            ctx.text(this.font, (Component)Component.literal(credit), searchLeft - 14 - cw, this.winTop + 15, -7695484);
-        }
+        // credits: Cosmetics tab
         int creditY = this.winBottom - 28 - 14;
         if (creditY > this.headerBottom + 8 + Tab.values().length * this.tabStep() + 4) {
             ctx.text(this.font, (Component)Component.literal((String)"Light by Grundsteuer"), this.winLeft + 10, creditY, -7695484);
@@ -1550,6 +1785,7 @@ extends Screen {
         STATS("Stats"),
         HISTORY("History"),
         ACHIEVEMENTS("Achievements"),
+        COSMETICS("Cosmetics"),
         SETTINGS("Settings");
 
         final String title;

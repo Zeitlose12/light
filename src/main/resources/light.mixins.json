@@ -15,7 +15,9 @@
 		"ParticlePacketMixin",
 		"BazaarSellLockMixin",
 		"BazaarPacketGuardMixin",
-		"LightPacketMixin"
+		"LightPacketMixin",
+		"FishingHookRendererMixin",
+		"FishingHookRenderStateMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

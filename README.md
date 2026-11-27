@@ -21,7 +21,8 @@ Light turns your rarest fishing moments into a show – and makes sure you never
 - **📜 History** – every gambling drop with price, total, best hit and coins per hour
 - **🏆 Achievements** for the gambling mobs, with a movable pop-up
 - *Beta:* **dry streak** ("after 412 Lord Jawbus") and an **RNG fanfare** for big drops
-- **🎨 Themes** – Pink Glass, Midnight, Ocean, Clean, Lava, Frost and Royal Gold, for the menu and the HUDs separately
+- **🎨 Themes** (Cosmetics tab) – 14 themes for the menu and the HUDs separately: Pink Glass, Midnight, Ocean, Clean, Lava, Frost, Royal Gold, Halloween and six themes you unlock with achievements (Radioactive, Thunderstorm, End Times, Abyss, Sunken Treasure, Moonlit Lake)
+- **💜 Light Crew** – the people behind Light have their own fishing line and bobber look; only visible to Light users, purely visual, can be switched off
 - **🎒 Sack value** – a tiny HUD with the value of everything in your sacks (sell offer or insta-sell), two looks
 - **💰 Drop prices** from **SkyCofl** right in the result (Bazaar insta-sell / sell offer, auction lowest BIN / median) – can be turned off in the **Settings** tab
 - **🎃 Spooky Fishing** *(still in testing)* – the **Grim Reaper**'s scythe slashes open the grave with your drop

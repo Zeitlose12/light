@@ -176,7 +176,8 @@ public enum Achievements {
             have.add(a.name());
             changed = true;
             if (!firstRun) {
-                TikiGambleClient.chat("§d[Light] §fAchievement unlocked: §d" + a.title + " §7- " + a.description);
+                // chat line, box and sound come from showNext (after any drop animation)
+                SHOW.addLast(a);
             }
         }
         if (changed) {
@@ -225,6 +226,11 @@ public enum Achievements {
             return;
         }
         AchievementPopup.show(a.title, a.description);
+        Theme unlockedTheme = Theme.unlockedBy(a.name());
+        if (unlockedTheme != null && (test || !Crew.isLocalCrew())) {
+            CosmeticPopup.theme(unlockedTheme, 900L);
+            if (!test) TikiGambleClient.chat("\u00a7d[Light] \u00a7fNew theme unlocked: \u00a7d" + unlockedTheme.title + " \u00a77- /light \u2192 Cosmetics");
+        }
         float volume = cfg == null ? 0.5f : Math.max(0.0f, Math.min(1.0f, cfg.lightAchievementVolume));
         if (volume > 0.0f) {
             mc.getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, volume));
