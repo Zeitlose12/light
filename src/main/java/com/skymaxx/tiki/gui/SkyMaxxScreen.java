@@ -93,6 +93,7 @@ extends Screen {
     private final Screen parent;
     private final List<Row> rows = new ArrayList<Row>();
     private final List<Label> labels = new ArrayList<Label>();
+    private final java.util.Map<AbstractWidget, String> tips = new java.util.IdentityHashMap<>();
     private final List<Panel> panels = new ArrayList<Panel>();
     private int indent;
     private final int[] tabX = new int[Tab.values().length];
@@ -139,6 +140,7 @@ extends Screen {
         TikiAssets.init();
         this.rows.clear();
         this.labels.clear();
+        this.tips.clear();
         this.panels.clear();
         this.indent = 0;
         // Light: pink glass window at ~75% of the screen with a sidebar and a search bar
@@ -301,6 +303,7 @@ extends Screen {
         }
         this.rows.clear();
         this.labels.clear();
+        this.tips.clear();
         this.panels.clear();
         y = this.heading(0, "Results for \"" + query.trim() + "\"");
         for (AbstractWidget widget : hits) {
@@ -322,7 +325,6 @@ extends Screen {
     private int buildGambling(int x, int y, int w) {
         y = this.category(x, y, w, "tiki", "Wiki Tiki", this.cfg.tikiEnabled, () -> this.buildTiki(x + 10, 0, w - 10));
         y = this.category(x, y, w, "boa", "Titanoboa", this.cfg.titanoboaEnabled, () -> this.buildTitanoboa(x + 10, 0, w - 10));
-        y = this.category(x, y, w, "view", "Gambling view  \u00a78(Lava, Spooky, Winter)", null, () -> this.buildGambleView(x + 10, 0, w - 10));
         y = this.category(x, y, w, "lava", "Lava Fishing  \u00a78(Test)", this.cfg.lavaGambleEnabled, () -> this.buildLavaGambling(x + 10, 0, w - 10));
         y = this.category(x, y, w, "spooky", "Spooky Fishing  \u00a78(Test)", this.cfg.spookyGambleEnabled, () -> this.buildSpooky(x + 10, 0, w - 10));
         y = this.category(x, y, w, "winter", "Winter Fishing  \u00a78(Test)", this.cfg.winterGambleEnabled, () -> this.buildWinter(x + 10, 0, w - 10));
@@ -337,7 +339,7 @@ extends Screen {
             openGamble = key.equals(openGamble) ? "" : key;
         });
         if (open) y = this.openSection(y, body);
-        return y + 2;
+        return y + 8; // a little air between the categories
     }
 
     private int sectionHeader(int x, int y, int w, String title, Boolean enabled, boolean open, Runnable flip) {
@@ -376,39 +378,39 @@ extends Screen {
         return y;
     }
 
-    private static String bobberPosLabel(String v) {
-        return "Bobber timer: " + switch (v == null ? "BOTTOM" : v) {
-            case "TOP_LEFT" -> "Top left";
-            case "TOP_RIGHT" -> "Top right";
-            default -> "Bottom middle";
-        };
-    }
 
-    private int buildGambleView(int x, int y, int w) {
-        y = this.note(y, "\u00a77The animation always fills the screen - no drop message spoils it.");
+    private int buildGambleDisplay(int x, int y, int w) {
         y = this.toggle(x, y, w, "Gameplay during Animation", () -> this.cfg.gambleGameplayView, v -> {
             this.cfg.gambleGameplayView = v;
         });
+        this.tip("Your game, very small in a corner, so you can see where you are and move.");
+        this.tip("The animation always fills the screen; HUD, chat and game sound stay off.");
         this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal("Corner: \u00a7f" + GameplayCorner.byName(this.cfg.gambleGameplayCorner).title()), b -> {
             this.cfg.gambleGameplayCorner = GameplayCorner.byName(this.cfg.gambleGameplayCorner).next().name();
             this.cfg.save();
             b.setMessage((Component)Component.literal("Corner: \u00a7f" + GameplayCorner.byName(this.cfg.gambleGameplayCorner).title()));
         }).bounds(x, y, w, 20).build(), y));
-        y += 24;
-        y = this.note(y, "Your game, very small, so you can see where you are");
-        y = this.note(y, "and move. The HUD stays hidden and the game sound off.");
-        y = this.toggle(x, y, w, "Bobber timer while it runs", () -> this.cfg.gambleBobberTimer, v -> {
+        y += 22;
+        y = this.toggle(x, y, w, "Bobber timer", () -> this.cfg.gambleBobberTimer, v -> {
             this.cfg.gambleBobberTimer = v;
         });
-        this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal(SkyMaxxScreen.bobberPosLabel(this.cfg.gambleBobberPos)), b -> {
-            String[] order = {"BOTTOM", "TOP_LEFT", "TOP_RIGHT"};
-            int i = java.util.Arrays.asList(order).indexOf(this.cfg.gambleBobberPos);
-            this.cfg.gambleBobberPos = order[(i + 1) % order.length];
-            this.cfg.save();
-            b.setMessage((Component)Component.literal(SkyMaxxScreen.bobberPosLabel(this.cfg.gambleBobberPos)));
-        }).bounds(x, y, w, 20).build(), y));
-        y += 24;
+        this.tip("Hypixel's countdown above your hook and \"!!!\" while an animation runs.");
+        this.tip("Sits right under the small gameplay picture (or bottom middle).");
+        y = this.toggle(x, y, w, "Bite sound (!!!)", () -> this.cfg.gambleBiteSound, v -> {
+            this.cfg.gambleBiteSound = v;
+        });
+        this.tip("A short ping when a fish bites - also while the game sound is off.");
         return y;
+    }
+
+    /** Light: adds a hover text to the last row instead of a line of text under it. */
+    private void tip(String text) {
+        if (this.rows.isEmpty()) return;
+        AbstractWidget wdg = this.rows.get(this.rows.size() - 1).widget();
+        String before = this.tips.getOrDefault(wdg, "");
+        String all = before.isEmpty() ? text : before + "\n" + text;
+        this.tips.put(wdg, all);
+        wdg.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(all)));
     }
 
     private int buildLavaGambling(int x, int y, int w) {
@@ -498,6 +500,8 @@ extends Screen {
     }
 
     private int buildSettings(int x, int y, int w) {
+        y = this.heading(y, "Gambling display");
+        y = this.buildGambleDisplay(x, y, w);
         y = this.heading(y, "Theme");
         int half = (w - 4) / 2;
         this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal("Menu: \u00a7f" + T().title), b -> {
@@ -505,23 +509,27 @@ extends Screen {
             this.cfg.save();
             this.rebuildWidgets();
         }).bounds(x, y, half, 20).build(), y));
+        this.tip("Pink Glass, Midnight, Ocean, Clean, Lava, Frost, Royal Gold.");
         this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal("HUDs: \u00a7f" + com.skymaxx.tiki.light.Theme.hud().title), b -> {
             this.cfg.hudTheme = com.skymaxx.tiki.light.Theme.hud().next().name();
             this.cfg.save();
             b.setMessage((Component)Component.literal("HUDs: \u00a7f" + com.skymaxx.tiki.light.Theme.hud().title));
         }).bounds(x + half + 4, y, w - half - 4, 20).build(), y));
+        this.tip("Menu and HUDs separately. Gambling scenes keep their own look.");
         y += 22;
-        y = this.note(y, "\u00a77Pink Glass, Midnight, Ocean, Clean, Lava, Frost, Royal Gold.");
-        y = this.note(y, "\u00a77Menu and HUDs separately. Gambling scenes keep their own look.");
-        y = this.heading(y, "Prices (SkyCofl)");
+        y = this.heading(y, "Prices");
         y = this.toggle(x, y, w, "Show drop prices", () -> this.cfg.lavaGamblePrices, v -> {
             this.cfg.lavaGamblePrices = v;
         });
+        this.tip("Data: SkyCofl (sky.coflnet.com/data) and Hypixel's bazaar.");
+        this.tip("Cached 10 min, max 20 a minute. Off = Light uses no internet.");
         this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal(SkyMaxxScreen.bazaarLabel(this.cfg.priceBazaarMode)), b -> {
             this.cfg.priceBazaarMode = "SELL_OFFER".equals(this.cfg.priceBazaarMode) ? "INSTA_SELL" : "SELL_OFFER";
             this.cfg.save();
             b.setMessage((Component)Component.literal(SkyMaxxScreen.bazaarLabel(this.cfg.priceBazaarMode)));
         }).bounds(x, y, w, 20).build(), y));
+        this.tip("Insta-sell = what buy orders pay right now.");
+        this.tip("Sell offer = what sellers ask (where your offer would sit).");
         y += 22;
         this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal(SkyMaxxScreen.auctionLabel(this.cfg.priceAuctionMode)), b -> {
             this.cfg.priceAuctionMode = "MEDIAN_5".equals(this.cfg.priceAuctionMode) ? "LOWEST_BIN" : "MEDIAN_5";
@@ -529,30 +537,25 @@ extends Screen {
             com.skymaxx.tiki.light.LavaPrices.clearCache();
             b.setMessage((Component)Component.literal(SkyMaxxScreen.auctionLabel(this.cfg.priceAuctionMode)));
         }).bounds(x, y, w, 20).build(), y));
+        this.tip("Lowest BIN = cheapest Buy-It-Now in the auction house.");
+        this.tip("Median = middle of the 5 cheapest, ignores troll listings.");
         y += 22;
         this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal("Refresh prices now"), b -> {
             com.skymaxx.tiki.light.LavaPrices.clearCache();
             b.setMessage((Component)Component.literal("\u00a7aPrices cleared - fetched again on the next drop"));
         }).bounds(x, y, w, 20).build(), y));
         y += 22;
-        y = this.note(y, "Insta-sell = what buy orders pay right now.");
-        y = this.note(y, "Sell offer = what sellers ask (where your offer would sit).");
-        y = this.note(y, "Lowest BIN = cheapest Buy-It-Now in the auction house.");
-        y = this.note(y, "Median = middle of the 5 cheapest, ignores troll listings.");
-        y = this.note(y, "\u00a78Data: SkyCofl - sky.coflnet.com/data. One request per drop,");
-        y = this.note(y, "\u00a78cached 10 min, max 20 a minute. Off = Light uses no internet.");
         y = this.heading(y, "RNG fanfare (Beta)");
-        y = this.note(y, "\u00a77Needs \"Beta features\" in General.");
         y = this.toggle(x, y, w, "RNG fanfare", () -> this.cfg.fanfareEnabled, v -> {
             this.cfg.fanfareEnabled = v;
         });
+        this.tip("Needs \"Beta features\" in General. Dyes always get the fanfare.");
         y = this.slider(x, y, w, "Fanfare from", 1.0f, 200.0f, () -> Float.valueOf(this.cfg.fanfareMillions), v -> {
             this.cfg.fanfareMillions = Math.round(v.floatValue());
         }, ConfigSlider.Format.MILLIONS, null);
         y = this.toggle(x, y, w, "Screenshot on RNG", () -> this.cfg.fanfareScreenshot, v -> {
             this.cfg.fanfareScreenshot = v;
         });
-        y = this.note(y, "\u00a77Dyes always get the fanfare.");
         return y;
     }
 
@@ -856,19 +859,20 @@ extends Screen {
         y = this.toggle(x, y, w, "Beta features", () -> this.cfg.betaFeatures, v -> {
             this.cfg.betaFeatures = v;
         });
-        y = this.note(y, "\u00a77Dry streak + RNG fanfare in the gambling result.");
-        y = this.note(y, "\u00a77Off = the animations run exactly as before.");
+        this.tip("Dry streak + RNG fanfare in the gambling result.");
+        this.tip("Off = the animations run exactly as before.");
+        y = this.heading(y, "Achievements");
         y = this.toggle(x, y, w, "Achievement pop-up & sound", () -> this.cfg.lightAchievementFx, v -> {
             this.cfg.lightAchievementFx = v;
         });
         y = this.slider(x, y, w, "Achievement sound volume", 0.0f, 1.0f, () -> Float.valueOf(this.cfg.lightAchievementVolume), v -> {
             this.cfg.lightAchievementVolume = v.floatValue();
         }, ConfigSlider.Format.PERCENT, null);
+        y = this.heading(y, "Debug");
         y = this.toggle(x, y, w, "Debug log", () -> this.cfg.debug, v -> {
             this.cfg.debug = v;
         });
-        y = this.note(y, "Writes every detection step to logs/latest.log");
-        y = this.note(y, "(lines starting with [SkyMaxx]). Leave off normally.");
+        this.tip("Writes every detection step to logs/latest.log. Leave off normally.");
         y = this.sectionHeader(x, y + 6, w, "Stamps", null, stampsOpen, () -> {
             stampsOpen = !stampsOpen;
         });
@@ -879,9 +883,8 @@ extends Screen {
         y = this.toggle(x, y, w, "Hotspot text on the water", () -> this.cfg.hotspotTextOnWater, v -> {
             this.cfg.hotspotTextOnWater = v;
         });
-        y = this.note(y, "The HOTSPOT sign and its buff lie flat on the");
-        y = this.note(y, "water inside the ring - same font and colours,");
-        y = this.note(y, "buffs shortened (FS, SCC, DHC, TC, TFC).");
+        this.tip("The HOTSPOT sign and its buff lie flat on the water inside the ring,");
+        this.tip("buffs shortened (FS, SCC, DHC, TC, TFC).");
         return y;
     }
 
@@ -1416,13 +1419,29 @@ extends Screen {
             int y = this.viewTop + label.baseY() - this.scroll;
             if (y < this.viewTop - 20 || y > this.viewBottom + 4) continue;
             if (label.heading()) {
-                ctx.text(this.font, (Component)Component.literal((String)label.text()), x, y + 3, T().accent);
-                int from = x + this.font.width(label.text()) + 6;
-                if (from >= right) continue;
-                ctx.fill(from, y + 7, right, y + 8, 1143881779);
+                // separator: a fading line in the theme colour on both sides, title in the middle
+                int tw = this.font.width(label.text());
+                int mid = (x + right) / 2;
+                int tx = mid - tw / 2;
+                ctx.text(this.font, (Component)Component.literal((String)label.text()), tx, y + 3, T().accent);
+                int acc = T().accent & 0xFFFFFF;
+                SkyMaxxScreen.fadeLine(ctx, x, tx - 8, y + 7, acc, false);
+                SkyMaxxScreen.fadeLine(ctx, tx + tw + 8, right, y + 7, acc, true);
                 continue;
             }
             ctx.text(this.font, (Component)Component.literal((String)label.text()), x, y + 3, -7695484);
+        }
+    }
+
+    /** A 1 px line that fades out towards the outer end (toRight: bright on the left). */
+    private static void fadeLine(GuiGraphicsExtractor ctx, int x0, int x1, int y, int rgb, boolean toRight) {
+        if (x1 - x0 < 4) return;
+        int steps = 12;
+        for (int i = 0; i < steps; i++) {
+            int a0 = x0 + (x1 - x0) * i / steps, a1 = x0 + (x1 - x0) * (i + 1) / steps;
+            float f = (i + 0.5f) / steps;
+            int alpha = (int) (200 * (toRight ? 1 - f : f));
+            ctx.fill(a0, y, a1, y + 1, alpha << 24 | rgb);
         }
     }
 

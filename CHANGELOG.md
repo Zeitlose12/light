@@ -34,7 +34,8 @@
 
 - **Spoiler-free gambling:** Lava, Spooky and Winter animations always fill the screen; chat, titles, other HUDs and the game sound stay off while they run (no spoiler from drop messages)
 - **Gameplay during Animation** (Gambling tab): your game, very small in a corner (top left, bottom left or top right) – like the Titanoboa
-- **Bobber timer during gambling:** Hypixel's countdown above your hook (and "!!!" when a fish bites) shows in a small box over the scene, so you can keep fishing (also over Wiki Tiki and Titanoboa) – bottom middle, top left or top right; display only, you still reel in yourself
+- **Bobber timer during gambling:** Hypixel's countdown above your hook (and "!!!" when a fish bites) in a big box right under the small gameplay picture (or bottom middle) – also over Wiki Tiki and Titanoboa; plus a short **bite ping** that plays even while the game sound is off; display only, you still reel in yourself
+- **Cleaner menu:** section separators in the theme colour, long explanations moved into hover tooltips (General, Settings), more space between the gambling categories; the gambling display options moved to Settings → "Gambling display"
 - **History** is folded by day (today open), so long sessions stay tidy; Wiki Tiki and Titanoboa results are listed too
 - **Journal:** one page per drop with a counter (e.g. "Flash I ×2"), only real drops (no Thunder Fragments or junk), Wiki Tiki and Titanoboa in the contents
 - Menu header: "Fishing Gambling Mod" with the credits next to the search bar

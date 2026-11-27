@@ -757,40 +757,72 @@ public final class LavaScene {
         return best;
     }
 
-    /** Small box over the scene: the bobber countdown, blinking yellow on "!!!" - reeling in stays your job. */
     private static void drawBobber(GuiGraphicsExtractor ctx) {
         if (active) drawBobberBox(ctx);
     }
 
-    /** Also used over the Wiki Tiki / Titanoboa animations (drawn on top - their animations are untouched). */
+    private static boolean lastBite;
+
+    /**
+     * The bobber box: right under the small gameplay picture (above it in the bottom-left corner), as wide as the
+     * picture; without the picture big at the bottom middle. Plays one ping when "!!!" appears.
+     */
     public static void drawBobberBox(GuiGraphicsExtractor ctx) {
         TikiConfig c = cfg();
-        if (c == null || !c.gambleBobberTimer) return;
+        if (c == null) return;
         String txt = bobberLine();
-        if (txt == null) return;
-        Minecraft mc = Minecraft.getInstance();
         boolean bite = "!!!".equals(txt);
-        boolean blink = bite && (System.currentTimeMillis() / 160L) % 2L == 0L;
-        String sub = bite ? "reel in!" : "bobber";
-        int bw = 26 + mc.font.width(txt) + 8 + mc.font.width(sub) + 10, bh = 18;
+        if (bite && !lastBite && c.gambleBiteSound) bitePing();
+        lastBite = bite;
+        if (!c.gambleBobberTimer || txt == null) return;
+        Minecraft mc = Minecraft.getInstance();
         int sw = ctx.guiWidth(), sh = ctx.guiHeight();
-        int bx = sw / 2 - bw / 2, by = sh - bh - 34;
-        String pos = c.gambleBobberPos;
-        // never on top of the small gameplay picture: then it moves to the bottom middle
-        if (active && c.gambleGameplayView && pos != null && pos.equals(com.skymaxx.tiki.config.GameplayCorner.byName(c.gambleGameplayCorner).name())) pos = "BOTTOM";
-        if ("TOP_LEFT".equals(pos)) {
-            bx = 8;
-            by = 8;
-        } else if ("TOP_RIGHT".equals(pos)) {
-            bx = sw - bw - 8;
-            by = 8;
+        // which gameplay picture is on screen: ours (Lava/Spooky/Winter) or the Titanoboa / Wiki Tiki one
+        boolean pic = active ? c.gambleGameplayView : c.boaGameplayView;
+        com.skymaxx.tiki.config.GameplayCorner corner = com.skymaxx.tiki.config.GameplayCorner.byName(active ? c.gambleGameplayCorner : c.boaGameplayCorner);
+        int bh = 30, bw, bx, by;
+        if (pic) {
+            float w = sw * 0.24f, h = w * sh / (float) Math.max(1, sw);
+            boolean left = corner != com.skymaxx.tiki.config.GameplayCorner.TOP_RIGHT;
+            boolean top = corner != com.skymaxx.tiki.config.GameplayCorner.BOTTOM_LEFT;
+            int px0 = Math.round(left ? 6f : sw - 6f - w), py0 = Math.round(top ? 6f : sh - 6f - h);
+            bw = Math.max(1, Math.round(w)) + 6;
+            bx = px0 - 3;
+            by = top ? py0 + Math.round(h) + 7 : py0 - bh - 7;
+        } else {
+            bw = 190;
+            bx = sw / 2 - bw / 2;
+            by = sh - bh - 30;
         }
-        Theme.round(ctx, bx, by, bx + bw, by + bh, 0xE0140E1A);
+        boolean blink = bite && (System.currentTimeMillis() / 160L) % 2L == 0L;
+        Theme.round(ctx, bx, by, bx + bw, by + bh, 0xE6140E1A);
         Theme.roundOutline(ctx, bx, by, bx + bw, by + bh, bite ? 0xFFFFD23C : 0xFF7A6A90);
-        ctx.fill(bx + 7, by + 5, bx + 15, by + 13, 0xFFE04848);
-        ctx.fill(bx + 7, by + 8, bx + 15, by + 10, 0xFFFFFFFF);
-        ctx.text(mc.font, Component.literal(txt), bx + 20, by + 5, bite ? (blink ? 0xFFFFE066 : 0xFFFF9A2A) : 0xFFE8E2F0, false);
-        ctx.text(mc.font, Component.literal(sub), bx + 20 + mc.font.width(txt) + 8, by + 5, 0xFF9A8FA8, false);
+        // little bobber
+        ctx.fill(bx + 9, by + 9, bx + 21, by + 21, 0xFFE04848);
+        ctx.fill(bx + 9, by + 14, bx + 21, by + 16, 0xFFFFFFFF);
+        String sub = bite ? "reel in!" : "bobber";
+        var pose = ctx.pose();
+        pose.pushMatrix();
+        try {
+            pose.translate(bx + 28, by + 7);
+            pose.scale(2f, 2f);
+            ctx.text(mc.font, Component.literal(txt), 0, 0, bite ? (blink ? 0xFFFFE066 : 0xFFFF9A2A) : 0xFFE8E2F0, false);
+        } finally {
+            pose.popMatrix();
+        }
+        int subX = bx + 28 + mc.font.width(txt) * 2 + 8;
+        if (subX + mc.font.width(sub) < bx + bw - 4) ctx.text(mc.font, Component.literal(sub), subX, by + 12, 0xFF9A8FA8, false);
+    }
+
+    /** One short ping for "!!!" - marked as Light's own sound so it plays while the game is muted. */
+    private static void bitePing() {
+        try {
+            float volume = Math.max(0.35f, vol());
+            SimpleSoundInstance inst = SimpleSoundInstance.forUI(net.minecraft.sounds.SoundEvents.NOTE_BLOCK_PLING.value(), 1.6f, volume);
+            OWN_SOUNDS.add(inst);
+            Minecraft.getInstance().getSoundManager().play(inst);
+        } catch (Throwable ignored) {
+        }
     }
 
     /** Fade of the whole scene (in at the start, out at the end) for the full-screen cover. */

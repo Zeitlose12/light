@@ -118,6 +118,8 @@ public class TikiConfig {
     public boolean gambleHideHud = true;
     /** Show Hypixel's bobber countdown / "!!!" in a small box while a gambling scene runs (display only). */
     public boolean gambleBobberTimer = true;
+    /** A short ping from Light when the bobber shows "!!!" during an animation. */
+    public boolean gambleBiteSound = true;
     /** BOTTOM, TOP_LEFT or TOP_RIGHT. */
     public String gambleBobberPos = "BOTTOM";
     public float lavaGambleVolume = 0.6f;

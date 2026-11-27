@@ -14,7 +14,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class SoundEngineMixin {
     @Inject(method={"play(Lnet/minecraft/client/resources/sounds/SoundInstance;)Lnet/minecraft/client/sounds/SoundEngine$PlayResult;"}, at={@At(value="HEAD")}, cancellable=true)
     private void skymaxx$refuseSound(SoundInstance instance, CallbackInfoReturnable<SoundEngine.PlayResult> cir) {
-        // Light: game sound off while a Lava / Spooky / Winter gambling scene runs (its own sounds still play)
+        // Light: its own sounds (scene sounds, bite ping) always play
+        try {
+            if (com.skymaxx.tiki.light.LavaScene.isOwnSound(instance)) return;
+        } catch (Throwable ignored) {
+        }
+        // Light: game sound off while a Lava / Spooky / Winter gambling scene runs
         try {
             if (com.skymaxx.tiki.light.LavaScene.silencesGame() && !com.skymaxx.tiki.light.LavaScene.isOwnSound(instance)) {
                 cir.setReturnValue(SoundEngine.PlayResult.NOT_STARTED);
