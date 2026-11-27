@@ -52,6 +52,12 @@ public final class LightInit implements ClientModInitializer {
                 return b.buildFuture();
             }).executes(c -> LightInit.testTheme(StringArgumentType.getString(c, "theme")))))
             .then(ClientCommands.literal("testcrew").executes(c -> LightInit.testCrew()))
+            .then(ClientCommands.literal("chance").then(ClientCommands.argument("drop", StringArgumentType.greedyString()).suggests((c, b) -> {
+                java.util.Set<String> seen = new java.util.LinkedHashSet<>();
+                for (Calc.Drop d : Calc.DROPS) seen.add(d.item().toLowerCase(Locale.ROOT).replace(" (common)", ""));
+                for (String n : seen) b.suggest(n);
+                return b.buildFuture();
+            }).executes(c -> Calc.chat(StringArgumentType.getString(c, "drop")))))
             .then(ClientCommands.literal("crew").requires(src -> CrewAdmin.available())
                 .then(ClientCommands.literal("list").executes(c -> CrewAdmin.list()))
                 .then(ClientCommands.literal("sync").executes(c -> CrewAdmin.sync()))

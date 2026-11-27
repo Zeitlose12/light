@@ -6,9 +6,9 @@ import java.util.List;
 
 /**
  * Light: compares the drops you got with what the base drop chances predict.
- * Base chances (no Magic Find), the same values the original mod uses:
- * Wiki Tiki  - Bobbin' 1%, Troubled Bubble 0.2%, Tiki Mask 0.1%, Aquamarine 1/50k
- * Titanoboa  - Lily Pad 1%, Bobbin' 1%, Shed 0.2%, Snake Eyes 0.11%, Aquamarine 1/50k
+ * Base chances (no Magic Find) after Hypixel SkyBlock 0.27.3 (Magic Find Rework, Nov 17 2026):
+ * Wiki Tiki  - Bobbin' 2.5%, Troubled Bubble 2%, Tiki Mask 0.66%, Aquamarine 1/25k
+ * Titanoboa  - Lily Pad 5%, Bobbin' 2.5%, Shed 0.5%, Snake Eyes 1.1%, Aquamarine 1/25k
  */
 public final class Luck {
     private Luck() {
@@ -26,20 +26,20 @@ public final class Luck {
 
     public static List<Line> tiki(TikiStats s) {
         ArrayList<Line> out = new ArrayList<Line>();
-        out.add(new Line("Bobbin' Scriptures", s.scripturesDropped, s.kills * 0.01));
-        out.add(new Line("Troubled Bubble", s.bubblesDropped, s.kills * 0.002));
-        out.add(new Line("Tiki Mask", s.masksDropped, s.kills * 0.001));
-        out.add(new Line("Aquamarine Dye", s.dyesDropped, s.kills * 2.0E-5));
+        out.add(new Line("Bobbin' Scriptures", s.scripturesDropped, s.kills * 0.025));
+        out.add(new Line("Troubled Bubble", s.bubblesDropped, s.kills * 0.02));
+        out.add(new Line("Tiki Mask", s.masksDropped, s.kills * 0.0066));
+        out.add(new Line("Aquamarine Dye", s.dyesDropped, s.kills * 4.0E-5));
         return out;
     }
 
     public static List<Line> boa(TikiStats s) {
         ArrayList<Line> out = new ArrayList<Line>();
-        out.add(new Line("Condensed Lily Pad", s.lilyPadsDropped, s.boaKills * 0.01));
-        out.add(new Line("Bobbin' Scriptures", s.boaScripturesDropped, s.boaKills * 0.01));
-        out.add(new Line("Titanoboa Shed", s.shedsDropped, s.boaKills * 0.002));
-        out.add(new Line("Snake Eyes", s.snakeEyesDropped, s.boaKills * 0.0011));
-        out.add(new Line("Aquamarine Dye", s.boaDyesDropped, s.boaKills * 2.0E-5));
+        out.add(new Line("Condensed Lily Pad", s.lilyPadsDropped, s.boaKills * 0.05));
+        out.add(new Line("Bobbin' Scriptures", s.boaScripturesDropped, s.boaKills * 0.025));
+        out.add(new Line("Titanoboa Shed", s.shedsDropped, s.boaKills * 0.005));
+        out.add(new Line("Snake Eyes", s.snakeEyesDropped, s.boaKills * 0.011));
+        out.add(new Line("Aquamarine Dye", s.boaDyesDropped, s.boaKills * 4.0E-5));
         return out;
     }
 

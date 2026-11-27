@@ -186,6 +186,7 @@ extends Screen {
                 case SETTINGS -> y = this.buildSettings(left, y, w);
                 case GENERAL -> y = this.buildGeneral(left, y, w);
                 case STATS -> y = this.buildStats(left, y, w);
+                case CALCULATOR -> y = this.buildCalculator(left, y, w);
                 case ACHIEVEMENTS -> y = this.buildAchievements(left, y, w);
                 case HISTORY -> y = this.buildHistory(left, y, w);
                 case COSMETICS -> y = this.buildCosmetics(left, y, w);
@@ -1173,6 +1174,123 @@ extends Screen {
         return y;
     }
 
+    // ------------------------------------------------------------------ Calculator tab
+
+    private static int calcIndex;
+    /** Typed values; null = automatic (Magic Find from your stats, kills from History). */
+    private static String calcMf;
+    private static String calcDry;
+    private int calcInputY = -1;
+    private int calcResultY = -1;
+    private int calcLeft;
+    private int calcW;
+
+    private int buildCalculator(int x, int y, int w) {
+        com.skymaxx.tiki.light.Calc.Drop[] all = com.skymaxx.tiki.light.Calc.DROPS;
+        calcIndex = Math.floorMod(calcIndex, all.length);
+        com.skymaxx.tiki.light.Calc.Drop d = all[calcIndex];
+        y = this.heading(y, "Drop chance");
+        this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal("\u25c0"), b -> {
+            calcIndex--;
+            calcDry = null;
+            this.rebuildWidgets();
+        }).bounds(x, y, 20, 20).build(), y));
+        this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal("\u00a7f" + d.item() + " \u00a78\u00b7 \u00a77" + d.mob()), b -> {
+            calcIndex++;
+            calcDry = null;
+            this.rebuildWidgets();
+        }).bounds(x + 24, y, w - 48, 20).build(), y));
+        this.tip("Click (or the arrows) to pick the drop. Base chances after the Magic Find Rework (Nov 2026).");
+        this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal("\u25b6"), b -> {
+            calcIndex++;
+            calcDry = null;
+            this.rebuildWidgets();
+        }).bounds(x + w - 20, y, 20, 20).build(), y));
+        y += 26;
+        this.calcLeft = x;
+        this.calcW = w;
+        this.calcInputY = y;
+        int boxX = x + 112, boxW = 70;
+        double autoMf = com.skymaxx.tiki.light.Calc.magicFind();
+        EditBox mf = new EditBox(this.font, boxX, y, boxW, 18, (Component)Component.literal("Magic Find"));
+        mf.setMaxLength(4);
+        mf.setValue(calcMf != null ? calcMf : autoMf < 0 ? "" : String.valueOf(Math.round(autoMf)));
+        mf.setResponder(s -> calcMf = s.isEmpty() ? null : s);
+        this.rows.add(new Row((AbstractWidget)mf, y));
+        y += 22;
+        long[] dry = com.skymaxx.tiki.light.Calc.dry(d);
+        EditBox dk = new EditBox(this.font, boxX, y, boxW, 18, (Component)Component.literal("Kills"));
+        dk.setMaxLength(7);
+        dk.setValue(calcDry != null ? calcDry : String.valueOf(dry[0]));
+        dk.setResponder(s -> calcDry = s.isEmpty() ? null : s);
+        this.rows.add(new Row((AbstractWidget)dk, y));
+        y += 26;
+        this.calcResultY = y;
+        y += 118;
+        y = this.note(y, "\u00a78Chance = base \u00d7 (1 + Magic Find / 100)" + (d.dye() != null ? " \u00d7 Vincent" : "") + ". Over 100% the rest is a double drop.");
+        y = this.note(y, "\u00a78Also in chat: /light chance <drop>");
+        return y;
+    }
+
+    private void drawCalculator(GuiGraphicsExtractor ctx) {
+        if (this.calcInputY < 0) return;
+        com.skymaxx.tiki.light.Calc.Drop d = com.skymaxx.tiki.light.Calc.DROPS[Math.floorMod(calcIndex, com.skymaxx.tiki.light.Calc.DROPS.length)];
+        int x = this.calcLeft, w = this.calcW;
+        int y0 = this.viewTop + this.calcInputY - this.scroll;
+        double autoMf = com.skymaxx.tiki.light.Calc.magicFind();
+        double mf = calcMf != null ? parse(calcMf) : Math.max(0, autoMf);
+        long[] dryAuto = com.skymaxx.tiki.light.Calc.dry(d);
+        long dry = calcDry != null ? (long) parse(calcDry) : dryAuto[0];
+        ctx.text(this.font, (Component)Component.literal("Magic Find"), x, y0 + 5, T().text);
+        ctx.text(this.font, (Component)Component.literal(calcMf == null && autoMf >= 0 ? "\u00a7a\u25cf from your stats" : calcMf == null ? "\u00a78open SkyBlock menu once" : "\u00a78typed"), x + 188, y0 + 5, -1);
+        ctx.text(this.font, (Component)Component.literal("Kills since drop"), x, y0 + 27, T().text);
+        ctx.text(this.font, (Component)Component.literal(calcDry == null ? "\u00a7a\u25cf from History" : "\u00a78typed"), x + 188, y0 + 27, -1);
+        int ry = this.viewTop + this.calcResultY - this.scroll;
+        com.skymaxx.tiki.light.Theme.round(ctx, x, ry, x + w, ry + 112, 0x30FFFFFF);
+        double p = com.skymaxx.tiki.light.Calc.chance(d, mf);
+        ctx.text(this.font, (Component)Component.literal("\u00a77Chance per kill"), x + 8, ry + 6, -1);
+        Matrix3x2fStack ps = ctx.pose();
+        ps.pushMatrix();
+        ps.translate(x + 8, ry + 18);
+        ps.scale(1.6f, 1.6f);
+        ctx.text(this.font, (Component)Component.literal(com.skymaxx.tiki.light.Calc.pct(p)), 0, 0, -1);
+        ps.popMatrix();
+        String sub = com.skymaxx.tiki.light.Calc.oneIn(p) + "  \u00b7  base " + com.skymaxx.tiki.light.Calc.pct(d.base()) + " \u00d7 " + String.format(java.util.Locale.ROOT, "%.2f", p / d.base());
+        ctx.text(this.font, (Component)Component.literal("\u00a77" + sub), x + 8, ry + 36, -1);
+        int cw = (w - 24) / 3;
+        String[] val = p >= 1 ? new String[]{"1", "1", "1"} : new String[]{
+            String.format(java.util.Locale.ROOT, "%,d", com.skymaxx.tiki.light.Calc.killsFor(p, 0.5)),
+            String.format(java.util.Locale.ROOT, "%,d", com.skymaxx.tiki.light.Calc.killsFor(p, 0.9)),
+            String.format(java.util.Locale.ROOT, "%,d", Math.round(1 / p))};
+        String[] cap = {"kills for 50%", "kills for 90%", "on average"};
+        for (int i = 0; i < 3; i++) {
+            int cx = x + 8 + i * (cw + 4);
+            ctx.fill(cx, ry + 50, cx + cw, ry + 76, 0x40000000);
+            ctx.centeredText(this.font, (Component)Component.literal("\u00a7e" + val[i]), cx + cw / 2, ry + 54, -1);
+            ctx.centeredText(this.font, (Component)Component.literal("\u00a78" + cap[i]), cx + cw / 2, ry + 65, -1);
+        }
+        if (p < 1) {
+            double wait = com.skymaxx.tiki.light.Calc.stillWaiting(p, dry);
+            int bw = w - 16;
+            ctx.fill(x + 8, ry + 84, x + 8 + bw, ry + 90, 0x50000000);
+            int fillW = (int) Math.round(bw * Math.min(1, 1 - wait));
+            int col = wait > 0.5 ? 0xFF7DFF9A : wait > 0.15 ? 0xFFFFD24A : 0xFFFF6A4A;
+            ctx.fill(x + 8, ry + 84, x + 8 + fillW, ry + 90, col);
+            String t = String.format(java.util.Locale.ROOT, "%,d", dry) + (calcDry == null && dryAuto[1] == 0 && dry > 0 ? "+" : "")
+                + " kills without it \u2192 only \u00a7f" + String.format(java.util.Locale.ROOT, "%.1f", wait * 100) + "%\u00a77 of players wait this long";
+            ctx.text(this.font, (Component)Component.literal("\u00a77" + t), x + 8, ry + 96, -1);
+        }
+    }
+
+    private static double parse(String s) {
+        try {
+            String n = s.replaceAll("[^0-9]", "");
+            return n.isEmpty() ? 0 : Double.parseDouble(n);
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
     private int buildStats(int x, int y, int w) {
         this.tikiStatsTop = y + (ITEM_ROWS + 1) * 15;
         y = this.tikiStatsTop + 90 + 6;
@@ -1621,6 +1739,9 @@ extends Screen {
         if (activeTab == Tab.STATS && query.isBlank()) {
             this.drawStats(ctx);
         }
+        if (activeTab == Tab.CALCULATOR && query.isBlank()) {
+            this.drawCalculator(ctx);
+        }
         if (activeTab == Tab.COSMETICS && query.isBlank()) {
             this.drawCosmetics(ctx, mouseX, mouseY);
         }
@@ -1833,6 +1954,7 @@ extends Screen {
         BAZAAR("Bazaar"),
         HUDS("HUDs"),
         STATS("Stats"),
+        CALCULATOR("Calculator"),
         HISTORY("History"),
         ACHIEVEMENTS("Achievements"),
         COSMETICS("Cosmetics"),

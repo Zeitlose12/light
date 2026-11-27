@@ -9,6 +9,11 @@
 - **HUDs in menus:** hidden or shown while your inventory or a chest is open
 - **Bestiary ranking** – your place for a mob of your choice, e.g. *Wiki Tiki #3,012 ↑37*, with a reminder when it's older than 7 days
 
+### 🧮 Drop calculator
+- New **Calculator** tab – pick a drop, Light fills in your Magic Find and your dry streak: chance per kill, kills for 50 % / 90 %, how rare your dry streak is
+- **`/light chance <drop>`** – the same in chat
+- All chances updated to the **Magic Find Rework** (Hypixel SkyBlock 0.27.3, Nov 17 2026) – also the luck meter
+
 ### 📖 Journal
 - **Old paper** look – grain, spots, worn edges
 - New **Bestiary Rankings** and **Total Drops** pages right after the contents

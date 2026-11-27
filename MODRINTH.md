@@ -144,15 +144,15 @@ Everything off → Light never goes online.
 
 <br>
 
-It uses the **base drop chances** (without Magic Find):
+It uses the **base drop chances** after the Magic Find Rework of November 2026 (without Magic Find):
 
 | Wiki Tiki | Chance | Titanoboa | Chance |
 |---|---|---|---|
-| Bobbin' Scriptures | 1% | Condensed Lily Pad | 1% |
-| Troubled Bubble | 0.2% | Bobbin' Scriptures | 1% |
-| Tiki Mask | 0.1% | Titanoboa Shed | 0.2% |
-| Aquamarine Dye | 1/50,000 | Snake Eyes | 0.11% |
-| | | Aquamarine Dye | 1/50,000 |
+| Bobbin' Scriptures | 2.5% | Condensed Lily Pad | 5% |
+| Troubled Bubble | 2% | Bobbin' Scriptures | 2.5% |
+| Tiki Mask | 0.66% | Titanoboa Shed | 0.5% |
+| Aquamarine Dye | 1/25,000 | Snake Eyes | 1.1% |
+| | | Aquamarine Dye | 1/25,000 |
 
 With a lot of Magic Find you will look a bit luckier than you really are.
 </details>
