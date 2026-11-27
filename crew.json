@@ -1,7 +1,19 @@
 {
   "_info": "Light Crew. Entries need the Minecraft uuid. role: Supporter (line + bobber) or Beta (also every theme). line: Standard, Aurora, Blitz, Flamme, Frost, Galaxie, Goldkette, Regenbogen, Seelenfeuer, Kirschblüte, Ender, Candy, Gift. bobber: Standard, Leucht-Orb, Stern, Mini-Tiki, Feuerball, Eiskristall, Kürbis, Diamant, Totenkopf, Ender-Perle, Herz, Mini-Boa. Changed in game with /light crew (Grundsteuer only).",
   "members": [
-    { "uuid": "48cedfb2c84b472fb99087e1e0bab713", "name": "Grundsteuer", "role": "Creator", "line": "Standard", "bobber": "Standard" },
-    { "uuid": "20e1f4c8145d46499f9dc35f85dfdd6b", "name": "Gesundheitskarte", "role": "Beta & ideas", "line": "Standard", "bobber": "Standard" }
+    {
+      "uuid": "48cedfb2c84b472fb99087e1e0bab713",
+      "name": "Grundsteuer",
+      "role": "Creator",
+      "line": "Frost",
+      "bobber": "Eiskristall"
+    },
+    {
+      "uuid": "20e1f4c8145d46499f9dc35f85dfdd6b",
+      "name": "Gesundheitskarte",
+      "role": "Beta & ideas",
+      "line": "Standard",
+      "bobber": "Standard"
+    }
   ]
 }
