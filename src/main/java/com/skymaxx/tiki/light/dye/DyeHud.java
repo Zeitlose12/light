@@ -42,9 +42,14 @@ public final class DyeHud {
         if (cfg.dyeHudOnlyFishing && !DyeHud.isFishing(mc.player)) {
             return;
         }
+        if (com.skymaxx.tiki.light.HudVis.hidden()) {
+            return;
+        }
         int sw = ctx.guiWidth();
         int sh = ctx.guiHeight();
-        DyeHud.draw(ctx, mc.font, Math.round(cfg.dyeHudX * sw), Math.round(cfg.dyeHudY * sh), cfg.dyeHudScale, cfg);
+        int hx = Math.round(cfg.dyeHudX * sw), hy = Math.round(cfg.dyeHudY * sh);
+        DyeHud.draw(ctx, mc.font, hx, hy, cfg.dyeHudScale, cfg);
+        com.skymaxx.tiki.light.HudVis.veil(ctx, hx, hy, hx + Math.round(WIDTH * cfg.dyeHudScale), hy + Math.round(DyeHud.height(cfg) * cfg.dyeHudScale));
     }
 
     public static boolean isFishing(LocalPlayer player) {

@@ -6,6 +6,7 @@
 - **Fishing stats** – one small line: ☂ Speed · α Sea Creature Chance · ⚓ Double Hook (+ Trophy, Treasure), each on/off
 - **[Marina] badge** while Marina is mayor or minister
 - Your last fishing stats are **remembered** – shown right after a restart
+- **HUDs in menus:** hidden, dimmed or shown while your inventory or a chest is open
 - **Bestiary ranking** – your place for a mob of your choice, e.g. *Wiki Tiki #3,012 ↑37*, with a reminder when it's older than 7 days
 
 ### 📖 Journal

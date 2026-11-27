@@ -904,6 +904,15 @@ extends Screen {
         y = this.heading(y, "Sack value");
         y = this.hudRow(x, y, w, "Sack value HUD", () -> this.cfg.sackHudEnabled, v -> this.cfg.sackHudEnabled = v,
             () -> new com.skymaxx.tiki.light.SackEditScreen((Screen)this));
+        y = this.heading(y, "In menus");
+        this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal("HUDs in menus: \u00a7f" + com.skymaxx.tiki.light.HudVis.label(this.cfg.hudInMenus)), b -> {
+            this.cfg.hudInMenus = com.skymaxx.tiki.light.HudVis.next(this.cfg.hudInMenus);
+            this.cfg.save();
+            b.setMessage((Component)Component.literal("HUDs in menus: \u00a7f" + com.skymaxx.tiki.light.HudVis.label(this.cfg.hudInMenus)));
+        }).bounds(x, y, w, 20).build(), y));
+        this.tip("While your inventory, a chest or another menu is open: Hidden, Dimmed or Shown.");
+        this.tip("The chat doesn't count. The sack value stays in the sack menu.");
+        y += 22;
         y = this.heading(y, "Fishing stats");
         y = this.hudRow(x, y, w, "Fishing stats HUD", () -> this.cfg.fishStatsHud, v -> this.cfg.fishStatsHud = v,
             () -> new com.skymaxx.tiki.light.HudMover((Screen)this, "Move fishing stats", com.skymaxx.tiki.light.HudMover.fishStats(), () -> com.skymaxx.tiki.light.FishStats.line(this.cfg, true)));
