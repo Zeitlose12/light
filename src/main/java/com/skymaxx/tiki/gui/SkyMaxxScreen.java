@@ -922,6 +922,13 @@ extends Screen {
             () -> new com.skymaxx.tiki.light.HudMover((Screen)this, "Move ranking", com.skymaxx.tiki.light.HudMover.bestiary(), com.skymaxx.tiki.light.Bestiary::sample));
         this.tip("Your place for the mob you killed last. Read when you open its Bestiary page (/be).");
         this.tip("\u00a76\u25cf\u00a7r = older than 7 days, open /be to refresh.");
+        this.rows.add(new Row((AbstractWidget)LightButton.create((Component)Component.literal("Mob: \u00a7f" + com.skymaxx.tiki.light.Bestiary.mobLabel(this.cfg.bestiaryHudMob)), b -> {
+            this.cfg.bestiaryHudMob = com.skymaxx.tiki.light.Bestiary.nextMob(this.cfg.bestiaryHudMob);
+            this.cfg.save();
+            b.setMessage((Component)Component.literal("Mob: \u00a7f" + com.skymaxx.tiki.light.Bestiary.mobLabel(this.cfg.bestiaryHudMob)));
+        }).bounds(x, y, w, 20).build(), y));
+        this.tip("Click through: the mob you killed last, or always the same one.");
+        y += 22;
         y = this.toggle(x, y, w, "Ranking only while fishing", () -> this.cfg.bestiaryHudOnlyFishing, v -> this.cfg.bestiaryHudOnlyFishing = v);
         y = this.heading(y, "Achievement pop-up");
         y = this.hudRow(x, y, w, "Achievement pop-up", () -> this.cfg.lightAchievementFx, v -> this.cfg.lightAchievementFx = v,

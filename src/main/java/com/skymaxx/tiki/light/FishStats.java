@@ -38,6 +38,8 @@ public final class FishStats {
         Pattern.compile("Trophy Fish Chance:?\\s*\\D{0,3}?([\\d,]+(?:\\.\\d+)?)|Trophy Chance:?\\s*\\D{0,3}?([\\d,]+(?:\\.\\d+)?)"),
         Pattern.compile("Treasure Chance:?\\s*\\D{0,3}?([\\d,]+(?:\\.\\d+)?)")};
     private static final String[] ICON = {"§b☂", "§3α", "§9⚓", "§6♔", "§6⛃"};
+    /** Each value in the colour of its icon (like Hypixel's stats). */
+    private static final String[] COLOR = {"§b", "§3", "§9", "§6", "§6"};
     private static final boolean[] PERCENT = {false, true, true, true, true};
     private static final double[] VALUES = {Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN};
     private static long readMs;
@@ -209,12 +211,12 @@ public final class FishStats {
         for (int i = 0; i < VALUES.length; i++) {
             if (!shown(c, i)) continue;
             double v = sample && Double.isNaN(VALUES[i]) ? demo[i] : VALUES[i];
-            if (b.length() > 0) b.append(' ');
-            b.append(ICON[i]).append("§f").append(Double.isNaN(v) ? "?" : fmt(v, PERCENT[i]));
+            if (b.length() > 0) b.append("  ");
+            b.append(ICON[i]).append(' ').append(COLOR[i]).append(Double.isNaN(v) ? "?" : fmt(v, PERCENT[i]));
             if (!Double.isNaN(v)) have = true;
         }
         if (c.fishStatsMarina && (marina() || sample)) b.append("  §b[Marina]");
-        if (!have && !sample) return "§7Fishing stats: §fshow Stats in /tab §7or open your SkyBlock menu";
+        if (!have && !sample) return "Fishing stats: §7show Stats in /tab or open your SkyBlock menu";
         return b.toString();
     }
 

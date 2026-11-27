@@ -162,12 +162,16 @@ public final class Bestiary {
 
     /** The mob of your last Wiki Tiki / Titanoboa / gambling kill (or the newest ranking). */
     private static String shownMob() {
+        TikiConfig c = TikiGambleClient.config;
+        if (c != null && c.bestiaryHudMob != null && !c.bestiaryHudMob.isEmpty()) {
+            for (int i = 0; i < GambleLog.JOURNAL.length; i++) if (GambleLog.JOURNAL[i].equals(c.bestiaryHudMob)) return GambleLog.JOURNAL_NAMES[i];
+        }
         for (GambleLog.Entry e : GambleLog.entries()) {
             if (!e.test && e.mobName != null) return e.mobName;
         }
         Rank newest = null;
         for (Rank r : data().values()) if (newest == null || r.ms > newest.ms) newest = r;
-        return newest == null ? null : newest.mob;
+        return newest == null ? GambleLog.JOURNAL_NAMES[0] : newest.mob; // nothing yet: Wiki Tiki
     }
 
     public static int boxX(TikiConfig c, int sw) {
@@ -194,8 +198,8 @@ public final class Bestiary {
     }
 
     public static String line(String mob, Rank r) {
-        if (r == null) return "§7" + mob + " §8· open /be once";
-        StringBuilder b = new StringBuilder("§7").append(mob).append(" §b#").append(String.format(Locale.ROOT, "%,d", r.rank));
+        if (r == null) return mob + " §8· open /be once";
+        StringBuilder b = new StringBuilder(mob).append(" §b#").append(String.format(Locale.ROOT, "%,d", r.rank));
         long ch = r.change();
         if (ch > 0) b.append(" §a↑").append(String.format(Locale.ROOT, "%,d", ch));
         else if (ch < 0) b.append(" §c↓").append(String.format(Locale.ROOT, "%,d", -ch));
@@ -214,7 +218,7 @@ public final class Bestiary {
         ps.scale(scale, scale);
         int[] s = size(font, text);
         Theme.hud().hudBox(ctx, 0, 0, s[0], s[1]);
-        ctx.text(font, Component.literal(text), 6, 3, -1);
+        ctx.text(font, Component.literal(text), 6, 3, 0xFFD2D8E0); // unformatted parts (the mob name) in a soft light grey
         ps.popMatrix();
     }
 
@@ -222,7 +226,23 @@ public final class Bestiary {
     public static String sample() {
         String mob = shownMob();
         Rank r = mob == null ? null : get(mob);
-        return r != null ? line(mob, r) : "§7Wiki Tiki §b#3,012 §a↑37";
+        return r != null ? line(mob, r) : "Wiki Tiki §b#3,012 §a↑37";
+    }
+
+    /** Label for the HUDs tab button. */
+    public static String mobLabel(String key) {
+        if (key == null || key.isEmpty()) return "Last killed";
+        for (int i = 0; i < GambleLog.JOURNAL.length; i++) if (GambleLog.JOURNAL[i].equals(key)) return GambleLog.JOURNAL_NAMES[i];
+        return "Last killed";
+    }
+
+    /** Next choice: last killed -> Wiki Tiki -> Titanoboa -> ... -> last killed. */
+    public static String nextMob(String key) {
+        if (key == null || key.isEmpty()) return GambleLog.JOURNAL[0];
+        for (int i = 0; i < GambleLog.JOURNAL.length; i++) {
+            if (GambleLog.JOURNAL[i].equals(key)) return i + 1 < GambleLog.JOURNAL.length ? GambleLog.JOURNAL[i + 1] : "";
+        }
+        return "";
     }
 
     /** All readings, best first (Journal page). */

@@ -32,7 +32,7 @@ public final class JournalScreen extends Screen {
     private static final long FLIP_MS = 380L;
     private static final int PAPER = 0xFFE9D6AE;
     private static final int PAPER_EDGE = 0xFFC9AE7C;
-    private static final int RANK_INK = 0xFF24486A;
+    private static final int RANK_INK = 0xFF6A3A1A; // warm sepia ink
     private static final int INK = 0xFF1A0E04;
     private static final int GOLD_INK = 0xFF7A4E00;
     private static final int ITEM_INK = 0xFF3C0C5C;
@@ -352,7 +352,7 @@ public final class JournalScreen extends Screen {
                 ctx.text(this.font, Component.literal(special[i]).withStyle(ChatFormatting.ITALIC), x0 + 16, ly, RANK_INK, false);
                 ctx.text(this.font, Component.literal(n), x0 + PW - 16 - this.font.width(n), ly, RANK_INK, false);
                 int dotsFrom = x0 + 20 + this.font.width(Component.literal(special[i]).withStyle(ChatFormatting.ITALIC));
-                for (int d = dotsFrom; d < x0 + PW - 22 - this.font.width(n); d += 4) ctx.fill(d, ly + 7, d + 1, ly + 8, 0x8024486A);
+                for (int d = dotsFrom; d < x0 + PW - 22 - this.font.width(n); d += 4) ctx.fill(d, ly + 7, d + 1, ly + 8, 0x806A3A1A);
             }
             ctx.fill(x0 + 40, top + 68, x0 + PW - 40, top + 69, 0x406A4E30);
             for (int i = 0; i < names.length; i++) {
@@ -388,7 +388,7 @@ public final class JournalScreen extends Screen {
                 if (ly > top + PH - 44) break;
                 ctx.text(this.font, Component.literal(r.mob), x0 + 16, ly, INK, false);
                 String place = "#" + String.format(Locale.ROOT, "%,d", r.rank);
-                Component pc = Component.literal(place).withStyle(ChatFormatting.BOLD);
+                Component pc = Component.literal(place);
                 ctx.text(this.font, pc, x0 + PW - 16 - this.font.width(pc), ly, RANK_INK, false);
                 long ch = r.change();
                 String sub = r.top() + (ch > 0 ? "  \u2191" + String.format(Locale.ROOT, "%,d", ch) : ch < 0 ? "  \u2193" + String.format(Locale.ROOT, "%,d", -ch) : "");

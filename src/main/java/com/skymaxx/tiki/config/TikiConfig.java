@@ -167,6 +167,8 @@ public class TikiConfig {
     /** Bestiary ranking HUD (one line, last killed mob). */
     public boolean bestiaryHud = true;
     public boolean bestiaryHudOnlyFishing = true;
+    /** Which mob the ranking HUD shows: "" = the one you killed last, else a Journal key (tiki, boa, jawbus, ...). */
+    public String bestiaryHudMob = "";
     public float bestiaryHudX = -1f;
     public float bestiaryHudY = -1f;
     public float bestiaryHudScale = 1.0f;
