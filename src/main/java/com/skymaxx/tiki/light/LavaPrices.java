@@ -110,6 +110,31 @@ public final class LavaPrices {
     }
 
     /** Display name with a roman book level: "Flash 1" -> "Flash I". */
+    /**
+     * Light Crew banner: the board drop named in this chat text (any bazaar / auction drop Light prices), or null.
+     * Thunder Fragment and Prosperity I are left out (almost worthless / always dropped).
+     */
+    public static String boardDropIn(String text) {
+        String t = text.toLowerCase(Locale.ROOT);
+        String best = null;
+        for (Map.Entry<String, String> e : TAGS.entrySet()) {
+            String tag = e.getValue();
+            if (tag.equals("THUNDER_SHARDS") || tag.equals("ENCHANTMENT_PROSPERITY_1")) continue;
+            if (!BAZAAR.contains(tag) && !AUCTION.contains(tag)) continue;
+            String key = e.getKey();
+            String inner = key.startsWith("enchanted book (") && key.endsWith(")") ? key.substring(16, key.length() - 1) : key;
+            if ((t.contains(key) || t.contains(inner)) && (best == null || key.length() > best.length())) best = key;
+        }
+        if (best == null) return null;
+        String d = display(best);
+        StringBuilder out = new StringBuilder();
+        for (String w : d.split(" ")) {
+            if (out.length() > 0) out.append(' ');
+            out.append(w.matches("[ivx]+") ? w.toUpperCase(Locale.ROOT) : w.isEmpty() ? w : Character.toUpperCase(w.charAt(0)) + w.substring(1));
+        }
+        return out.toString().replace(" Of ", " of ").replace(" The ", " the ").replace("Hilt of True Ice", "True Ice");
+    }
+
     public static String display(String itemName) {
         if (itemName == null) return null;
         String k = itemName.replaceAll("§.", "").trim();

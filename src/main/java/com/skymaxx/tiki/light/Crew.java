@@ -407,10 +407,6 @@ public final class Crew {
     // ------------------------------------------------------------------ party banner
 
     private static final Pattern PARTY = Pattern.compile("^Party > (?:\\[[^\\]]+\\] )?(\\w{3,16}): (.+)$");
-    private static final String[] BIG = {
-        "Aquamarine Dye", "Iceberg Dye", "Carmine Dye", "Midnight Dye", "Radioactive Vial", "Flash", "Magma Lord Fragment",
-        "Bobbin' Scriptures", "Burnt Texts", "Tiki Mask", "Titanoboa Shed", "Snake Eyes", "Deep Sea Orb", "Baby Yeti",
-        "True Ice", "Chain of the End Times", "Brimstone Handle", "Troubled Bubble", "Great White Shark Tooth", "Vampire Fang"};
 
     /** A crew member names a big drop in party chat -> a short Light Crew banner for everyone in the party with Light. */
     public static void onChat(Component message, boolean overlay) {
@@ -422,12 +418,8 @@ public final class Crew {
         if (!m.matches()) return;
         Member who = byName(m.group(1));
         if (who == null) return;
-        String said = m.group(2).toLowerCase(Locale.ROOT);
-        for (String big : BIG) {
-            if (said.contains(big.toLowerCase(Locale.ROOT))) {
-                CosmeticPopup.crewDrop(who.name(), big);
-                return;
-            }
-        }
+        // any drop from the gambling boards that Light prices (bazaar or auction house)
+        String drop = LavaPrices.boardDropIn(m.group(2));
+        if (drop != null) CosmeticPopup.crewDrop(who.name(), drop);
     }
 }

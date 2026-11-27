@@ -45,11 +45,12 @@ public final class LavaScene {
     private static final int PARTICLES = 50;
     private static final int CHUNKS = 30;
     private static final int SLOT_MACHINE_H = 182;
-    private static final float SLOT_SCALE = 0.70f;
-    /** Jawbus: machine a bit lower, golem a bit higher. */
-    private static final int SLOT_DROP = 40;
+    /** Jawbus' slot machine: 25 % bigger than before (0.70); Jawbus himself keeps his size. */
+    private static final float SLOT_SCALE = 0.875f;
+    /** Jawbus: machine a bit lower, golem a bit higher (both moved 10 so he still looks over the bigger machine). */
+    private static final int SLOT_DROP = 50;
     /** Jawbus: how far the golem stands above the machine (more = head higher, face free). */
-    private static final int GOLEM_LIFT = 145;
+    private static final int GOLEM_LIFT = 155;
     private static final float RIDE = 3.2f;
 
     private enum Game { SLOTS, ROULETTE, WHEEL, BUBBLES, SHOOT, GRAVES, CLAW, GIFTS }

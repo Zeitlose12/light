@@ -23,6 +23,12 @@
 - **Auto mode** – the HUD shows the dyes that matter where you fish: lava → Carmine, water → Aquamarine (+ Iceberg / Midnight at their events)
 - Chances with **two decimals** and a small **+x% this session**, so you see them grow while you fish
 
+### 🎰 Gambling
+- Lord Jawbus' **slot machine is 25 % bigger** – Jawbus still looks over it
+
+### 💬 Light Crew banner
+- Shows for **every board drop** Light prices (bazaar and auction house) – Flash I included, Thunder Fragment and Prosperity I left out
+
 ### 🐛 Fixed
 - The **bite ping** is now audible during Wiki Tiki and Titanoboa animations
 
