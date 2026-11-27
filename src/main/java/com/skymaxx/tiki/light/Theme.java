@@ -81,7 +81,7 @@ public enum Theme {
         if (this.unlock == null) return false;
         TikiConfig c = TikiGambleClient.config;
         if (c == null) return true;
-        if (Crew.isLocalCrew()) return false;
+        if (Crew.localAllThemes()) return false;
         String have = c.lightAchievements == null ? "" : c.lightAchievements;
         if (!have.equals(cachedFor)) {
             cachedSet = Achievements.unlocked(c);

@@ -49,7 +49,15 @@ public enum Achievements {
     TEN_MILLION(Category.GAMBLING, "Ten Million Club", "One gambling drop worth 10,000,000 coins", s -> GambleLog.bestPrice() >= 10_000_000L),
     HIGH_ROLLER(Category.GAMBLING, "High Roller", "100,000,000 coins from gambling drops", s -> GambleLog.total(false) >= 100_000_000L),
     PATIENCE(Category.GAMBLING, "Patience", "50 lava mobs of one kind without a drop", s -> GambleLog.longestDry(GambleLog.LAVA) >= 50),
-    FULL_SWEEP(Category.GAMBLING, "Full Sweep", "A drop from every gambling mob", s -> Achievements.fullSweep());
+    FULL_SWEEP(Category.GAMBLING, "Full Sweep", "A drop from every gambling mob", s -> Achievements.fullSweep()),
+    NIGHT_OWL(Category.SECRETS, "Night Owl", "Kill a sea creature between 3 and 4 am", s -> Secrets.has("NIGHT_OWL")),
+    GOLDEN_HOUR(Category.SECRETS, "Golden Hour", "Kill a sea creature at exactly 6:00 pm", s -> Secrets.has("GOLDEN_HOUR")),
+    PACIFIST(Category.SECRETS, "Pacifist", "Ragnarok's gallery without a single hit", s -> Secrets.has("PACIFIST")),
+    DEJA_VU(Category.SECRETS, "D\u00e9j\u00e0 vu", "The same drop from the same mob twice in a row", s -> Secrets.has("DEJA_VU")),
+    SPEEDRUN(Category.SECRETS, "Speedrun", "Two gambling mobs within 60 seconds", s -> Secrets.has("SPEEDRUN")),
+    PATIENCE_VIRTUE(Category.SECRETS, "Patience is a Virtue", "Fish for 2 hours without opening /light", s -> Secrets.has("PATIENCE")),
+    BEHIND_THE_SCENES(Category.SECRETS, "Behind the Scenes", "Click the credits 10 times", s -> Secrets.has("BEHIND_THE_SCENES")),
+    CREW_SIGHTING(Category.SECRETS, "Crew Sighting", "Meet a member of the Light Crew", s -> Secrets.has("CREW_SIGHTING"));
 
     public final Category category;
     public final String title;
@@ -123,6 +131,11 @@ public enum Achievements {
             }
         }
         return false;
+    }
+
+    /** Secret achievements show as "???" until they unlock and are not part of the "x / y" total. */
+    public boolean secret() {
+        return this.category == Category.SECRETS;
     }
 
     public boolean reached(TikiStats stats) {
@@ -227,7 +240,7 @@ public enum Achievements {
         }
         AchievementPopup.show(a.title, a.description);
         Theme unlockedTheme = Theme.unlockedBy(a.name());
-        if (unlockedTheme != null && (test || !Crew.isLocalCrew())) {
+        if (unlockedTheme != null && (test || !Crew.localAllThemes())) {
             CosmeticPopup.theme(unlockedTheme, 900L);
             if (!test) TikiGambleClient.chat("\u00a7d[Light] \u00a7fNew theme unlocked: \u00a7d" + unlockedTheme.title + " \u00a77- /light \u2192 Cosmetics");
         }
@@ -247,7 +260,8 @@ public enum Achievements {
         LUCK("Luck"),
         LAVA("Lava"),
         FESTIVALS("Festivals"),
-        GAMBLING("Gambling");
+        GAMBLING("Gambling"),
+        SECRETS("Secrets");
 
         public final String title;
 

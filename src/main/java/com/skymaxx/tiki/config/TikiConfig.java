@@ -91,6 +91,8 @@ public class TikiConfig {
     public String lightAchievements = null;
     /** Achievements taken away with /light achievement remove: they stay locked until /light achievement restore. */
     public String lightAchievementsRevoked = "";
+    /** Secret achievement moments Light has seen (comma separated, see Secrets). */
+    public String lightSecrets = "";
     public boolean lightAchievementFx = true;
     public float lightAchievementVolume = 0.5f;
     public String lightSellSacksSlots = "";

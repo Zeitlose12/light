@@ -52,6 +52,30 @@ public final class LightInit implements ClientModInitializer {
                 return b.buildFuture();
             }).executes(c -> LightInit.testTheme(StringArgumentType.getString(c, "theme")))))
             .then(ClientCommands.literal("testcrew").executes(c -> LightInit.testCrew()))
+            .then(ClientCommands.literal("crew").requires(src -> CrewAdmin.available())
+                .then(ClientCommands.literal("list").executes(c -> CrewAdmin.list()))
+                .then(ClientCommands.literal("sync").executes(c -> CrewAdmin.sync()))
+                .then(ClientCommands.literal("add").then(ClientCommands.argument("name", StringArgumentType.word())
+                    .executes(c -> CrewAdmin.add(StringArgumentType.getString(c, "name"), null))
+                    .then(ClientCommands.argument("role", StringArgumentType.word()).suggests((c, b) -> {
+                        b.suggest("supporter");
+                        b.suggest("beta");
+                        return b.buildFuture();
+                    }).executes(c -> CrewAdmin.add(StringArgumentType.getString(c, "name"), StringArgumentType.getString(c, "role"))))))
+                .then(ClientCommands.literal("remove").then(ClientCommands.argument("name", StringArgumentType.word()).suggests((c, b) -> {
+                    for (Crew.Member m : Crew.members()) if (!m.builtIn()) b.suggest(m.name());
+                    return b.buildFuture();
+                }).executes(c -> CrewAdmin.remove(StringArgumentType.getString(c, "name")))))
+                .then(ClientCommands.literal("look").then(ClientCommands.argument("name", StringArgumentType.word()).suggests((c, b) -> {
+                    for (Crew.Member m : Crew.members()) b.suggest(m.name());
+                    return b.buildFuture();
+                }).then(ClientCommands.argument("line", StringArgumentType.word()).suggests((c, b) -> {
+                    for (String n : CrewAdmin.lineNames()) b.suggest(n);
+                    return b.buildFuture();
+                }).then(ClientCommands.argument("bobber", StringArgumentType.word()).suggests((c, b) -> {
+                    for (String n : CrewAdmin.bobberNames()) b.suggest(n);
+                    return b.buildFuture();
+                }).executes(c -> CrewAdmin.look(StringArgumentType.getString(c, "name"), StringArgumentType.getString(c, "line"), StringArgumentType.getString(c, "bobber"))))))))
             .then(ClientCommands.literal("achievement")
                 .then(ClientCommands.literal("list").executes(c -> LightInit.listAchievements()))
                 .then(ClientCommands.literal("remove").then(ClientCommands.argument("name", StringArgumentType.word()).suggests((c, b) -> {
@@ -91,6 +115,7 @@ public final class LightInit implements ClientModInitializer {
             SackValue.tick(client);
             GambleLog.tick();
             Crew.tick();
+            Secrets.tick(client);
             if (openRequested) {
                 openRequested = false;
                 client.gui.setScreen(SkyMaxxScreen.create());

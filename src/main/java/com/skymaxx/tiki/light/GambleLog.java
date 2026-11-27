@@ -142,9 +142,11 @@ public final class GambleLog {
             d.killsAtDrop.put(mob, kills);
             d.killsAtItem.put(itemKey(mob, drop), kills);
         }
+        GambleLog.Entry prev = d.entries.isEmpty() ? null : d.entries.get(0);
         d.entries.add(0, e);
         while (d.entries.size() > MAX_ENTRIES) d.entries.remove(d.entries.size() - 1);
         save();
+        Secrets.onRecord(e, prev);
         return e;
     }
 

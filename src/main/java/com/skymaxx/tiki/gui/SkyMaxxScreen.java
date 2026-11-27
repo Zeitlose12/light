@@ -513,6 +513,8 @@ extends Screen {
     private int cosThemeTop = -1;
     private int cosLineTop = -1;
     private int cosBobberTop = -1;
+    private int cosCreditsTop = -1;
+    private int cosCreditsBottom = -1;
 
     private int buildCosmetics(int x, int y, int w) {
         com.skymaxx.tiki.light.Theme[] all = com.skymaxx.tiki.light.Theme.values();
@@ -563,6 +565,7 @@ extends Screen {
         this.tip("Sparks, snow, petals ... along crew lines and above crew bobbers.");
         this.tip("Never on the water, so they don't look like a bite.");
         y = this.heading(y, "Credits");
+        this.cosCreditsTop = y;
         y = this.note(y, "\u00a7f\u00a7lLight \u00a77by Grundsteuer");
         y = this.note(y, "\u00a7fSkyMaxx \u00a77by Rachie \u00b7 Wiki Tiki & Titanoboa (MIT)");
         y = this.note(y, "\u00a7fDyeAddons \u00a77\u00b7 dye chances");
@@ -575,6 +578,7 @@ extends Screen {
             first = false;
         }
         y = this.note(y, crew.toString() + " \u00a7d\u2764");
+        this.cosCreditsBottom = y;
         return y;
     }
 
@@ -601,6 +605,11 @@ extends Screen {
 
     private boolean clickCosmetics(double mx, double my) {
         if (my < this.viewTop || my > this.viewBottom || this.cosThemeTop < 0) return false;
+        if (this.cosCreditsTop >= 0 && my >= this.viewTop + this.cosCreditsTop - this.scroll && my < this.viewTop + this.cosCreditsBottom - this.scroll
+            && mx >= this.cosLeft && mx < this.cosLeft + this.cosW) {
+            com.skymaxx.tiki.light.Secrets.creditClick();
+            return false;
+        }
         com.skymaxx.tiki.light.Theme[] all = com.skymaxx.tiki.light.Theme.values();
         for (int i = 0; i < all.length; i++) {
             if (!inside(this.tile(this.cosThemeTop, i, THEME_TILE_H), mx, my)) continue;
@@ -1339,9 +1348,17 @@ extends Screen {
         int x = this.cardLeft + 14;
         int right = this.cardRight - 14 - 3 - 4;
         int top = this.viewTop - this.scroll;
-        int got = com.skymaxx.tiki.light.Achievements.count(this.cfg);
-        int total = com.skymaxx.tiki.light.Achievements.values().length;
-        ctx.text(this.font, (Component)Component.literal((String)("Achievements  \u00a7f" + got + " / " + total)), x, top + 3, T().accent);
+        int got = 0, total = 0, secrets = 0;
+        for (com.skymaxx.tiki.light.Achievements a : com.skymaxx.tiki.light.Achievements.values()) {
+            boolean has = a.isUnlocked(this.cfg);
+            if (a.secret()) {
+                if (has) ++secrets;
+            } else {
+                ++total;
+                if (has) ++got;
+            }
+        }
+        ctx.text(this.font, (Component)Component.literal((String)("Achievements  \u00a7f" + got + " / " + total + (secrets > 0 ? "  \u00a7d+ " + secrets + " secret" + (secrets == 1 ? "" : "s") : "  \u00a78+ ? secrets"))), x, top + 3, T().accent);
         int y = this.viewTop + this.achievementsTop - this.scroll;
         int colW = (right - x + 8 - 8) / 2;
         for (com.skymaxx.tiki.light.Achievements.Category cat : com.skymaxx.tiki.light.Achievements.Category.values()) {
@@ -1352,9 +1369,11 @@ extends Screen {
                 ++inCat;
                 if (a.isUnlocked(this.cfg)) ++doneInCat;
             }
+            boolean secretCat = cat == com.skymaxx.tiki.light.Achievements.Category.SECRETS;
             if (y > this.viewTop - 30 && y < this.viewBottom + 4) {
-                ctx.text(this.font, (Component)Component.literal((String)(cat.title + "  \u00a77" + doneInCat + " / " + inCat)), x, y + 8, T().accent);
-                int from = x + this.font.width(cat.title + "  " + doneInCat + " / " + inCat) + 8;
+                String count = secretCat ? doneInCat + " / ?" : doneInCat + " / " + inCat;
+                ctx.text(this.font, (Component)Component.literal((String)(cat.title + "  \u00a77" + count)), x, y + 8, T().accent);
+                int from = x + this.font.width(cat.title + "  " + count) + 8;
                 if (from < right) ctx.fill(from, y + 12, right, y + 13, T().line());
             }
             y += 26;
@@ -1364,7 +1383,15 @@ extends Screen {
                 boolean done = a.isUnlocked(this.cfg);
                 int cx = x - 4 + (i % 2) * (colW + 8);
                 int cy = y + (i / 2) * 46;
-                if (cy > this.viewTop - 46 && cy < this.viewBottom + 4) {
+                if (cy > this.viewTop - 46 && cy < this.viewBottom + 4 && a.secret() && !done) {
+                    // hidden until it unlocks
+                    ctx.fill(cx, cy, cx + colW, cy + 40, 0x40100018);
+                    ctx.outline(cx, cy, colW, 40, 0xFF5A3A6E);
+                    ctx.text(this.font, (Component)Component.literal("\u00a75?"), cx + 8, cy + 16, -1);
+                    ctx.text(this.font, (Component)Component.literal("\u00a7k???????"), cx + 20, cy + 8, 0xFF8A6AA0);
+                    ctx.text(this.font, (Component)Component.literal("Secret achievement"), cx + 20, cy + 23, 0xFF6A5A78);
+                } else if (cy > this.viewTop - 46 && cy < this.viewBottom + 4) {
+                    if (a.secret()) ctx.fill(cx, cy, cx + colW, cy + 40, 0x18C060FF);
                     ctx.fill(cx, cy, cx + colW, cy + 40, done ? 0x22FFD24A : 0x40000000);
                     ctx.outline(cx, cy, colW, 40, done ? 0xFFFFD24A : 0xFF555555);
                     ctx.text(this.font, (Component)Component.literal(done ? "\u00a76\u2605" : "\u00a78\u2606"), cx + 7, cy + 16, -1);

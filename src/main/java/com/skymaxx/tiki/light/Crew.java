@@ -40,10 +40,15 @@ public final class Crew {
     }
     private static final RenderType[] BOBBER_TYPES = new RenderType[BOBBER_FILES.length];
     private static final String URL = "https://raw.githubusercontent.com/Zeitlose12/light/main/crew.json";
-    private static final long REFRESH_MS = 30L * 60L * 1000L;
+    private static final long REFRESH_MS = 5L * 60L * 1000L;
+    /** Grundsteuer (Creator) - the only one who can use /light crew (together with his own GitHub token). */
+    public static final String DEV_UUID = "48cedfb2c84b472fb99087e1e0bab713";
+    private static final String BETA_UUID = "20e1f4c8145d46499f9dc35f85dfdd6b";
 
-    /** name (lower case) -> member. Built in, then updated from crew.json. */
+    /** uuid (32 hex, no dashes) -> member. Built in, then updated from crew.json. */
     private static final Map<String, Member> MEMBERS = new ConcurrentHashMap<>();
+    private static volatile Object lastLevel;
+    private static volatile long lastWorldFetch;
     private static volatile long fetchedAt;
     private static volatile boolean fetching;
 
@@ -51,12 +56,29 @@ public final class Crew {
     public static int bobberNow;
     public static int lineNow;
 
-    public record Member(String name, String role, int line, int bobber) {
+    /** role: "Creator", "Beta & ideas" (built in) or "Supporter" / "Beta" (crew.json). */
+    public record Member(String uuid, String name, String role, int line, int bobber) {
+        /** Creator and Beta get every theme; Supporters only the line and bobber looks. */
+        public boolean allThemes() {
+            return !"Supporter".equalsIgnoreCase(this.role);
+        }
+
+        public boolean builtIn() {
+            return DEV_UUID.equals(this.uuid) || BETA_UUID.equals(this.uuid);
+        }
     }
 
     static {
-        MEMBERS.put("grundsteuer", new Member("Grundsteuer", "Creator", 0, 0));
-        MEMBERS.put("gesundheitskarte", new Member("Gesundheitskarte", "Beta & ideas", 0, 0));
+        MEMBERS.put(DEV_UUID, new Member(DEV_UUID, "Grundsteuer", "Creator", 0, 0));
+        MEMBERS.put(BETA_UUID, new Member(BETA_UUID, "Gesundheitskarte", "Beta & ideas", 0, 0));
+    }
+
+    public static String key(java.util.UUID id) {
+        return id == null ? "" : id.toString().replace("-", "").toLowerCase(Locale.ROOT);
+    }
+
+    public static String key(String uuid) {
+        return uuid == null ? "" : uuid.replace("-", "").toLowerCase(Locale.ROOT);
     }
 
     private Crew() {
@@ -66,18 +88,43 @@ public final class Crew {
         return TikiGambleClient.config;
     }
 
-    public static boolean isMember(String name) {
-        return name != null && MEMBERS.containsKey(name.toLowerCase(Locale.ROOT));
+    /** By name - only for the party chat banner (chat lines carry no UUID). */
+    public static Member byName(String name) {
+        if (name == null) return null;
+        for (Member m : MEMBERS.values()) if (m.name().equalsIgnoreCase(name)) return m;
+        return null;
     }
 
-    /** The player using this Minecraft is in the Light Crew. */
-    public static boolean isLocalCrew() {
+    public static Member byUuid(String uuid) {
+        return MEMBERS.get(key(uuid));
+    }
+
+    /** The account playing on this Minecraft, or null. */
+    public static Member local() {
         try {
             Minecraft mc = Minecraft.getInstance();
-            return mc != null && mc.getUser() != null && isMember(mc.getUser().getName());
+            if (mc == null || mc.getUser() == null) return null;
+            return MEMBERS.get(key(mc.getUser().getProfileId()));
         } catch (Throwable t) {
-            return false;
+            return null;
         }
+    }
+
+    /** The player using this Minecraft is in the Light Crew (any role). */
+    public static boolean isLocalCrew() {
+        return local() != null;
+    }
+
+    /** Creator and Beta: every theme unlocked. */
+    public static boolean localAllThemes() {
+        Member m = local();
+        return m != null && m.allThemes();
+    }
+
+    /** Grundsteuer's account (checked by UUID). */
+    public static boolean isLocalDev() {
+        Member m = local();
+        return m != null && DEV_UUID.equals(m.uuid());
     }
 
     public static java.util.List<Member> members() {
@@ -98,7 +145,7 @@ public final class Crew {
                 return new int[]{clamp(c.crewLine, LINES.length), clamp(c.crewBobber, BOBBERS.length)};
             }
             if (!c.crewCosmetics) return new int[]{0, 0};
-            Member m = MEMBERS.get(owner.getName().getString().toLowerCase(Locale.ROOT));
+            Member m = MEMBERS.get(key(owner.getUUID()));
             if (m == null) return new int[]{0, 0};
             return new int[]{clamp(m.line(), LINES.length), clamp(m.bobber(), BOBBERS.length)};
         } catch (Throwable t) {
@@ -256,16 +303,35 @@ public final class Crew {
     // ------------------------------------------------------------------ crew.json
 
     /** Called every client tick: reloads crew.json every 30 minutes (only if crew looks are shown). */
+    private static int sightTick;
+
     public static void tick() {
         try {
-            particles(Minecraft.getInstance());
+            Minecraft mc0 = Minecraft.getInstance();
+            if (mc0.level != null && mc0.player != null && ++sightTick % 40 == 0) {
+                for (Player p : mc0.level.players()) {
+                    if (p != mc0.player && MEMBERS.containsKey(key(p.getUUID()))) {
+                        Secrets.flag("CREW_SIGHTING");
+                        break;
+                    }
+                }
+            }
+            particles(mc0);
         } catch (Throwable t) {
             TikiGambleClient.LOGGER.debug("[Light] crew particles failed", t);
         }
         TikiConfig c = cfg();
         if (c == null || !c.crewCosmetics || fetching) return;
         long now = System.currentTimeMillis();
-        if (fetchedAt != 0L && now - fetchedAt < REFRESH_MS) return;
+        Object level = Minecraft.getInstance().level;
+        boolean newWorld = level != null && level != lastLevel;
+        lastLevel = level;
+        // also on joining a world / changing lobby (at most once a minute)
+        if (newWorld && now - lastWorldFetch > 60_000L) {
+            lastWorldFetch = now;
+        } else if (fetchedAt != 0L && now - fetchedAt < REFRESH_MS) {
+            return;
+        }
         fetching = true;
         fetchedAt = now;
         Thread th = new Thread(() -> {
@@ -273,7 +339,7 @@ public final class Crew {
                 java.net.http.HttpClient http = java.net.http.HttpClient.newBuilder().connectTimeout(java.time.Duration.ofSeconds(5)).build();
                 java.net.http.HttpRequest req = java.net.http.HttpRequest.newBuilder(java.net.URI.create(URL))
                     .timeout(java.time.Duration.ofSeconds(8))
-                    .header("User-Agent", "Light-Mod (Fabric, crew looks)").GET().build();
+                    .header("User-Agent", "Light-Mod (Fabric, crew looks)").header("Cache-Control", "no-cache").GET().build();
                 java.net.http.HttpResponse<String> res = http.send(req, java.net.http.HttpResponse.BodyHandlers.ofString());
                 if (res.statusCode() == 200) read(res.body());
             } catch (Throwable t) {
@@ -286,18 +352,45 @@ public final class Crew {
         th.start();
     }
 
-    /** { "members": [ { "name": "...", "role": "...", "line": "Aurora", "bobber": "Stern" } ] } */
-    static void read(String body) {
+    /**
+     * { "members": [ { "uuid": "...", "name": "...", "role": "Supporter", "line": "Aurora", "bobber": "Stern" } ] }
+     * Entries need a uuid (names can change hands). The built-in Creator / Beta keep their role.
+     * Members removed from the file lose their looks at the next reload.
+     */
+    public static void read(String body) {
         JsonElement root = JsonParser.parseString(body);
         if (!root.isJsonObject() || !root.getAsJsonObject().has("members")) return;
+        Map<String, Member> fresh = new java.util.HashMap<>();
         for (JsonElement e : root.getAsJsonObject().getAsJsonArray("members")) {
             if (!e.isJsonObject()) continue;
             JsonObject o = e.getAsJsonObject();
+            String uuid = key(str(o, "uuid"));
             String name = str(o, "name");
-            if (name == null || !name.matches("\\w{3,16}")) continue;
+            if (!uuid.matches("[0-9a-f]{32}") || name == null || !name.matches("\\w{3,16}")) continue;
             String role = str(o, "role");
-            MEMBERS.put(name.toLowerCase(Locale.ROOT), new Member(name, role == null ? "Crew" : role, index(LINES, str(o, "line")), index(BOBBERS, str(o, "bobber"))));
+            if (role == null || role.equalsIgnoreCase("Creator")) role = "Supporter";
+            Member old = MEMBERS.get(uuid);
+            if (old != null && old.builtIn()) role = old.role();
+            fresh.put(uuid, new Member(uuid, name, role, index(LINES, str(o, "line")), index(BOBBERS, str(o, "bobber"))));
         }
+        for (Member m : MEMBERS.values()) {
+            if (m.builtIn()) fresh.putIfAbsent(m.uuid(), new Member(m.uuid(), m.name(), m.role(), 0, 0));
+        }
+        MEMBERS.clear();
+        MEMBERS.putAll(fresh);
+    }
+
+    /** Line / bobber by name; ASCII spellings work too (Kirschbluete, Kuerbis). */
+    public static int lineIndex(String v) {
+        return index(LINES, v);
+    }
+
+    public static int bobberIndex(String v) {
+        return index(BOBBERS, v);
+    }
+
+    public static String ascii(String s) {
+        return s.replace("\u00fc", "ue").replace("\u00e4", "ae").replace("\u00f6", "oe").replace("\u00dc", "Ue").replace(" ", "");
     }
 
     private static String str(JsonObject o, String k) {
@@ -305,7 +398,9 @@ public final class Crew {
     }
 
     private static int index(String[] names, String v) {
-        if (v != null) for (int i = 0; i < names.length; i++) if (names[i].equalsIgnoreCase(v)) return i;
+        if (v != null) for (int i = 0; i < names.length; i++) {
+            if (names[i].equalsIgnoreCase(v) || ascii(names[i]).equalsIgnoreCase(ascii(v))) return i;
+        }
         return 0;
     }
 
@@ -324,11 +419,13 @@ public final class Crew {
         if (c == null || !c.crewBanner) return;
         String text = message.getString().replaceAll("§.", "").trim();
         Matcher m = PARTY.matcher(text);
-        if (!m.matches() || !isMember(m.group(1))) return;
+        if (!m.matches()) return;
+        Member who = byName(m.group(1));
+        if (who == null) return;
         String said = m.group(2).toLowerCase(Locale.ROOT);
         for (String big : BIG) {
             if (said.contains(big.toLowerCase(Locale.ROOT))) {
-                CosmeticPopup.crewDrop(MEMBERS.get(m.group(1).toLowerCase(Locale.ROOT)).name(), big);
+                CosmeticPopup.crewDrop(who.name(), big);
                 return;
             }
         }
