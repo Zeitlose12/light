@@ -57,12 +57,12 @@ public final class FishStats {
         return TikiGambleClient.config;
     }
 
-    /** Fishing right now: hook out, or a rod in the hand in the last 30 seconds. */
+    /** Fishing right now: hook out, or a rod in the hand in the last 15 seconds. */
     public static boolean fishingNow(Minecraft mc) {
         if (mc.player == null) return false;
         long now = System.currentTimeMillis();
         if (mc.player.fishing != null || mc.player.getMainHandItem().getItem() instanceof net.minecraft.world.item.FishingRodItem) lastRod = now;
-        return now - lastRod < 30_000L;
+        return now - lastRod < 15_000L;
     }
 
     public static boolean marina() {

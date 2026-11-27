@@ -748,8 +748,9 @@ public class AudioDirector {
     public void bitePing() {
         try {
             this.synth.keepAwake();
-            this.synth.play(ToneVoice.bell(1568.0f, 0.24f, 0.0f));
-            this.schedule(0.07f, () -> this.synth.play(ToneVoice.bell(2093.0f, 0.16f, 0.0f)));
+            // soft and warm, at about the pitch of the note block pling (D5, then A5 quietly)
+            this.synth.play(new ToneVoice(587.33f, new float[]{1.0f, 2.0f}, new float[]{1.0f, 0.12f}, new float[]{0.32f, 0.12f}, 0.006f, 0.11f, 0.0f, 0.3f, 0.0f, 0.0f, 0.0f, 0.0f));
+            this.schedule(0.08f, () -> this.synth.play(new ToneVoice(880.0f, new float[]{1.0f, 2.0f}, new float[]{1.0f, 0.1f}, new float[]{0.28f, 0.1f}, 0.006f, 0.07f, 0.0f, 0.3f, 0.0f, 0.0f, 0.0f, 0.0f)));
         } catch (Throwable ignored) {
         }
     }

@@ -374,7 +374,6 @@ public final class JournalScreen extends Screen {
                 Bestiary.Rank r = Bestiary.get(n);
                 if (r != null) all.add(r);
             }
-            for (Bestiary.Rank r : Bestiary.all()) if (!all.contains(r)) all.add(r);
             if (all.isEmpty()) {
                 ink(ctx, Component.literal("Open a sea creature"), cx, top + 80, INK_SOFT);
                 ink(ctx, Component.literal("in your Bestiary (/be)"), cx, top + 92, INK_SOFT);

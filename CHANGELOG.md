@@ -31,7 +31,7 @@
 - Also works with **custom drop messages** from other mods (short names like "vial", "flash book", "MLF")
 
 ### 🐛 Fixed
-- The **bite ping** is now audible during Wiki Tiki and Titanoboa animations
+- The **bite ping** is now audible during Wiki Tiki and Titanoboa animations (soft tone)
 
 ### 🗑️ Removed
 - Shark pop-up

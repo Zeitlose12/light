@@ -170,7 +170,10 @@ public final class Bestiary {
             if (!e.test && e.mobName != null) return e.mobName;
         }
         Rank newest = null;
-        for (Rank r : data().values()) if (newest == null || r.ms > newest.ms) newest = r;
+        for (String n : GambleLog.JOURNAL_NAMES) {
+            Rank r = get(n); // only the mobs with an animation
+            if (r != null && (newest == null || r.ms > newest.ms)) newest = r;
+        }
         return newest == null ? GambleLog.JOURNAL_NAMES[0] : newest.mob; // nothing yet: Wiki Tiki
     }
 
