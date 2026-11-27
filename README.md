@@ -16,6 +16,7 @@ Light turns your rarest fishing drops into a show – and keeps you from insta-s
 - 🎣 **Small HUDs** – fishing stats, Bestiary ranking, sack value
 - 🔒 **Bazaar lock** – no more accidental "Sell Sacks Now"
 - 🏆 **35 achievements** + 8 secret ones
+- 🧮 **Drop calculator** – your chance per kill with your Magic Find
 - 🖌️ **14 themes** for the menu and the HUDs
 
 Everything in one menu: **`/light`**
