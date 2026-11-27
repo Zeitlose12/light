@@ -1246,9 +1246,9 @@ public final class LavaScene {
             }
         }
         // Wiki Tiki / Titanoboa drops (Journal)
-        if (low.contains("mask")) return new ItemStack(net.minecraft.world.item.Items.CARVED_PUMPKIN);
-        if (low.contains("bubble")) return new ItemStack(net.minecraft.world.item.Items.HEART_OF_THE_SEA);
-        if (low.contains("snake eyes")) return new ItemStack(net.minecraft.world.item.Items.ENDER_EYE);
+        if (low.contains("mask")) return GambleArt.icon("TIKIMASK");
+        if (low.contains("bubble")) return GambleArt.icon("TBUBBLE");
+        if (low.contains("snake eyes")) return GambleArt.icon("SNAKEEYES");
         if (low.contains("shed")) return new ItemStack(net.minecraft.world.item.Items.RABBIT_HIDE);
         if (low.contains("lily pad")) return new ItemStack(net.minecraft.world.item.Items.LILY_PAD);
         return null;

@@ -32,6 +32,7 @@
 
 ### 🐛 Fixed
 - The **bite ping** is now audible during Wiki Tiki and Titanoboa animations (soft tone)
+- Journal: Tiki Mask, Troubled Bubble and Snake Eyes show their real item pictures
 
 ### 🗑️ Removed
 - Shark pop-up
